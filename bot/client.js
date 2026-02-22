@@ -90,11 +90,13 @@ const groupName = m.isGroup ? groupMetadata.subject : ''
 const participants = m.isGroup ? await groupMetadata.participants : ''
 const groupAdmins = m.isGroup ? await getGroupAdmins(participants) : ''
 const botLid = X.user?.lid ? X.decodeJid(X.user.lid) : null
-const isBotAdmins = m.isGroup ? (groupAdmins.includes(botNumber) || (botLid && groupAdmins.includes(botLid)) || participants.some(p => {
-    return (p.id === botNumber || (botLid && p.id === botLid)) && (p.admin === 'admin' || p.admin === 'superadmin')
+const botNumberClean = botNumber.split(':')[0].split('@')[0]
+const isBotAdmins = m.isGroup ? (groupAdmins.includes(botNumber) || (botLid && groupAdmins.includes(botLid)) || groupAdmins.some(a => a.split(':')[0].split('@')[0] === botNumberClean) || participants.some(p => {
+    const pid = (p.id || '').split(':')[0].split('@')[0]
+    return (pid === botNumberClean || (botLid && p.id === botLid)) && (p.admin === 'admin' || p.admin === 'superadmin')
 })) : false
 const isAdmins = m.isGroup ? (groupAdmins.includes(m.sender) || participants.some(p => {
-    return p.id === m.sender && (p.admin === 'admin' || p.admin === 'superadmin')
+    return (p.id === m.sender || p.id?.split(':')[0].split('@')[0] === m.sender?.split(':')[0].split('@')[0]) && (p.admin === 'admin' || p.admin === 'superadmin')
 })) : false
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
