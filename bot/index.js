@@ -544,7 +544,7 @@ return (withoutContact ? '' : v.name) || v.subject || v.verifiedName || PhoneNum
 X.public = true 
 
 X.serializeM = (m) => smsg(X, m, store);
-X.ev.on('connection.update', (update) => {
+X.ev.on('connection.update', async (update) => {
 const { connection, lastDisconnect } = update;
 if (connection === "close") {
 let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
