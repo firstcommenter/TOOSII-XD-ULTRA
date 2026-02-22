@@ -95,12 +95,19 @@ const participants = m.isGroup ? await groupMetadata.participants : ''
 const groupAdmins = m.isGroup ? await getGroupAdmins(participants) : ''
 const botLid = X.user?.lid ? X.decodeJid(X.user.lid) : null
 const botNumberClean = botNumber.split(':')[0].split('@')[0]
-const isBotAdmins = m.isGroup ? (groupAdmins.includes(botNumber) || (botLid && groupAdmins.includes(botLid)) || groupAdmins.some(a => a.split(':')[0].split('@')[0] === botNumberClean) || participants.some(p => {
+const botLidClean = botLid ? botLid.split(':')[0].split('@')[0] : null
+const isBotAdmins = m.isGroup ? participants.some(p => {
     const pid = (p.id || '').split(':')[0].split('@')[0]
-    return (pid === botNumberClean || (botLid && (p.id === botLid || (p.id || '').split(':')[0].split('@')[0] === (botLid || '').split(':')[0].split('@')[0]))) && (p.admin === 'admin' || p.admin === 'superadmin')
-})) : false
-const isAdmins = m.isGroup ? (isOwner || groupAdmins.includes(m.sender) || participants.some(p => {
-    return (p.id === m.sender || p.id?.split(':')[0].split('@')[0] === m.sender?.split(':')[0].split('@')[0]) && (p.admin === 'admin' || p.admin === 'superadmin')
+    const isBot = pid === botNumberClean || 
+                  p.id === botNumber || 
+                  (botLid && (p.id === botLid || pid === botLidClean)) ||
+                  (X.user?.id && p.id === X.user.id)
+    return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+}) : false
+const isAdmins = m.isGroup ? (isOwner || participants.some(p => {
+    const pid = (p.id || '').split(':')[0].split('@')[0]
+    const sid = (m.sender || '').split(':')[0].split('@')[0]
+    return (pid === sid || p.id === m.sender) && (p.admin === 'admin' || p.admin === 'superadmin')
 })) : false
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
@@ -1703,7 +1710,6 @@ break
                         case 'add': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isAdmins && !isOwner) return reply(mess.admin);
-                                if (!isBotAdmins) return reply(mess.botAdmin);
                                 if (!text && !m.quoted) {
                                         reply(`_Example :_\n\n ${prefix + command} 62xxx`);
                                 } else {
@@ -1743,7 +1749,6 @@ break
                         case 'remove': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
-                                if (!isBotAdmins) return reply(mess.botAdmin);
                                 let users = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null;
                                 if (!users) return reply(`*Usage:* ${prefix + command} @user or reply to their message`);
                                 if (owner.includes(users.replace('@s.whatsapp.net', ''))) {
@@ -1764,7 +1769,6 @@ break
                         case 'delete': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
-                                if (!isBotAdmins) return reply(mess.botAdmin);
                                 if (!m.quoted) return reply(`*Usage:* Reply to a message with ${prefix + command} to delete it.`);
                                 try {
                                         await X.sendMessage(m.chat, { delete: m.quoted.key });
@@ -1777,7 +1781,6 @@ break
                         case 'warn': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
-                                if (!isBotAdmins) return reply(mess.botAdmin);
                                 let warnUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null;
                                 if (!warnUser) return reply(`*Usage:* ${prefix}warn @user [reason]\nReply to a message or mention someone.`);
                                 if (owner.includes(warnUser.replace('@s.whatsapp.net', ''))) return reply('Cannot warn the bot owner.');
@@ -1856,33 +1859,46 @@ break
                         case 'promote': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isOwner && !isAdmins) return reply(mess.admin)
-                                if (!isBotAdmins) return reply(mess.botAdmin)
                                 let users = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
                                 if (!users) return reply(`*Example:* ${prefix + command} @user or reply to their message`)
-                                await X.groupParticipantsUpdate(m.chat, [users], 'promote').then((res) => {
+                                try {
+                                    await X.groupParticipantsUpdate(m.chat, [users], 'promote')
                                     let num = users.split('@')[0]
                                     X.sendMessage(from, { text: `*✅ @${num} has been promoted to admin!*`, mentions: [users] }, { quoted: m })
-                                }).catch((err) => reply(mess.error))
+                                } catch(err) {
+                                    let errMsg = (err?.message || err || '').toString().toLowerCase()
+                                    if (errMsg.includes('not-authorized') || errMsg.includes('403') || errMsg.includes('admin')) {
+                                        reply('🤖 I need to be a group admin to promote members. Please make me admin first.')
+                                    } else {
+                                        reply(mess.error)
+                                    }
+                                }
                         }
                         break
 
                         case 'demote': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isOwner && !isAdmins) return reply(mess.admin)
-                                if (!isBotAdmins) return reply(mess.botAdmin)
                                 let users = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
                                 if (!users) return reply(`*Example:* ${prefix + command} @user or reply to their message`)
-                                await X.groupParticipantsUpdate(m.chat, [users], 'demote').then((res) => {
+                                try {
+                                    await X.groupParticipantsUpdate(m.chat, [users], 'demote')
                                     let num = users.split('@')[0]
                                     X.sendMessage(from, { text: `*✅ @${num} has been demoted from admin.*`, mentions: [users] }, { quoted: m })
-                                }).catch((err) => reply(mess.error))
+                                } catch(err) {
+                                    let errMsg = (err?.message || err || '').toString().toLowerCase()
+                                    if (errMsg.includes('not-authorized') || errMsg.includes('403') || errMsg.includes('admin')) {
+                                        reply('🤖 I need to be a group admin to demote members. Please make me admin first.')
+                                    } else {
+                                        reply(mess.error)
+                                    }
+                                }
                         }
                         break
 
                         case 'revoke':{
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isAdmins && !isOwner) return reply(mess.admin);
-                                if (!isBotAdmins) return reply(mess.botAdmin);
                                 await X.groupRevokeInvite(m.chat)
                                         .then(res => {
                                                 reply(mess.success)
@@ -1894,7 +1910,6 @@ break
                         case 'acceptjoin': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isAdmins && !isOwner) return reply(mess.admin)
-                                if (!isBotAdmins) return reply(mess.botAdmin)
                                 try {
                                         let pending = await X.groupRequestParticipantsList(m.chat)
                                         if (!pending || pending.length === 0) return reply('No pending join requests.')
@@ -1923,7 +1938,6 @@ break
                         case 'rejectjoin': {
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isAdmins && !isOwner) return reply(mess.admin)
-                                if (!isBotAdmins) return reply(mess.botAdmin)
                                 try {
                                         let pending = await X.groupRequestParticipantsList(m.chat)
                                         if (!pending || pending.length === 0) return reply('No pending join requests.')
@@ -3775,7 +3789,6 @@ if (modeArg === 'public') {
 case 'mute': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 await X.groupSettingUpdate(m.chat, 'announcement')
 reply('*Group muted.* Only admins can send messages.')
 } break
@@ -3783,7 +3796,6 @@ reply('*Group muted.* Only admins can send messages.')
 case 'unmute': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 await X.groupSettingUpdate(m.chat, 'not_announcement')
 reply('*Group unmuted.* Everyone can send messages.')
 } break
@@ -3849,7 +3861,6 @@ else reply(`*Anti Demote: ${global.antiDemote ? 'ON' : 'OFF'}*\nUsage: ${prefix}
 case 'setgdesc': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 if (!text) return reply(`Usage: ${prefix}setgdesc [new description]`)
 await X.groupUpdateDescription(m.chat, text)
 reply('*Group description updated.*')
@@ -3858,7 +3869,6 @@ reply('*Group description updated.*')
 case 'setgname': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 if (!text) return reply(`Usage: ${prefix}setgname [new name]`)
 await X.groupUpdateSubject(m.chat, text)
 reply('*Group name updated.*')
@@ -3867,7 +3877,6 @@ reply('*Group name updated.*')
 case 'setgpp': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`Reply to an image with ${prefix}setgpp`)
 try {
 let media = await X.downloadAndSaveMediaMessage(m.quoted, 'gpp_temp')
@@ -3880,7 +3889,6 @@ reply('*Group profile picture updated!*')
 case 'open': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 await X.groupSettingUpdate(m.chat, 'not_announcement')
 reply('*Group opened.* Everyone can send messages.')
 } break
@@ -3888,7 +3896,6 @@ reply('*Group opened.* Everyone can send messages.')
 case 'close': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 await X.groupSettingUpdate(m.chat, 'announcement')
 reply('*Group closed.* Only admins can send messages.')
 } break
@@ -3896,7 +3903,6 @@ reply('*Group closed.* Only admins can send messages.')
 case 'resetlink': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-if (!isBotAdmins) return reply(mess.botAdmin)
 await X.groupRevokeInvite(m.chat)
 let newCode = await X.groupInviteCode(m.chat)
 reply(`*Group link reset.*\nNew link: https://chat.whatsapp.com/${newCode}`)
