@@ -73,7 +73,7 @@ global.ownerNumber = "+254748340864"
 global.mess = {
     success: '✅ Done.',
     admin: '🚨 Admin only.',
-    botAdmin: '🤖 Make me admin first.',
+    botAdmin: '🤖 I need to be a group admin to do this. Please promote me to admin first, then try again.',
     OnlyOwner: '👑 Owner only.',
     OnlyGrup: '👥 Group only.',
     private: '📩 Private chat only.',

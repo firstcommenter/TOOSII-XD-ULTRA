@@ -97,9 +97,9 @@ const botLid = X.user?.lid ? X.decodeJid(X.user.lid) : null
 const botNumberClean = botNumber.split(':')[0].split('@')[0]
 const isBotAdmins = m.isGroup ? (groupAdmins.includes(botNumber) || (botLid && groupAdmins.includes(botLid)) || groupAdmins.some(a => a.split(':')[0].split('@')[0] === botNumberClean) || participants.some(p => {
     const pid = (p.id || '').split(':')[0].split('@')[0]
-    return (pid === botNumberClean || (botLid && p.id === botLid)) && (p.admin === 'admin' || p.admin === 'superadmin')
+    return (pid === botNumberClean || (botLid && (p.id === botLid || (p.id || '').split(':')[0].split('@')[0] === (botLid || '').split(':')[0].split('@')[0]))) && (p.admin === 'admin' || p.admin === 'superadmin')
 })) : false
-const isAdmins = m.isGroup ? (groupAdmins.includes(m.sender) || participants.some(p => {
+const isAdmins = m.isGroup ? (isOwner || groupAdmins.includes(m.sender) || participants.some(p => {
     return (p.id === m.sender || p.id?.split(':')[0].split('@')[0] === m.sender?.split(':')[0].split('@')[0]) && (p.admin === 'admin' || p.admin === 'superadmin')
 })) : false
 //━━━━━━━━━━━━━━━━━━━━━━━━//
