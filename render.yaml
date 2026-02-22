@@ -1,0 +1,10 @@
+services:
+  - type: worker
+    name: toosii-xd-ultra
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
