@@ -71,14 +71,14 @@ global.ownerNumber = "+254748340864"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Respon Message
 global.mess = {
-    success: '✅ Done.',
-    admin: '🚨 Admin only.',
-    botAdmin: '🤖 I need to be a group admin to do this. Please promote me to admin first, then try again.',
-    OnlyOwner: '👑 Owner only.',
-    OnlyGrup: '👥 Group only.',
-    private: '📩 Private chat only.',
+    success: '✅ *Success!* Operation completed.',
+    admin: '🚫 *Admin Only* — This command requires group admin privileges.',
+    botAdmin: '⚠️ *Bot Not Admin* — Please promote me to group admin first, then try again.',
+    OnlyOwner: '🔒 *Owner Only* — This command is restricted to the bot owner.',
+    OnlyGrup: '👥 *Group Only* — This command can only be used in group chats.',
+    private: '📩 *Private Chat Only* — Please send this command in my DM.',
     wait: '',
-    error: '⚠️ Error occurred.',
+    error: '❌ *Error* — Something went wrong. Please try again.',
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // File Update

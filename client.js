@@ -578,7 +578,7 @@ if (m.isGroup) {
  }
 // tes bot no prefix
 if ((budy.match) && ["bot",].includes(budy) && !isCmd) {
-reply(`bot online ✅`)
+reply(`🟢 *${global.botname || 'TOOSII-XD ULTRA'}* is online and ready!\n⏱️ Uptime: ${runtime(process.uptime())}`)
 }       
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -987,20 +987,28 @@ X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
 break
 
 case 'sc': {
-reply(`TOOSII-XD ULTRA Bot\nContact: https://wa.me/254748340864\nTelegram: https://t.me/toosiitech`)
+reply(`╭━━━〔 🤖 *${global.botname}* 〕━━━╮\n│\n│ 📞 wa.me/254748340864\n│ 📲 t.me/toosiitech\n│\n╰━━━━━━━━━━━━━━━━━╯`)
 }
 break
 
 case 'infobot':
 case 'botinfo': {
-  const botInfo = `
-╭─ ⌬ Bot Info
-│ • Name    : ${botname}
-│ • Owner   : ${ownername}
-│ • Version  : ${botver}
-│ • Command : ${totalfitur()}
-│ • Runtime  : ${runtime(process.uptime())}\n╰─────────────
-`
+  const botInfo = `╭━━━〔 🤖 *BOT INFO* 〕━━━╮
+│
+│ 📛 Name: *${botname}*
+│ 👑 Owner: *${ownername}*
+│ 🏷️ Version: *${botver}*
+│ 📋 Commands: *${totalfitur()}*
+│ ⏱️ Uptime: *${runtime(process.uptime())}*
+│ 🔒 Mode: *${X.public ? 'Public' : 'Private'}*
+│ 🔤 Prefix: *${global.botPrefix || 'Multi-prefix'}*
+│
+│ 📞 Contact: ${global.ownerNumber}
+│ 📲 Telegram: @toosiitech
+│
+╰━━━━━━━━━━━━━━━━━╯
+
+_⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
   reply(botInfo)
 }
 break
@@ -1630,41 +1638,55 @@ case 'botsettings':
 case 'settings':
 case 'botconfig': {
 if (!isOwner) return reply(mess.OnlyOwner)
-let settingsText = `*${global.botname} - Settings*\n\n`
-settingsText += `*Bot Info*\n`
-settingsText += `- Name: ${global.botname}\n`
-settingsText += `- Version: ${global.botver}\n`
-settingsText += `- Prefix: ${global.botPrefix || 'Multi-prefix'}\n`
-settingsText += `- Timezone: ${global.botTimezone}\n`
-settingsText += `- Mode: ${X.public ? 'Public' : 'Self'}\n`
-settingsText += `- URL: ${global.botUrl || global.wagc}\n\n`
-settingsText += `*Sticker*\n`
-settingsText += `- Pack: ${global.packname}\n`
-settingsText += `- Author: ${global.author}\n\n`
-settingsText += `*Auto Features*\n`
-settingsText += `- Auto Read: ${global.autoRead ? 'ON' : 'OFF'}\n`
-settingsText += `- Auto Bio: ${global.autoBio ? 'ON' : 'OFF'}\n`
-settingsText += `- ChatBot: ${global.chatBot ? 'ON' : 'OFF'}\n`
-settingsText += `- Auto View Status: ${global.autoViewStatus ? 'ON' : 'OFF'}\n`
-settingsText += `- Auto Like Status: ${global.autoLikeStatus ? 'ON' : 'OFF'} ${global.autoLikeEmoji ? '(' + global.autoLikeEmoji + ')' : ''}\n`
-settingsText += `- Auto Reply Status: ${global.autoReplyStatus ? 'ON' : 'OFF'}\n`
-settingsText += `- Forward Status: ${global.statusToGroup ? 'ON' : 'OFF'}\n`
-settingsText += `- Fake Presence: ${global.fakePresence}\n\n`
-settingsText += `*Protection*\n`
-settingsText += `- Anti-Call: ${global.antiCall ? 'ON' : 'OFF'}\n`
-settingsText += `- Anti-Link: ${global.antiLink ? 'ON' : 'OFF'}\n`
-settingsText += `- Anti-Delete: ${global.antiDelete ? 'ON' : 'OFF'}\n`
-settingsText += `- Anti Status Mention: ${global.antiStatusMention ? 'ON' : 'OFF'}\n\n`
-settingsText += `*Group*\n`
-settingsText += `- Welcome: ${global.welcome ? 'ON' : 'OFF'}\n`
-settingsText += `- Admin Events: ${global.adminevent ? 'ON' : 'OFF'}`
+const on = '✅ ON'
+const off = '❌ OFF'
+let settingsText = `╭━━━〔 ⚙️ *BOT SETTINGS* 〕━━━╮
+│
+│ 📛 Name: *${global.botname}*
+│ 🏷️ Version: *${global.botver}*
+│ 🔤 Prefix: *${global.botPrefix || 'Multi-prefix'}*
+│ 🌍 Timezone: *${global.botTimezone}*
+│ 🔒 Mode: *${X.public ? 'Public' : 'Private'}*
+│ 🔗 URL: ${global.botUrl || global.wagc}
+│
+╰━━━━━━━━━━━━━━━━━╯
+
+╭━━━〔 🎨 *STICKER* 〕━━━╮
+│ 📦 Pack: *${global.packname}*
+│ ✍️ Author: *${global.author}*
+╰━━━━━━━━━━━━━━━━━╯
+
+╭━━━〔 🤖 *AUTO FEATURES* 〕━━━╮
+│ 👁️ Auto Read: ${global.autoRead ? on : off}
+│ 📝 Auto Bio: ${global.autoBio ? on : off}
+│ 💬 ChatBot: ${global.chatBot ? on : off}
+│ 👀 Auto View Status: ${global.autoViewStatus ? on : off}
+│ ❤️ Auto Like Status: ${global.autoLikeStatus ? on : off} ${global.autoLikeEmoji ? '(' + global.autoLikeEmoji + ')' : ''}
+│ 💌 Auto Reply Status: ${global.autoReplyStatus ? on : off}
+│ 📤 Forward Status: ${global.statusToGroup ? on : off}
+│ 👻 Fake Presence: *${global.fakePresence}*
+╰━━━━━━━━━━━━━━━━━╯
+
+╭━━━〔 🛡️ *PROTECTION* 〕━━━╮
+│ 📵 Anti-Call: ${global.antiCall ? on : off}
+│ 🔗 Anti-Link: ${global.antiLink ? on : off}
+│ 🗑️ Anti-Delete: ${global.antiDelete ? on : off}
+│ 📢 Anti Status Mention: ${global.antiStatusMention ? on : off}
+╰━━━━━━━━━━━━━━━━━╯
+
+╭━━━〔 👥 *GROUP* 〕━━━╮
+│ 👋 Welcome: ${global.welcome ? on : off}
+│ 📣 Admin Events: ${global.adminevent ? on : off}
+╰━━━━━━━━━━━━━━━━━╯
+
+_⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
 reply(settingsText)
 }
 break
 
 case 'restart':
 if (!isOwner) return reply(mess.OnlyOwner)
-reply(`Restarting...`)
+reply(`🔄 *Restarting bot...*\n⏳ Please wait a moment.`)
 await sleep(3000)
 process.exit()
 break
@@ -3396,29 +3418,39 @@ async function getServerInfo() {
 
   const latensi = (Date.now() - start)
 
-  const responseText = `*⚡ ${global.botname || 'TOOSII-XD ULTRA'} — Server Info*
+  const responseText = `╭━━━〔 ⚡ *PONG!* 〕━━━╮
+│
+│  🤖 *${global.botname || 'TOOSII-XD ULTRA'}*
+│  📡 Latency: *${latensi}ms*
+│
+╰━━━━━━━━━━━━━━━━━╯
 
-*PING*
-• Latency: ${latensi}ms
-• Bot Uptime: ${runtime(process.uptime())}
-• Server Uptime: ${runtime(os.uptime())}
+╭━━━〔 🕐 *UPTIME* 〕━━━╮
+│ 🟢 Bot: ${runtime(process.uptime())}
+│ 🖥️ Server: ${runtime(os.uptime())}
+╰━━━━━━━━━━━━━━━━━╯
 
-*SERVER*
-• OS: ${osType} (${platform})
-• Release: ${release}
-• Arch: ${arch}
-• Node.js: ${nodeVersion}
+╭━━━〔 💻 *SERVER* 〕━━━╮
+│ 🔧 OS: ${osType} (${platform})
+│ 📦 Release: ${release}
+│ 🏗️ Arch: ${arch}
+│ 🟩 Node.js: ${nodeVersion}
+╰━━━━━━━━━━━━━━━━━╯
 
-*CPU*
-• Model: ${cpuModel}
-• Cores: ${coreCount}
-• Usage: ${cpuUsage}
-• Load: ${loadAverage.join(', ')}
+╭━━━〔 🧠 *CPU* 〕━━━╮
+│ 💎 Model: ${cpuModel}
+│ ⚙️ Cores: ${coreCount}
+│ 📊 Usage: ${cpuUsage}
+│ 📈 Load: ${loadAverage.join(', ')}
+╰━━━━━━━━━━━━━━━━━╯
 
-*MEMORY*
-• Total: ${formatp(totalMem)}
-• Used: ${formatp(usedMem)}
-• Free: ${formatp(freeMem)}${storageText}
+╭━━━〔 💾 *MEMORY* 〕━━━╮
+│ 📦 Total: ${formatp(totalMem)}
+│ 🔴 Used: ${formatp(usedMem)}
+│ 🟢 Free: ${formatp(freeMem)}
+╰━━━━━━━━━━━━━━━━━╯${storageText ? `\n\n╭━━━〔 💿 *STORAGE* 〕━━━╮\n${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'│ 📁 ')}\n╰━━━━━━━━━━━━━━━━━╯` : ''}
+
+_⚡ Powered by ${global.ownername || 'Toosii Tech'}_
 `
   return responseText.trim()
 }
@@ -3429,7 +3461,7 @@ await X.sendMessage(m.chat, { text: responseText }, { quoted: m })
 break           
 
 case 'totalfitur':{
-reply(`Total Bot Features: ${totalfitur()}`)
+reply(`📋 *Total Commands:* ${totalfitur()}`)
 }
 break   
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -4908,14 +4940,25 @@ reply(repoInfo)
 case 'sc':
 case 'script':
 case 'source': {
-let scText = `*${global.botname} Source Code*\n\n`
-scText += `🔗 *GitHub:* https://github.com/TOOSII102/TOOSII-XD-ULTRA\n\n`
-scText += `⭐ Don't forget to *Star* the repo!\n`
-scText += `🍴 *Fork* it to deploy your own bot!\n\n`
-scText += `👉 Fork: https://github.com/TOOSII102/TOOSII-XD-ULTRA/fork\n\n`
-scText += `Developer: ${global.ownername}\n`
-scText += `Contact: ${global.ownerNumber}\n\n`
-scText += `© ${global.ownername} - All Rights Reserved`
+let scText = `╭━━━〔 📂 *SOURCE CODE* 〕━━━╮
+│
+│ 🤖 *${global.botname}*
+│
+│ 🔗 *GitHub:*
+│ github.com/TOOSII102/TOOSII-XD-ULTRA
+│
+│ ⭐ Star the repo to show support!
+│ 🍴 Fork it to deploy your own bot!
+│
+│ 👉 Fork:
+│ github.com/TOOSII102/TOOSII-XD-ULTRA/fork
+│
+│ 👨‍💻 Developer: *${global.ownername}*
+│ 📞 Contact: ${global.ownerNumber}
+│
+╰━━━━━━━━━━━━━━━━━╯
+
+_© ${global.ownername} — All Rights Reserved_`
 reply(scText)
 } break
 
