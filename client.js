@@ -90,23 +90,35 @@ const senderFromKey = m.key?.participant ? X.decodeJid(m.key.participant) : null
 const senderClean = senderJid.split(':')[0].split('@')[0]
 const senderKeyClean = senderFromKey ? senderFromKey.split(':')[0].split('@')[0] : null
 
-function matchesJid(participantId, targetJid, targetLid, targetClean, targetLidClean) {
-    if (!participantId) return false
-    const pid = participantId.split(':')[0].split('@')[0]
-    if (pid === targetClean) return true
-    if (participantId === targetJid) return true
-    if (targetLid && (participantId === targetLid || pid === targetLidClean)) return true
+const allBotIds = [botJid, botLid, X.user?.id, X.user?.lid, botClean + '@s.whatsapp.net', botClean + '@lid'].filter(Boolean).map(id => X.decodeJid(id))
+const allBotNums = [...new Set(allBotIds.map(id => id.split(':')[0].split('@')[0]))]
+
+const allSenderIds = [senderJid, senderFromKey, sender, m.sender, m.key?.participant].filter(Boolean).map(id => {
+    try { return X.decodeJid(id) } catch { return id }
+})
+const allSenderNums = [...new Set(allSenderIds.map(id => id.split(':')[0].split('@')[0]))]
+
+function isParticipantBot(p) {
+    if (!p || !p.id) return false
+    const decoded = X.decodeJid(p.id)
+    const pNum = decoded.split(':')[0].split('@')[0]
+    const rawNum = p.id.split(':')[0].split('@')[0]
+    if (allBotIds.includes(decoded)) return true
+    if (allBotIds.includes(p.id)) return true
+    if (allBotNums.includes(pNum)) return true
+    if (allBotNums.includes(rawNum)) return true
     return false
 }
 
-function matchesSender(participantId) {
-    if (!participantId) return false
-    const pid = participantId.split(':')[0].split('@')[0]
-    if (pid === senderClean) return true
-    if (participantId === senderJid) return true
-    if (senderFromKey && (participantId === senderFromKey || pid === senderKeyClean)) return true
-    if (participantId.endsWith('@lid') && senderFromKey && participantId === senderFromKey) return true
-    if (senderJid.endsWith('@lid') && pid === senderJid.split(':')[0].split('@')[0]) return true
+function isParticipantSender(p) {
+    if (!p || !p.id) return false
+    const decoded = X.decodeJid(p.id)
+    const pNum = decoded.split(':')[0].split('@')[0]
+    const rawNum = p.id.split(':')[0].split('@')[0]
+    if (allSenderIds.includes(decoded)) return true
+    if (allSenderIds.includes(p.id)) return true
+    if (allSenderNums.includes(pNum)) return true
+    if (allSenderNums.includes(rawNum)) return true
     return false
 }
 
@@ -114,7 +126,8 @@ const isOwner = (
     m.key.fromMe ||
     senderClean === botClean ||
     ownerNums.includes(senderClean) ||
-    (senderKeyClean && (senderKeyClean === botClean || ownerNums.includes(senderKeyClean)))
+    (senderKeyClean && (senderKeyClean === botClean || ownerNums.includes(senderKeyClean))) ||
+    allSenderNums.some(n => ownerNums.includes(n) || n === botClean)
 ) || false
 
 const isGroup = m.isGroup
@@ -127,30 +140,17 @@ const groupName = isGroup ? groupMetadata.subject : ''
 const participants = isGroup ? await groupMetadata.participants : ''
 const groupAdmins = isGroup ? await getGroupAdmins(participants) : ''
 
-if (isGroup && participants && participants.length) {
-    console.log('[DEBUG ROLES] botJid:', botJid, '| botLid:', botLid, '| botClean:', botClean, '| botLidClean:', botLidClean)
-    console.log('[DEBUG ROLES] senderJid:', senderJid, '| senderFromKey:', senderFromKey, '| senderClean:', senderClean, '| senderKeyClean:', senderKeyClean)
-    console.log('[DEBUG ROLES] X.user.id:', X.user?.id, '| X.user.lid:', X.user?.lid)
-    participants.forEach(p => {
-        if (p.admin) console.log('[DEBUG ROLES] Admin participant:', p.id, '| admin:', p.admin, '| decoded:', X.decodeJid(p.id))
-    })
-}
-
-const isBotAdmins = isGroup ? participants.some(p => {
-    return matchesJid(p.id, botJid, botLid, botClean, botLidClean) && (p.admin === 'admin' || p.admin === 'superadmin')
+const isBotAdmins = isGroup && participants ? participants.some(p => {
+    return isParticipantBot(p) && (p.admin === 'admin' || p.admin === 'superadmin')
 }) : false
 
-const isAdmins = isGroup ? (isOwner || participants.some(p => {
-    return matchesSender(p.id) && (p.admin === 'admin' || p.admin === 'superadmin')
-})) : false
+const isAdmins = isGroup ? (isOwner || (participants ? participants.some(p => {
+    return isParticipantSender(p) && (p.admin === 'admin' || p.admin === 'superadmin')
+}) : false)) : false
 
-const isSuperAdmin = isGroup ? participants.some(p => {
-    return matchesSender(p.id) && p.admin === 'superadmin'
+const isSuperAdmin = isGroup && participants ? participants.some(p => {
+    return isParticipantSender(p) && p.admin === 'superadmin'
 }) : false
-
-if (isGroup) {
-    console.log('[DEBUG ROLES] Results -> isBotAdmins:', isBotAdmins, '| isAdmins:', isAdmins, '| isOwner:', isOwner, '| isSuperAdmin:', isSuperAdmin)
-}
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
 if (m.message) {

@@ -376,12 +376,14 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                                 let gMeta = await X.groupMetadata(gJid)
                                 groupName = gMeta.subject || gJid
                                 let isMember = gMeta.participants.some(p => p.id.includes(mentioner))
+                                let botAllIds2 = [X.decodeJid(X.user.id), X.user?.lid ? X.decodeJid(X.user.lid) : null, X.user?.id, X.user?.lid].filter(Boolean)
+                                let botAllNums2 = [...new Set(botAllIds2.map(id => id.split(':')[0].split('@')[0]))]
                                 let botIsAdmin2 = gMeta.participants.some(p => {
-                                    let pNum = (p.id || '').split(':')[0].split('@')[0]
-                                    let botNum2 = (X.user.id || '').split(':')[0].split('@')[0]
-                                    let botLid2 = X.user?.lid ? X.decodeJid(X.user.lid) : null
-                                    let botLidClean2 = botLid2 ? botLid2.split(':')[0].split('@')[0] : null
-                                    return (pNum === botNum2 || p.id === X.user.id || p.id === X.decodeJid(X.user.id) || (botLid2 && (p.id === botLid2 || pNum === botLidClean2))) && (p.admin === 'admin' || p.admin === 'superadmin')
+                                    let decoded = X.decodeJid(p.id)
+                                    let pNum = decoded.split(':')[0].split('@')[0]
+                                    let rawNum = (p.id || '').split(':')[0].split('@')[0]
+                                    let isBot = botAllIds2.includes(decoded) || botAllIds2.includes(p.id) || botAllNums2.includes(pNum) || botAllNums2.includes(rawNum)
+                                    return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
                                 })
                                 let isOwnerMention = global.owner.includes(mentioner)
                                 if (isMember && botIsAdmin2 && !isOwnerMention) {
@@ -499,13 +501,14 @@ if (global.antiLink && mek.message && !mek.key.fromMe) {
             if (!isOwnr) {
                 try {
                     let groupMeta = await X.groupMetadata(chat)
-                    let botId = X.decodeJid(X.user.id)
-                    let botLid3 = X.user?.lid ? X.decodeJid(X.user.lid) : null
+                    let botAllIds3 = [X.decodeJid(X.user.id), X.user?.lid ? X.decodeJid(X.user.lid) : null, X.user?.id, X.user?.lid].filter(Boolean)
+                    let botAllNums3 = [...new Set(botAllIds3.map(id => id.split(':')[0].split('@')[0]))]
                     let isBotAdmin = groupMeta.participants.some(p => {
                         let decoded = X.decodeJid(p.id)
-                        let pClean = decoded.split(':')[0].split('@')[0]
-                        let bClean = botId.split(':')[0].split('@')[0]
-                        return (decoded === botId || pClean === bClean || (botLid3 && (decoded === botLid3 || pClean === botLid3.split(':')[0].split('@')[0]))) && (p.admin === 'admin' || p.admin === 'superadmin')
+                        let pNum = decoded.split(':')[0].split('@')[0]
+                        let rawNum = (p.id || '').split(':')[0].split('@')[0]
+                        let isBot = botAllIds3.includes(decoded) || botAllIds3.includes(p.id) || botAllNums3.includes(pNum) || botAllNums3.includes(rawNum)
+                        return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
                     })
                     if (isBotAdmin) {
                         await X.sendMessage(chat, { delete: mek.key })
