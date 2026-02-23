@@ -151,6 +151,18 @@ const isAdmins = isGroup ? (isOwner || (participants ? participants.some(p => {
 const isSuperAdmin = isGroup && participants ? participants.some(p => {
     return isParticipantSender(p) && p.admin === 'superadmin'
 }) : false
+
+if (isGroup && isCmd && !isBotAdmins && participants) {
+    let adminList = participants.filter(p => p.admin).map(p => `${p.id} (${p.admin})`).join('\n')
+    console.log('[ROLE-DEBUG] === BOT ADMIN CHECK FAILED ===')
+    console.log('[ROLE-DEBUG] X.user.id:', X.user?.id)
+    console.log('[ROLE-DEBUG] X.user.lid:', X.user?.lid)
+    console.log('[ROLE-DEBUG] botJid:', botJid, '| botLid:', botLid)
+    console.log('[ROLE-DEBUG] allBotIds:', JSON.stringify(allBotIds))
+    console.log('[ROLE-DEBUG] allBotNums:', JSON.stringify(allBotNums))
+    console.log('[ROLE-DEBUG] Admin participants:\n' + adminList)
+    console.log('[ROLE-DEBUG] All participant IDs:', participants.map(p => p.id).join(', '))
+}
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
 if (m.message) {
@@ -3290,6 +3302,46 @@ break;
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Info Bot             
+case 'debugrole': {
+    if (!isOwner) return reply('Owner only.')
+    let dbgMsg = `*🔍 ROLE DEBUG INFO*\n\n`
+    dbgMsg += `*Bot Identity:*\n`
+    dbgMsg += `• X.user.id: ${X.user?.id || 'null'}\n`
+    dbgMsg += `• X.user.lid: ${X.user?.lid || 'null'}\n`
+    dbgMsg += `• botJid (decoded): ${botJid}\n`
+    dbgMsg += `• botLid (decoded): ${botLid || 'null'}\n`
+    dbgMsg += `• botClean: ${botClean}\n`
+    dbgMsg += `• allBotIds: ${JSON.stringify(allBotIds)}\n`
+    dbgMsg += `• allBotNums: ${JSON.stringify(allBotNums)}\n\n`
+    dbgMsg += `*Sender Identity:*\n`
+    dbgMsg += `• m.sender: ${m.sender}\n`
+    dbgMsg += `• m.key.participant: ${m.key?.participant || 'null'}\n`
+    dbgMsg += `• sender var: ${sender}\n`
+    dbgMsg += `• senderFromKey: ${senderFromKey || 'null'}\n`
+    dbgMsg += `• allSenderNums: ${JSON.stringify(allSenderNums)}\n\n`
+    dbgMsg += `*Role Results:*\n`
+    dbgMsg += `• isGroup: ${isGroup}\n`
+    dbgMsg += `• isOwner: ${isOwner}\n`
+    dbgMsg += `• isAdmins: ${isAdmins}\n`
+    dbgMsg += `• isBotAdmins: ${isBotAdmins}\n`
+    dbgMsg += `• isSuperAdmin: ${isSuperAdmin}\n\n`
+    if (isGroup && participants) {
+        dbgMsg += `*Group Admins (raw p.id):*\n`
+        participants.filter(p => p.admin).forEach(p => {
+            dbgMsg += `• ${p.id} → ${p.admin}\n`
+            dbgMsg += `  decoded: ${X.decodeJid(p.id)}\n`
+            dbgMsg += `  num: ${p.id.split(':')[0].split('@')[0]}\n`
+            dbgMsg += `  isBot? ${isParticipantBot(p)}\n`
+        })
+        dbgMsg += `\n*All Participants (raw p.id):*\n`
+        participants.forEach(p => {
+            dbgMsg += `• ${p.id}${p.admin ? ' ['+p.admin+']' : ''}\n`
+        })
+    }
+    reply(dbgMsg)
+}
+break;
+
 case 'ping':
 case 'info':
 case 'storage':
