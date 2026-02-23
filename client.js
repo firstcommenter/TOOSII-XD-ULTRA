@@ -986,7 +986,7 @@ case 'bratvideo': {
       `ffmpeg -y -f concat -safe 0 -i ${fileListPath} -vf "fps=30" -c:v libx264 -preset ultrafast -pix_fmt yuv420p ${outputVideoPath}`
     )
 
-    await X.sendImageAsSticker(m.chat, outputVideoPath, m, {
+    await X.sendImageAsStickerAV(m.chat, outputVideoPath, m, {
       packname: '',
       author: `${global.author}`
     })
@@ -1009,7 +1009,7 @@ let rulz = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(q)}`;
 try {
 const res = await axios.get(rulz, { responseType: 'arraybuffer' });
 const buffer = Buffer.from(res.data, 'binary');
-await X.sendImageAsSticker(m.chat, buffer, m, { packname: ``, author: `${global.author}` });
+await X.sendImageAsStickerAV(m.chat, buffer, m, { packname: ``, author: `${global.author}` });
 } catch (e) {
 console.log(e);
 await reply(`API is currently down or under maintenance. Please try again later.`);
@@ -1026,7 +1026,7 @@ case 'emojimix': {
     const text2 = emojis[1].trim();
  
     let api = `https://fastrestapis.fasturl.cloud/maker/emojimix?emoji1=${text1}&emoji2=${text2}`;
-    await X.sendImageAsSticker(m.chat, api, m, { packname: '', author: `${packname}` });
+    await X.sendImageAsStickerAV(m.chat, api, m, { packname: '', author: `${packname}` });
 }
 break;
 case 'qc': {
@@ -1043,7 +1043,7 @@ case 'qc': {
     if (text.length > 200) return reply('Maximum 200 characters!');
     let ppnyauser = await X.profilePictureUrl(m.sender, 'image').catch(_ => 'https://files.catbox.moe/nwvkbt.png');
     const rest = await quote(text, pushname, ppnyauser);
-    X.sendImageAsSticker(m.chat, rest.result, m, {
+    X.sendImageAsStickerAV(m.chat, rest.result, m, {
         packname: ``,
         author: `${global.author}`
     });
@@ -1055,14 +1055,14 @@ case 's':{
 if (!quoted) return reply(`Reply to Video/Image with caption ${prefix + command}`)
 if (/image/.test(mime)) {
 let media = await quoted.download()
-let encmedia = await X.sendImageAsSticker(m.chat, media, m, {
+let encmedia = await X.sendImageAsStickerAV(m.chat, media, m, {
 packname: global.packname,
 author: global.author
 })
 } else if (/video/.test(mime)) {
 if ((quoted.msg || quoted).seconds > 31) return reply('Maximum 30 seconds!')
 let media = await quoted.download()
-let encmedia = await X.sendVideoAsSticker(m.chat, media, m, {
+let encmedia = await X.sendVideoAsStickerAV(m.chat, media, m, {
 packname: global.packname,
 author: global.author
 })
