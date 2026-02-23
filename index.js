@@ -13,7 +13,7 @@ by Toosii Tech • 2024 - 2026
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
 require("./setting")
-const { default: makeWASocket, DisconnectReason, jidDecode, proto, getContentType, useMultiFileAuthState, downloadContentFromMessage } = require("gifted-baileys")
+const { default: makeWASocket, DisconnectReason, jidDecode, proto, getContentType, useMultiFileAuthState, downloadContentFromMessage, areJidsSameUser } = require("gifted-baileys")
 const { makeInMemoryStore } = require('./library/lib/store')
 const pino = require('pino')
 const { Boom } = require('@hapi/boom')
@@ -376,14 +376,9 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                                 let gMeta = await X.groupMetadata(gJid)
                                 groupName = gMeta.subject || gJid
                                 let isMember = gMeta.participants.some(p => p.id.includes(mentioner))
-                                let botAllIds2 = [X.decodeJid(X.user.id), X.user?.lid ? X.decodeJid(X.user.lid) : null, X.user?.id, X.user?.lid].filter(Boolean)
-                                let botAllNums2 = [...new Set(botAllIds2.map(id => id.split(':')[0].split('@')[0]))]
                                 let botIsAdmin2 = gMeta.participants.some(p => {
-                                    let decoded = X.decodeJid(p.id)
-                                    let pNum = decoded.split(':')[0].split('@')[0]
-                                    let rawNum = (p.id || '').split(':')[0].split('@')[0]
-                                    let isBot = botAllIds2.includes(decoded) || botAllIds2.includes(p.id) || botAllNums2.includes(pNum) || botAllNums2.includes(rawNum)
-                                    return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+                                    let match = areJidsSameUser(p.id, X.user.id) || (X.user?.lid && areJidsSameUser(p.id, X.user.lid))
+                                    return match && (p.admin === 'admin' || p.admin === 'superadmin')
                                 })
                                 let isOwnerMention = global.owner.includes(mentioner)
                                 if (isMember && botIsAdmin2 && !isOwnerMention) {
@@ -501,14 +496,9 @@ if (global.antiLink && mek.message && !mek.key.fromMe) {
             if (!isOwnr) {
                 try {
                     let groupMeta = await X.groupMetadata(chat)
-                    let botAllIds3 = [X.decodeJid(X.user.id), X.user?.lid ? X.decodeJid(X.user.lid) : null, X.user?.id, X.user?.lid].filter(Boolean)
-                    let botAllNums3 = [...new Set(botAllIds3.map(id => id.split(':')[0].split('@')[0]))]
                     let isBotAdmin = groupMeta.participants.some(p => {
-                        let decoded = X.decodeJid(p.id)
-                        let pNum = decoded.split(':')[0].split('@')[0]
-                        let rawNum = (p.id || '').split(':')[0].split('@')[0]
-                        let isBot = botAllIds3.includes(decoded) || botAllIds3.includes(p.id) || botAllNums3.includes(pNum) || botAllNums3.includes(rawNum)
-                        return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+                        let match = areJidsSameUser(p.id, X.user.id) || (X.user?.lid && areJidsSameUser(p.id, X.user.lid))
+                        return match && (p.admin === 'admin' || p.admin === 'superadmin')
                     })
                     if (isBotAdmin) {
                         await X.sendMessage(chat, { delete: mek.key })
@@ -606,7 +596,7 @@ console.log(`${c.yellow}[${phone}]${c.r} ${c.dim}Could not auto-join group: ${e.
 const connectedJid = X.user.id.replace(/:.*@/, '@')
 X.sendMessage(connectedJid, {text: `\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\u2502  *TOOSII-XD ULTRA*\n\u2502  _WhatsApp Multi-Device Bot_\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n\u2705 *Connection Successful!*\n\n\u250F\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\u2503 *User:* ${connUser}\n\u2503 *Status:* Active & Online\n\u2503 *Bot:* TOOSII-XD ULTRA v2.0\n\u2517\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n\u25B8 Type *.menu* to view all commands\n\u25B8 Type *.help* for quick assistance\n\n\u250F\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\u2503 *Join Our Community*\n\u2503 https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g\n\u2517\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n_Powered by Toosii Tech_\n_wa.me/254748340864_`})
 console.log(`[BOT_CONNECTED:${connUser}]`)
-console.log(`[${phone}] Connected: ${JSON.stringify(X.user.id)}`);
+console.log(`[${phone}] Connected: id=${JSON.stringify(X.user.id)} lid=${JSON.stringify(X.user?.lid || 'NOT SET')}`);
 }
 });
 

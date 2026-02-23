@@ -82,52 +82,46 @@ const ownerNums = [...global.owner].map(v => v.replace(/[^0-9]/g, ''))
 
 const botJid = X.decodeJid(X.user.id)
 const botLid = X.user?.lid ? X.decodeJid(X.user.lid) : null
-const botClean = botJid.split(':')[0].split('@')[0]
-const botLidClean = botLid ? botLid.split(':')[0].split('@')[0] : null
 
 const senderJid = m.sender || sender
 const senderFromKey = m.key?.participant ? X.decodeJid(m.key.participant) : null
-const senderClean = senderJid.split(':')[0].split('@')[0]
-const senderKeyClean = senderFromKey ? senderFromKey.split(':')[0].split('@')[0] : null
 
-const allBotIds = [botJid, botLid, X.user?.id, X.user?.lid, botClean + '@s.whatsapp.net', botClean + '@lid'].filter(Boolean).map(id => X.decodeJid(id))
-const allBotNums = [...new Set(allBotIds.map(id => id.split(':')[0].split('@')[0]))]
-
-const allSenderIds = [senderJid, senderFromKey, sender, m.sender, m.key?.participant].filter(Boolean).map(id => {
-    try { return X.decodeJid(id) } catch { return id }
-})
-const allSenderNums = [...new Set(allSenderIds.map(id => id.split(':')[0].split('@')[0]))]
+function isSameUser(participantId, targetId) {
+    if (!participantId || !targetId) return false
+    try { return areJidsSameUser(participantId, targetId) } catch { }
+    const pUser = participantId.split(':')[0].split('@')[0]
+    const tUser = targetId.split(':')[0].split('@')[0]
+    return pUser === tUser
+}
 
 function isParticipantBot(p) {
     if (!p || !p.id) return false
-    const decoded = X.decodeJid(p.id)
-    const pNum = decoded.split(':')[0].split('@')[0]
-    const rawNum = p.id.split(':')[0].split('@')[0]
-    if (allBotIds.includes(decoded)) return true
-    if (allBotIds.includes(p.id)) return true
-    if (allBotNums.includes(pNum)) return true
-    if (allBotNums.includes(rawNum)) return true
+    if (isSameUser(p.id, X.user.id)) return true
+    if (X.user?.lid && isSameUser(p.id, X.user.lid)) return true
+    if (isSameUser(p.id, botJid)) return true
+    if (botLid && isSameUser(p.id, botLid)) return true
     return false
 }
 
 function isParticipantSender(p) {
     if (!p || !p.id) return false
-    const decoded = X.decodeJid(p.id)
-    const pNum = decoded.split(':')[0].split('@')[0]
-    const rawNum = p.id.split(':')[0].split('@')[0]
-    if (allSenderIds.includes(decoded)) return true
-    if (allSenderIds.includes(p.id)) return true
-    if (allSenderNums.includes(pNum)) return true
-    if (allSenderNums.includes(rawNum)) return true
+    if (isSameUser(p.id, senderJid)) return true
+    if (senderFromKey && isSameUser(p.id, senderFromKey)) return true
+    if (m.sender && isSameUser(p.id, m.sender)) return true
+    if (m.key?.participant && isSameUser(p.id, m.key.participant)) return true
+    if (sender && isSameUser(p.id, sender)) return true
     return false
 }
+
+const senderClean = senderJid.split(':')[0].split('@')[0]
+const senderKeyClean = senderFromKey ? senderFromKey.split(':')[0].split('@')[0] : null
+const botClean = botJid.split(':')[0].split('@')[0]
 
 const isOwner = (
     m.key.fromMe ||
     senderClean === botClean ||
     ownerNums.includes(senderClean) ||
-    (senderKeyClean && (senderKeyClean === botClean || ownerNums.includes(senderKeyClean))) ||
-    allSenderNums.some(n => ownerNums.includes(n) || n === botClean)
+    (senderKeyClean && (senderKeyClean === botClean || ownerNums.includes(senderKeyClean)))
 ) || false
 
 const isGroup = m.isGroup
@@ -151,18 +145,6 @@ const isAdmins = isGroup ? (isOwner || (participants ? participants.some(p => {
 const isSuperAdmin = isGroup && participants ? participants.some(p => {
     return isParticipantSender(p) && p.admin === 'superadmin'
 }) : false
-
-if (isGroup && isCmd && !isBotAdmins && participants) {
-    let adminList = participants.filter(p => p.admin).map(p => `${p.id} (${p.admin})`).join('\n')
-    console.log('[ROLE-DEBUG] === BOT ADMIN CHECK FAILED ===')
-    console.log('[ROLE-DEBUG] X.user.id:', X.user?.id)
-    console.log('[ROLE-DEBUG] X.user.lid:', X.user?.lid)
-    console.log('[ROLE-DEBUG] botJid:', botJid, '| botLid:', botLid)
-    console.log('[ROLE-DEBUG] allBotIds:', JSON.stringify(allBotIds))
-    console.log('[ROLE-DEBUG] allBotNums:', JSON.stringify(allBotNums))
-    console.log('[ROLE-DEBUG] Admin participants:\n' + adminList)
-    console.log('[ROLE-DEBUG] All participant IDs:', participants.map(p => p.id).join(', '))
-}
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
 if (m.message) {
@@ -3309,16 +3291,11 @@ case 'debugrole': {
     dbgMsg += `• X.user.id: ${X.user?.id || 'null'}\n`
     dbgMsg += `• X.user.lid: ${X.user?.lid || 'null'}\n`
     dbgMsg += `• botJid (decoded): ${botJid}\n`
-    dbgMsg += `• botLid (decoded): ${botLid || 'null'}\n`
-    dbgMsg += `• botClean: ${botClean}\n`
-    dbgMsg += `• allBotIds: ${JSON.stringify(allBotIds)}\n`
-    dbgMsg += `• allBotNums: ${JSON.stringify(allBotNums)}\n\n`
+    dbgMsg += `• botLid (decoded): ${botLid || 'null'}\n\n`
     dbgMsg += `*Sender Identity:*\n`
     dbgMsg += `• m.sender: ${m.sender}\n`
     dbgMsg += `• m.key.participant: ${m.key?.participant || 'null'}\n`
-    dbgMsg += `• sender var: ${sender}\n`
-    dbgMsg += `• senderFromKey: ${senderFromKey || 'null'}\n`
-    dbgMsg += `• allSenderNums: ${JSON.stringify(allSenderNums)}\n\n`
+    dbgMsg += `• senderFromKey: ${senderFromKey || 'null'}\n\n`
     dbgMsg += `*Role Results:*\n`
     dbgMsg += `• isGroup: ${isGroup}\n`
     dbgMsg += `• isOwner: ${isOwner}\n`
@@ -3326,16 +3303,13 @@ case 'debugrole': {
     dbgMsg += `• isBotAdmins: ${isBotAdmins}\n`
     dbgMsg += `• isSuperAdmin: ${isSuperAdmin}\n\n`
     if (isGroup && participants) {
-        dbgMsg += `*Group Admins (raw p.id):*\n`
+        dbgMsg += `*Admin Participants:*\n`
         participants.filter(p => p.admin).forEach(p => {
-            dbgMsg += `• ${p.id} → ${p.admin}\n`
-            dbgMsg += `  decoded: ${X.decodeJid(p.id)}\n`
-            dbgMsg += `  num: ${p.id.split(':')[0].split('@')[0]}\n`
-            dbgMsg += `  isBot? ${isParticipantBot(p)}\n`
-        })
-        dbgMsg += `\n*All Participants (raw p.id):*\n`
-        participants.forEach(p => {
-            dbgMsg += `• ${p.id}${p.admin ? ' ['+p.admin+']' : ''}\n`
+            let matchBot = isParticipantBot(p)
+            let matchSender = isParticipantSender(p)
+            dbgMsg += `• ${p.id}\n`
+            dbgMsg += `  role: ${p.admin} | isBot: ${matchBot} | isSender: ${matchSender}\n`
+            dbgMsg += `  sameAsUserId: ${isSameUser(p.id, X.user.id)} | sameAsLid: ${X.user?.lid ? isSameUser(p.id, X.user.lid) : 'no lid'}\n`
         })
     }
     reply(dbgMsg)
