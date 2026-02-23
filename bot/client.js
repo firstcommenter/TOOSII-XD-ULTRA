@@ -572,7 +572,9 @@ break
 
 // system menu
 case 'menu': {
-// menu list terpisah
+// menu list - clear cache to always load fresh
+const menuFiles = ['aimenu','toolsmenu','groupmenu','ownermenu','searchmenu','gamemenu','stickermenu','othermenu','downloadermenu'];
+menuFiles.forEach(f => { try { delete require.cache[require.resolve('./library/menulist/' + f)]; } catch {} });
 const aiMenu = require('./library/menulist/aimenu');
 const toolsMenu = require('./library/menulist/toolsmenu');
 const groupMenu = require('./library/menulist/groupmenu');
@@ -1775,11 +1777,13 @@ break
 
                         case 'del':
                         case 'delete': {
-                                if (!m.isGroup) return reply(mess.OnlyGrup);
-                                if (!isOwner && !isAdmins) return reply(mess.admin);
                                 if (!m.quoted) return reply(`*Usage:* Reply to a message with ${prefix + command} to delete it.`);
                                 try {
-                                        await X.sendMessage(m.chat, { delete: m.quoted.key });
+                                        if (m.quoted.key.fromMe || isOwner || (m.isGroup && isAdmins)) {
+                                                await X.sendMessage(m.chat, { delete: m.quoted.key });
+                                        } else {
+                                                reply('You can only delete bot messages or your own messages (admin required in groups).');
+                                        }
                                 } catch (err) {
                                         reply('Failed to delete message. Make sure the bot is an admin.');
                                 }
@@ -1907,10 +1911,14 @@ break
                         case 'revoke':{
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isAdmins && !isOwner) return reply(mess.admin);
-                                await X.groupRevokeInvite(m.chat)
-                                        .then(res => {
-                                                reply(mess.success)
-                                        }).catch(() => reply(mess.error))
+                                try {
+                                    await X.groupRevokeInvite(m.chat)
+                                    reply(mess.success)
+                                } catch(err) {
+                                    let errMsg = (err?.message || '').toLowerCase()
+                                    if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+                                    else reply(mess.error)
+                                }
                                 }
                                 break
 
@@ -3426,15 +3434,27 @@ if (modeArg === 'public') {
 case 'mute': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 await X.groupSettingUpdate(m.chat, 'announcement')
 reply('*Group muted.* Only admins can send messages.')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'unmute': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 await X.groupSettingUpdate(m.chat, 'not_announcement')
 reply('*Group unmuted.* Everyone can send messages.')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'ban': {
@@ -3499,16 +3519,28 @@ case 'setgdesc': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!text) return reply(`Usage: ${prefix}setgdesc [new description]`)
+try {
 await X.groupUpdateDescription(m.chat, text)
 reply('*Group description updated.*')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'setgname': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!text) return reply(`Usage: ${prefix}setgname [new name]`)
+try {
 await X.groupUpdateSubject(m.chat, text)
 reply('*Group name updated.*')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'setgpp': {
@@ -3516,40 +3548,67 @@ if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`Reply to an image with ${prefix}setgpp`)
 try {
-let media = await X.downloadAndSaveMediaMessage(m.quoted, 'gpp_temp')
-await X.updateProfilePicture(m.chat, { url: media })
-fs.unlinkSync(media)
+let media = await m.quoted.download()
+await X.updateProfilePicture(m.chat, media)
 reply('*Group profile picture updated!*')
-} catch(e) { reply('Failed: ' + e.message) }
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply('Failed: ' + err.message)
+}
 } break
 
 case 'open': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 await X.groupSettingUpdate(m.chat, 'not_announcement')
 reply('*Group opened.* Everyone can send messages.')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'close': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 await X.groupSettingUpdate(m.chat, 'announcement')
 reply('*Group closed.* Only admins can send messages.')
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'resetlink': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 await X.groupRevokeInvite(m.chat)
 let newCode = await X.groupInviteCode(m.chat)
 reply(`*Group link reset.*\nNew link: https://chat.whatsapp.com/${newCode}`)
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'link': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
+try {
 let code = await X.groupInviteCode(m.chat)
 reply(`*Group Invite Link:*\nhttps://chat.whatsapp.com/${code}`)
+} catch(err) {
+let errMsg = (err?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply('I need to be a group admin to do this.')
+else reply(mess.error)
+}
 } break
 
 case 'goodbye': {
@@ -3628,9 +3687,11 @@ X.sendMessage(from, { text: adminList, mentions: adminMentions }, { quoted: m })
 case 'leave': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isOwner) return reply(mess.OnlyOwner)
+try {
 reply('*Leaving group...*')
 await delay(2000)
 await X.groupLeave(m.chat)
+} catch(err) { reply('Failed to leave: ' + err.message) }
 } break
 
 case 'pair': {
