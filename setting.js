@@ -63,6 +63,7 @@ global.botUrl = 'https://wa.me/254748340864'
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // GitHub Repo URL (used by .update command — set this to your repo)
 global.repoUrl = 'https://github.com/TOOSII102/TOOSII-XD-ULTRA'
+global.ownerFontMode = 'off' // Set via .setfont [name], disable via .fontoff
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Sticker Marker
 global.packname = "TOOSII-XD ULTRA"
