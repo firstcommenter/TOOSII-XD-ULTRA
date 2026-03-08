@@ -260,6 +260,59 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Connection Bot - Multi-Session
 
+// ── Safe Pairing Code Generator ─────────────────────────────────────────────
+// Spawns a TEMPORARY isolated socket to generate a pairing code.
+// Does NOT touch the active bot session — prevents logout.
+global.generatePairCode = async function(phoneNumber) {
+    const tmpDir = path.join(SESSIONS_DIR, '_pair_tmp_' + Date.now())
+    let tmpSocket = null
+    try {
+        // Create a fresh temp session directory
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+        const { state: tmpState } = await useMultiFileAuthState(tmpDir)
+        // Spawn a minimal socket — silent, no store, no events
+        tmpSocket = makeWASocket({
+            logger: pino({ level: 'silent' }),
+            printQRInTerminal: false,
+            auth: tmpState,
+            connectTimeoutMs: 30000,
+            defaultQueryTimeoutMs: 20000,
+            browser: ['Ubuntu', 'Chrome', '20.0.04'],
+            syncFullHistory: false,
+            fireInitQueries: false,
+            generateHighQualityLinkPreview: false,
+            markOnlineOnConnect: false,
+        })
+        // Wait for WS handshake before requesting code
+        await new Promise((resolve, reject) => {
+            let done = false
+            const timeout = setTimeout(() => {
+                if (!done) { done = true; reject(new Error('Pairing socket connection timed out')) }
+            }, 20000)
+            tmpSocket.ev.on('connection.update', (update) => {
+                if (update.connection === 'open' || update.qr || (!update.connection && !done)) {
+                    // QR or open means we can request pairing code
+                    if (!done) { done = true; clearTimeout(timeout); resolve() }
+                } else if (update.connection === 'close') {
+                    if (!done) { done = true; clearTimeout(timeout); resolve() } // resolve anyway, may still work
+                }
+            })
+        })
+        // Small buffer for WS handshake to settle
+        await new Promise(r => setTimeout(r, 3000))
+        // Request the pairing code
+        let code = await tmpSocket.requestPairingCode(phoneNumber)
+        return code
+    } finally {
+        // Always destroy temp socket and clean up temp directory
+        try { if (tmpSocket) tmpSocket.end() } catch {}
+        try { if (tmpSocket) tmpSocket.ws?.close() } catch {}
+        setTimeout(() => {
+            try { if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true }) } catch {}
+        }, 5000)
+    }
+}
+
 async function connectSession(phone) {
 try {
 const sessionDir = path.join(SESSIONS_DIR, phone)
