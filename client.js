@@ -1626,14 +1626,14 @@ case 'setantidelete': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let adArg = (args[0] || '').toLowerCase()
 if (!adArg) {
-    let adState = global.antiDelete ? 'ON' : 'OFF'
-    reply(`*Anti-Delete: ${adState}*\nWhen ON, deleted messages are forwarded to the owner.\n\nUsage:\n${prefix}antidelete on\n${prefix}antidelete off`)
+    let adState = global.antiDelete ? '✅ ON' : '❌ OFF'
+    reply(`*🗑️ Anti-Delete: ${adState}*\n\nWhen ON, deleted messages are sent to this bot's own chat (your deployed number).\n\nUsage:\n${prefix}antidelete on\n${prefix}antidelete off`)
 } else if (adArg === 'on' || adArg === 'enable') {
     global.antiDelete = true
-    reply('*Anti-Delete ON*\nDeleted messages will be forwarded to the owner.')
+    reply('*🗑️ Anti-Delete: ✅ ON*\n\nDeleted messages will now be forwarded to this bot\'s number.')
 } else if (adArg === 'off' || adArg === 'disable') {
     global.antiDelete = false
-    reply('*Anti-Delete OFF*')
+    reply('*🗑️ Anti-Delete: ❌ OFF*\n\nDeleted messages will no longer be tracked.')
 }
 }
 break
