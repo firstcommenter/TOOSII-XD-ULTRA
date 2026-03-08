@@ -506,7 +506,28 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             if (global.autoReplyStatus && global.autoReplyStatusMsg) {
                 let statusPoster = mek.key.participant || mek.key.remoteJid
                 try {
-                    await X.sendMessage(statusPoster, { text: global.autoReplyStatusMsg })
+                    // Build a professional auto-reply with time and bot branding
+                    let posterNum = statusPoster.split('@')[0].split(':')[0]
+                    let now = new Date().toLocaleString('en-KE', {
+                        timeZone: global.botTimezone || 'Africa/Nairobi',
+                        hour: '2-digit', minute: '2-digit',
+                        day: '2-digit', month: 'short', year: 'numeric'
+                    })
+                    let replyText =
+`┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  💌 *AUTO REPLY*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+👋 Hey *+${posterNum}*
+
+${global.autoReplyStatusMsg}
+
+┌─────────────────────
+│ 🕐 ${now}
+│ 🤖 ${global.botname || 'TOOSII-XD ULTRA'}
+└─────────────────────
+_This is an automated reply._`
+                    await X.sendMessage(statusPoster, { text: replyText })
                     console.log(`[${phone}] Auto-replied to status from ${statusPoster}`)
                 } catch (arErr) {
                     console.log(`[${phone}] Auto-reply status error:`, arErr.message || arErr)
