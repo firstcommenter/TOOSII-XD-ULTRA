@@ -301,52 +301,71 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 // Spawns a TEMPORARY isolated socket to generate a pairing code.
 // Does NOT touch the active bot session — prevents logout.
 global.generatePairCode = async function(phoneNumber) {
+    // Strip everything except digits — must match exactly what WA has registered
+    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
     const tmpDir = path.join(SESSIONS_DIR, '_pair_tmp_' + Date.now())
     let tmpSocket = null
     try {
-        // Create a fresh temp session directory
         if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
         const { state: tmpState } = await useMultiFileAuthState(tmpDir)
-        // Spawn a minimal socket — silent, no store, no events
+
         tmpSocket = makeWASocket({
             logger: pino({ level: 'silent' }),
             printQRInTerminal: false,
             auth: tmpState,
-            connectTimeoutMs: 30000,
-            defaultQueryTimeoutMs: 20000,
+            connectTimeoutMs: 60000,
+            defaultQueryTimeoutMs: 30000,
+            keepAliveIntervalMs: 10000,
             browser: ['TOOSII-XD-ULTRA', 'Desktop', '0.0.0'],
             syncFullHistory: false,
             fireInitQueries: false,
             generateHighQualityLinkPreview: false,
             markOnlineOnConnect: false,
         })
-        // Wait for WS handshake before requesting code
+
+        // Wait for WS to reach 'connecting' state — that is when WA is ready for pairingCode request
         await new Promise((resolve, reject) => {
             let done = false
             const timeout = setTimeout(() => {
-                if (!done) { done = true; reject(new Error('Pairing socket connection timed out')) }
-            }, 20000)
+                if (!done) { done = true; reject(new Error('Pairing socket connection timed out after 30s')) }
+            }, 30000)
             tmpSocket.ev.on('connection.update', (update) => {
-                if (update.connection === 'open' || update.qr || (!update.connection && !done)) {
-                    // QR or open means we can request pairing code
-                    if (!done) { done = true; clearTimeout(timeout); resolve() }
-                } else if (update.connection === 'close') {
-                    if (!done) { done = true; clearTimeout(timeout); resolve() } // resolve anyway, may still work
+                if (done) return
+                // 'connecting' = WS handshake done, safe to request code
+                // 'open' = also fine
+                // qr = WA wants QR instead (pairing code not registered yet, still ok to request)
+                if (update.connection === 'connecting' || update.connection === 'open' || update.qr) {
+                    done = true
+                    clearTimeout(timeout)
+                    resolve()
+                }
+                // Do NOT resolve on 'close' — that means connection failed
+                if (update.connection === 'close') {
+                    done = true
+                    clearTimeout(timeout)
+                    reject(new Error('Connection closed before pairing code could be requested'))
                 }
             })
         })
-        // Small buffer for WS handshake to settle
-        await new Promise(r => setTimeout(r, 3000))
-        // Request the pairing code
-        let code = await tmpSocket.requestPairingCode(phoneNumber)
+
+        // Wait for WA servers to fully register this socket (critical — too short = "Couldn't link device")
+        await new Promise(r => setTimeout(r, 6000))
+
+        // Request the code with the clean number
+        let code = await tmpSocket.requestPairingCode(cleanPhone)
+        if (!code) throw new Error('WhatsApp returned empty pairing code')
+
+        // Keep socket alive for 10 more seconds so WA confirms the code server-side
+        // before we destroy the socket (destroying too early = "Couldn't link device")
+        await new Promise(r => setTimeout(r, 10000))
+
         return code
     } finally {
-        // Always destroy temp socket and clean up temp directory
         try { if (tmpSocket) tmpSocket.end() } catch {}
         try { if (tmpSocket) tmpSocket.ws?.close() } catch {}
         setTimeout(() => {
             try { if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true }) } catch {}
-        }, 5000)
+        }, 8000)
     }
 }
 
