@@ -1610,17 +1610,17 @@ case 'autoreply': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let arsArg = args.join(' ').trim()
 if (!arsArg) {
-    let arsState = global.autoReplyStatus ? 'ON' : 'OFF'
-    let arsMsg = global.autoReplyStatusMsg || 'Not set'
-    reply(`*Auto Reply to Status: ${arsState}*\nReply message: ${arsMsg}\n\nUsage:\n${prefix}autoreplystatus [message] - Set message and enable\n${prefix}autoreplystatus off - Disable`)
+    let arsState = global.autoReplyStatus ? '✅ ON' : '❌ OFF'
+    let arsMsg = global.autoReplyStatusMsg || '_Not set_'
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  💌 *AUTO REPLY STATUS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Status:* ${arsState}\n*Current Message:*\n${arsMsg}\n\nWhen enabled, the bot automatically sends a reply to anyone whose WhatsApp status you view.\n\n*Usage:*\n• ${prefix}autoreplystatus [your message]\n• ${prefix}autoreplystatus off\n\n*Examples:*\n• ${prefix}autoreplystatus Thanks for the update! 😊\n• ${prefix}autoreplystatus Nice status! 🔥\n• ${prefix}autoreplystatus Seen! 👀`)
 } else if (arsArg.toLowerCase() === 'off' || arsArg.toLowerCase() === 'disable') {
     global.autoReplyStatus = false
     global.autoReplyStatusMsg = ''
-    reply('*Auto Reply Status OFF*')
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  💌 *AUTO REPLY STATUS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n❌ *Disabled*\n\nThe bot will no longer auto-reply to status updates.`)
 } else {
     global.autoReplyStatusMsg = arsArg
     global.autoReplyStatus = true
-    reply(`*Auto Reply Status ON*\nBot will reply to status updates with:\n"${arsArg}"`)
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  💌 *AUTO REPLY STATUS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ *Enabled*\n\n*Reply message set to:*\n❝ ${arsArg} ❞\n\n_The bot will now send this message to anyone whose status you view._`)
 }
 }
 break
