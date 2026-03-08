@@ -204,7 +204,7 @@ function waitForConsoleInput() {
                     return
                 }
                 console.log(`${c.green}[ ${_bn} ]${c.r} ${c.cyan}Connecting with number: ${c.bold}${phone}${c.r}${c.cyan}...${c.r}`)
-                await connectSession(phone)
+                await connectSession(phone, true)  // isPairing=true — skip creds.json check
                 waitForConsoleInput()
             })
         } else if (cmd === '2') {
@@ -221,7 +221,7 @@ function waitForConsoleInput() {
         } else if (cmd.length >= 10 && /^[0-9]+$/.test(cmd)) {
             console.log(`${c.green}[ ${_bn} ]${c.r} Detected phone number: ${c.cyan}${c.bold}${cmd}${c.r}`)
             console.log(`${c.green}[ ${_bn} ]${c.r} ${c.cyan}Connecting...${c.r}`)
-            await connectSession(cmd)
+            await connectSession(cmd, true)  // isPairing=true
             waitForConsoleInput()
         } else if (cmd) {
             console.log(`${c.red}[ ${_bn} ] ✗ Unknown command: "${cmd}"${c.r}`)
@@ -350,7 +350,7 @@ global.generatePairCode = async function(phoneNumber) {
     }
 }
 
-async function connectSession(phone) {
+async function connectSession(phone, isPairing = false) {
 try {
 // Prevent duplicate concurrent connection attempts for same number
 const existing = activeSessions.get(phone)
@@ -362,8 +362,8 @@ if (existing && existing.status === 'connecting') {
 const sessionDir = path.join(SESSIONS_DIR, phone)
 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true })
 
-// If session directory was deleted (loggedOut/badSession), abort reconnect
-if (!fs.existsSync(path.join(sessionDir, 'creds.json'))) {
+// Only block reconnects when creds are missing — NOT fresh pairings from option 1
+if (!isPairing && !fs.existsSync(path.join(sessionDir, 'creds.json'))) {
     console.log(`[${phone}] No creds.json found — session was removed. Re-pair to reconnect.`)
     activeSessions.delete(phone)
     return
