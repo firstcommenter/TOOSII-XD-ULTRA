@@ -5347,14 +5347,29 @@ case 'sand':
 case 'blackpink':
 case 'glitch':
 case 'fire': {
-if (!text) return reply(`Example: ${prefix}${command} Your Text Here`)
-try {
+// Resolve text from typed args OR quoted message body/caption
+let tmText = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
+if (!tmText) return reply(`Example: ${prefix}${command} Your Text Here\n_Or reply to a message containing the text_`)
+// styleMap defined outside try so fallback catch can also access it
 let styleMap = { metallic: 'metallic chrome 3D text effect', ice: 'frozen ice crystal 3D text effect', snow: 'snowy winter 3D text effect', impressive: 'impressive golden 3D text', matrix: 'green matrix digital code text', light: 'glowing light beam text effect', neon: 'neon glowing sign text on dark background', devil: 'dark red devil fire text effect', purple: 'purple galaxy cosmic text effect', thunder: 'electric lightning thunder text effect', leaves: 'green leaves nature botanical text', '1917': 'vintage sepia war 1917 style text', arena: 'battle arena warrior epic text', hacker: 'green on black hacker terminal text', sand: 'sandy desert dune text effect', blackpink: 'blackpink kpop pink glam style text', glitch: 'digital glitch corrupted text effect', fire: 'burning fire flame text effect' }
+try {
 let style = styleMap[command] || command + ' style text'
-let prompt = `3D stylized text that says "${text}", ${style}, centered composition, no background clutter, high quality render, typography art`
-let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`
-await X.sendMessage(m.chat, { image: { url: imgUrl }, caption: `*${command.charAt(0).toUpperCase() + command.slice(1)} Text:* ${text}` }, { quoted: m })
-} catch(e) { reply('Error: ' + e.message) }
+let prompt = `3D stylized text that says "${tmText}", ${style}, centered composition, no background clutter, high quality render, typography art`
+let seed = Math.floor(Math.random() * 99999)
+let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=512&nologo=true&seed=${seed}`
+let caption = `*${command.charAt(0).toUpperCase() + command.slice(1)} Text:* ${tmText}`
+// Download to buffer so image sends correctly in any chat (group, DM, or bot number)
+let imgBuffer = await getBuffer(imgUrl)
+if (!imgBuffer || imgBuffer.length < 3000) throw new Error('Image generation failed, try again')
+await X.sendMessage(m.chat, { image: imgBuffer, caption }, { quoted: m })
+} catch(e) {
+// Fallback: send via URL if buffer download failed
+try {
+    let p2 = `3D stylized text "${tmText}", ${styleMap[command] || command + ' style'}, high quality`
+    let fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(p2)}?width=1024&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`
+    await X.sendMessage(m.chat, { image: { url: fallbackUrl }, caption: `*${command.charAt(0).toUpperCase() + command.slice(1)} Text:* ${tmText}` }, { quoted: m })
+} catch(e2) { reply('❌ Error: ' + (e2.message || e.message)) }
+}
 } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
