@@ -1256,12 +1256,21 @@ case 'autoviewstatus':
 case 'autoview':
 case 'avs': {
 if (!isOwner) return reply(mess.OnlyOwner)
-if (global.autoViewStatus) {
-    global.autoViewStatus = false
-    reply('*Auto View Status OFF*\nBot will no longer auto-view contact statuses.')
-} else {
+let avsArg = (args[0] || '').toLowerCase()
+if (avsArg === 'on' || avsArg === 'enable') {
     global.autoViewStatus = true
-    reply('*Auto View Status ON*\nBot will now automatically view all contact statuses.')
+    reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.\n_Protocol: readMessages + sendReceipt (Meta 2024+)_')
+} else if (avsArg === 'off' || avsArg === 'disable') {
+    global.autoViewStatus = false
+    reply('*👀 Auto View Status: ❌ OFF*\n\nBot will no longer auto-view statuses.')
+} else {
+    if (global.autoViewStatus) {
+        global.autoViewStatus = false
+        reply('*👀 Auto View Status: ❌ OFF*\n\nBot will no longer auto-view statuses.')
+    } else {
+        global.autoViewStatus = true
+        reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.\n_Protocol: readMessages + sendReceipt (Meta 2024+)_')
+    }
 }
 }
 break
@@ -1272,17 +1281,19 @@ case 'als': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let emojiArg = (args.join(' ') || '').trim()
 if (!emojiArg) {
-    let statusMsg = global.autoLikeStatus ? 'ON' : 'OFF'
+    let statusMsg = global.autoLikeStatus ? '✅ ON' : '❌ OFF'
     let currentEmoji = global.autoLikeEmoji || 'Not set'
-    reply(`*Auto Like Status: ${statusMsg}*\nCurrent emoji: ${currentEmoji}\n\n*Usage:*\n• ${prefix}autolikestatus [emoji] - Set emoji and turn ON\n• ${prefix}autolikestatus off - Turn OFF\n• ${prefix}autolikestatus - Check status\n\n*Examples:*\n• ${prefix}autolikestatus \u2764\uFE0F\n• ${prefix}autolikestatus \uD83D\uDD25\n• ${prefix}autolikestatus \uD83D\uDE02\n• ${prefix}autolikestatus \uD83D\uDC4D\n• ${prefix}autolikestatus off`)
-} else if (emojiArg.toLowerCase() === 'off') {
+    let viewStatus = global.autoViewStatus ? '✅ ON' : '❌ OFF'
+    reply(`*❤️ Auto Like Status: ${statusMsg}*\n*👀 Auto View: ${viewStatus}*\nCurrent emoji: ${currentEmoji}\n\n*Usage:*\n• ${prefix}autolikestatus [emoji] - Set emoji & turn ON\n• ${prefix}autolikestatus off - Turn OFF\n\n*Examples:*\n• ${prefix}autolikestatus ❤️\n• ${prefix}autolikestatus 🔥\n• ${prefix}autolikestatus 😂\n• ${prefix}autolikestatus 👍\n• ${prefix}autolikestatus off`)
+} else if (emojiArg.toLowerCase() === 'off' || emojiArg.toLowerCase() === 'disable') {
     global.autoLikeStatus = false
     global.autoLikeEmoji = ''
-    reply('*Auto Like Status OFF*\nBot will no longer auto-react to contact statuses.')
+    reply('*❤️ Auto Like Status: ❌ OFF*\n\nBot will no longer auto-react to statuses.')
 } else {
     global.autoLikeEmoji = emojiArg
     global.autoLikeStatus = true
-    reply(`*Auto Like Status ON*\nBot will react to all contact statuses with: ${emojiArg}`)
+    global.autoViewStatus = true
+    reply(`*❤️ Auto Like Status: ✅ ON*\n\nReacting to all statuses with: ${emojiArg}\n👀 Auto View also enabled (required for reactions).\n_Protocol: direct react to poster JID (Meta 2024+)_`)
 }
 }
 break
