@@ -301,66 +301,92 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 // Spawns a TEMPORARY isolated socket to generate a pairing code.
 // Does NOT touch the active bot session — prevents logout.
 global.generatePairCode = async function(phoneNumber) {
+    // Strip everything except digits
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
     const tmpDir = path.join(SESSIONS_DIR, '_pair_tmp_' + Date.now())
-    let tmpSocket = null
-    try {
-        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-        const { state: tmpState } = await useMultiFileAuthState(tmpDir)
 
-        // Minimal socket config for pairing code only — no full client init
-        tmpSocket = makeWASocket({
-            logger: pino({ level: 'silent' }),
-            printQRInTerminal: false,
-            auth: tmpState,
-            connectTimeoutMs: 60000,
-            defaultQueryTimeoutMs: 30000,
-            keepAliveIntervalMs: 10000,
-            browser: ['TOOSII-XD-ULTRA', 'Desktop', '0.0.0'],
-            syncFullHistory: false,
-            fireInitQueries: false,         // must be false — prevents full client init
-            generateHighQualityLinkPreview: false,
-            markOnlineOnConnect: false,     // must be false — pairing socket stays invisible
-        })
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+    const { state: tmpState } = await useMultiFileAuthState(tmpDir)
 
-        // Wait for 'connecting' — this is when WA WS handshake is done and code can be requested
-        await new Promise((resolve, reject) => {
-            let done = false
-            const timeout = setTimeout(() => {
-                if (!done) { done = true; reject(new Error('Pairing socket timed out')) }
-            }, 30000)
-            tmpSocket.ev.on('connection.update', (update) => {
-                if (done) return
-                if (update.connection === 'connecting' || update.qr) {
-                    done = true; clearTimeout(timeout); resolve()
-                }
-                if (update.connection === 'close') {
-                    done = true; clearTimeout(timeout)
-                    reject(new Error('Socket closed before pairing code could be requested'))
-                }
-            })
-        })
+    const tmpSocket = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false,
+        auth: tmpState,
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 30000,
+        keepAliveIntervalMs: 15000,
+        browser: ['TOOSII-XD-ULTRA', 'Desktop', '0.0.0'],
+        syncFullHistory: false,
+        fireInitQueries: false,
+        generateHighQualityLinkPreview: false,
+        markOnlineOnConnect: false,
+    })
 
-        // Settle — let WA finish registering the connection server-side
-        await new Promise(r => setTimeout(r, 5000))
-
-        let code = await tmpSocket.requestPairingCode(cleanPhone)
-        if (!code) throw new Error('WhatsApp returned empty pairing code')
-
-        code = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
-        const formatted = code.match(/.{1,4}/g)?.join('-') || code
-
-        // Keep socket alive while user enters the code (15s window)
-        await new Promise(r => setTimeout(r, 15000))
-
-        return formatted
-    } finally {
-        try { if (tmpSocket) tmpSocket.end() } catch {}
-        try { if (tmpSocket) tmpSocket.ws?.close() } catch {}
+    // Helper to clean up temp socket+dir after done
+    function cleanupTmp() {
+        try { tmpSocket.end() } catch {}
+        try { tmpSocket.ws?.close() } catch {}
         setTimeout(() => {
             try { if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true }) } catch {}
-        }, 10000)
+        }, 3000)
     }
+
+    // Wait for WS 'connecting' before requesting code
+    await new Promise((resolve, reject) => {
+        let done = false
+        const timeout = setTimeout(() => {
+            if (!done) { done = true; cleanupTmp(); reject(new Error('Pairing socket timed out')) }
+        }, 30000)
+        tmpSocket.ev.on('connection.update', (update) => {
+            if (done) return
+            if (update.connection === 'connecting' || update.connection === 'open' || update.qr) {
+                done = true; clearTimeout(timeout); resolve()
+            }
+            if (update.connection === 'close' && !done) {
+                done = true; clearTimeout(timeout); resolve()
+            }
+        })
+    })
+
+    // Settle time so WA registers the socket
+    await new Promise(r => setTimeout(r, 3000))
+
+    // Request the code
+    let code
+    try {
+        code = await tmpSocket.requestPairingCode(cleanPhone)
+        if (!code) throw new Error('WhatsApp returned empty pairing code')
+    } catch (e) {
+        cleanupTmp()
+        throw e
+    }
+
+    // Format for display
+    const raw = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
+    const formatted = raw.match(/.{1,4}/g)?.join('-') || raw
+
+    // CRITICAL: Keep socket ALIVE until user links — destroying it invalidates the code
+    await new Promise((resolve) => {
+        const giveUp = setTimeout(() => {
+            console.log(`[pair] Code timed out (90s), cleaning up`)
+            resolve()
+        }, 90000)
+
+        tmpSocket.ev.on('connection.update', (update) => {
+            if (update.connection === 'open') {
+                console.log(`[pair] Device linked successfully!`)
+                // Save creds so the session persists after cleanup
+                clearTimeout(giveUp)
+                setTimeout(() => { cleanupTmp(); resolve() }, 3000)
+            }
+            if (update.connection === 'close') {
+                clearTimeout(giveUp)
+                setTimeout(() => { cleanupTmp(); resolve() }, 1000)
+            }
+        })
+    })
+
+    return formatted
 }
 
 async function connectSession(phone, isPairing = false) {
@@ -456,67 +482,53 @@ X.ev.on('CB:error', () => {})
 // Per-session signal noise suppression (already handled globally above)
 
 if (!X.authState.creds.registered) {
-    console.log(`[${phone}] Waiting for WebSocket handshake before requesting pairing code...`)
+    // ── ISOLATED PAIRING — uses a separate temp socket, NOT X ────────────────
+    // Requesting the code on X (main socket) causes WA to see a session conflict
+    // and reject the link. generatePairCode() spawns its own isolated socket.
+    console.log(`${c.cyan}[${phone}]${c.r} ${c.dim}Generating pairing code via isolated socket...${c.r}`)
 
-    // Wait for 'connecting' event — signals WS handshake is done and WA is ready
-    await new Promise((resolve, reject) => {
-        let done = false
-        const t = setTimeout(() => {
-            if (!done) { done = true; reject(new Error('WS handshake timed out')) }
-        }, 30000)
-        X.ev.on('connection.update', (upd) => {
-            if (done) return
-            if (upd.connection === 'connecting' || upd.qr) {
-                done = true; clearTimeout(t); resolve()
-            }
-        })
-    }).catch(e => console.log(`[${phone}] Handshake wait: ${e.message} — proceeding anyway`))
+    // End X — we don't need it yet. It will be recreated after the user links.
+    try { X.end() } catch {}
+    activeSessions.delete(phone)
 
-    // Extra settle time so WA servers fully register the socket before pairing code request
-    await new Promise(resolve => setTimeout(resolve, 5000))
-
-    console.log(`${c.cyan}[${phone}]${c.r} ${c.dim}Requesting pairing code...${c.r}`)
-    let retries = 0
-    const maxRetries = 3
-    let paired = false
-    while (retries < maxRetries && !paired) {
+    let code
+    let attempt = 0
+    const maxAttempts = 3
+    while (attempt < maxAttempts) {
         try {
-            // Always use clean digits only — must exactly match registered WA number
-            const cleanPhone = phone.replace(/[^0-9]/g, '')
-            let code = await X.requestPairingCode(cleanPhone)
-            if (!code) throw new Error('Empty code returned')
-            code = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
-            code = code.match(/.{1,4}/g)?.join('-') || code
-            console.log(`[PAIRING_CODE:${code}]`)
-            console.log('')
-            console.log(`${c.green}${c.bold}╔══════════════════════════════════════════╗${c.r}`)
-            console.log(`${c.green}${c.bold}║${c.r}  ${c.bgGreen}${c.white}${c.bold} PAIRING CODE: ${code} ${c.r}                   ${c.green}${c.bold}║${c.r}`)
-            console.log(`${c.green}${c.bold}╚══════════════════════════════════════════╝${c.r}`)
-            console.log('')
-            console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}Open WhatsApp > Settings > Linked Devices > Link a Device${c.r}`)
-            console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}Choose "Link with phone number" and enter the code above${c.r}`)
-            console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}Enter the code within 60 seconds${c.r}`)
-            console.log('')
-            paired = true
+            code = await global.generatePairCode(phone)
+            break
         } catch (err) {
-            retries++
-            console.error(`[${phone}] Pairing attempt ${retries}/${maxRetries} failed:`, err.message || err)
-            if (retries < maxRetries) {
+            attempt++
+            console.error(`[${phone}] Pairing attempt ${attempt}/${maxAttempts} failed:`, err.message)
+            if (attempt < maxAttempts) {
                 console.log(`[${phone}] Retrying in 5 seconds...`)
-                await new Promise(resolve => setTimeout(resolve, 5000))
+                await new Promise(r => setTimeout(r, 5000))
             }
         }
     }
-    if (!paired) {
-        console.error(`[${phone}] All pairing attempts failed — check number has country code and is on WhatsApp`)
-        activeSessions.delete(phone)
-        try { X.end(); } catch(e) {}
-        try {
-            const sessDir = path.join(SESSIONS_DIR, phone)
-            if (fs.existsSync(sessDir)) fs.rmSync(sessDir, { recursive: true, force: true })
-        } catch(e) {}
+
+    if (!code) {
+        console.error(`[${phone}] All pairing attempts failed. Run option 1 again.`)
         return
     }
+
+    const formatted = code.replace(/[^A-Z0-9]/gi, '').toUpperCase().match(/.{1,4}/g)?.join('-') || code
+    console.log('')
+    console.log(`${c.green}${c.bold}╔══════════════════════════════════════════╗${c.r}`)
+    console.log(`${c.green}${c.bold}║${c.r}  ${c.bgGreen}${c.white}${c.bold} PAIRING CODE: ${formatted} ${c.r}`)
+    console.log(`${c.green}${c.bold}╚══════════════════════════════════════════╝${c.r}`)
+    console.log('')
+    console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}Open WhatsApp > Settings > Linked Devices > Link a Device${c.r}`)
+    console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}Choose "Link with phone number" and enter the code above${c.r}`)
+    console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}You have ~60 seconds to enter the code${c.r}`)
+    console.log('')
+
+    // generatePairCode now awaits internally until linked or timed out
+    // After it returns, creds.json exists — reconnect the main session
+    console.log(`[${phone}] Pairing complete. Starting main session...`)
+    await connectSession(phone)
+    return
 } else {
     console.log(`[${phone}] Reconnecting existing session...`)
 }
