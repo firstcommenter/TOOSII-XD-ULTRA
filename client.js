@@ -1319,20 +1319,57 @@ case 'togroupstatus':
 case 'statustogroup':
 case 'fwdstatus': {
 if (!isOwner) return reply(mess.OnlyOwner)
-let statusArg = (args.join(' ') || '').trim().toLowerCase()
-if (statusArg === 'off' || statusArg === 'disable') {
-    global.statusToGroup = ''
-    reply('*Status Forwarding OFF*\nContact statuses will no longer be forwarded to any group.')
-} else if (m.isGroup) {
-    global.statusToGroup = m.chat
-    let gName = groupName || m.chat
-    reply(`*Status Forwarding ON*\nAll contact statuses (images, videos, text) will now be forwarded to this group: *${gName}*`)
-} else {
-    if (global.statusToGroup) {
-        reply(`*Status Forwarding is ON*\nCurrently forwarding to: *${global.statusToGroup}*\n\n• Use in a group to change target\n• ${prefix}togroupstatus off - Disable`)
+if (!m.isGroup) return reply(`*📤 Group Status Poster*\n\nThis command must be used inside a group.\n\n*Usage:*\n• Reply to an image/video/text with *${prefix}togroupstatus* to post it as a group status\n• Or just send *${prefix}togroupstatus [text]* to post a text status to this group`)
+try {
+    // Get group participants to build statusJidList
+    let groupParticipants = participants.map(p => p.id)
+    if (!groupParticipants.length) return reply('Could not fetch group participants. Try again.')
+
+    // Case 1: Replied to a message — post that media/text as group status
+    if (m.quoted) {
+        let qType = m.quoted.mtype || ''
+        if (qType === 'imageMessage' || /image/.test(m.quoted.mimetype || '')) {
+            let buf = await m.quoted.download()
+            let cap = m.quoted.text || m.quoted.caption || ''
+            await X.sendMessage(m.chat, {
+                image: buf,
+                caption: cap,
+                backgroundColor: '#000000',
+                font: 0
+            }, { statusJidList: groupParticipants })
+            reply('✅ *Image posted to group status!*')
+        } else if (qType === 'videoMessage' || /video/.test(m.quoted.mimetype || '')) {
+            let buf = await m.quoted.download()
+            let cap = m.quoted.text || m.quoted.caption || ''
+            await X.sendMessage(m.chat, {
+                video: buf,
+                caption: cap,
+                gifPlayback: false
+            }, { statusJidList: groupParticipants })
+            reply('✅ *Video posted to group status!*')
+        } else if (m.quoted.text) {
+            await X.sendMessage(m.chat, {
+                text: m.quoted.text,
+                backgroundColor: '#075E54',
+                font: 4
+            }, { statusJidList: groupParticipants })
+            reply('✅ *Text posted to group status!*')
+        } else {
+            reply(`❌ Unsupported media type.\nReply to an image, video, or text message.`)
+        }
+    // Case 2: Text provided directly — post as text status
+    } else if (text) {
+        await X.sendMessage(m.chat, {
+            text: text,
+            backgroundColor: '#075E54',
+            font: 4
+        }, { statusJidList: groupParticipants })
+        reply(`✅ *Text posted to group status!*`)
     } else {
-        reply(`*Status Forwarding is OFF*\n\nUse this command inside a group chat to set it as the target for status forwarding.\n\n• ${prefix}togroupstatus off - Disable`)
+        reply(`*📤 Group Status Poster*\n\n*Usage:*\n• Reply to an image/video/text with *${prefix}togroupstatus*\n• Or: *${prefix}togroupstatus [your text]*\n\nThis posts content directly to this group's WhatsApp status.`)
     }
+} catch(e) {
+    reply(`❌ Failed to post group status: ${e.message}`)
 }
 }
 break
@@ -1593,27 +1630,29 @@ case 'antismention': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let asmArg = (args[0] || '').toLowerCase()
 if (!asmArg) {
-    let asmState = global.antiStatusMention ? 'ON' : 'OFF'
+    let asmState = global.antiStatusMention ? '✅ ON' : '❌ OFF'
     let asmAction = global.antiStatusMentionAction || 'warn'
-    reply(`*Anti Status Mention*\n\nStatus: *${asmState}*\nAction: *${asmAction}*\n\nWhen someone mentions a group in their status, the bot will take action against them in that group.\n\n*Usage:*\n${prefix}antistatusmention on\n${prefix}antistatusmention off\n${prefix}antistatusmention warn - Warn the user (3 warns = kick)\n${prefix}antistatusmention delete - Delete their messages in the group\n${prefix}antistatusmention kick - Remove them from the group\n\n_Current action: ${asmAction}_`)
+    reply(`*🛡️ Anti Status Mention: ${asmState}*\n*Current Action: ${asmAction.toUpperCase()}*\n\nPrevents anyone from tagging your groups in their WhatsApp status.\n\n*Usage:*\n• ${prefix}antistatusmention on\n• ${prefix}antistatusmention off\n• ${prefix}antistatusmention warn — 3 warnings then auto-kick\n• ${prefix}antistatusmention delete — delete their messages in the group\n• ${prefix}antistatusmention kick — instant removal\n\n_Bot must be admin in the group for actions to work._`)
 } else if (asmArg === 'on' || asmArg === 'enable') {
     global.antiStatusMention = true
-    reply(`*Anti Status Mention ON*\nAction: *${global.antiStatusMentionAction || 'warn'}*\nAnyone who mentions a group in their status will be actioned.`)
+    reply(`*🛡️ Anti Status Mention: ✅ ON*\nAction: *${(global.antiStatusMentionAction || 'warn').toUpperCase()}*\n\nAnyone who tags a group in their status will be actioned.\n_Bot must be admin in the group._`)
 } else if (asmArg === 'off' || asmArg === 'disable') {
     global.antiStatusMention = false
-    reply('*Anti Status Mention OFF*')
+    reply('*🛡️ Anti Status Mention: ❌ OFF*\n\nGroup tagging in statuses will no longer be actioned.')
 } else if (asmArg === 'warn') {
     global.antiStatusMention = true
     global.antiStatusMentionAction = 'warn'
-    reply('*Anti Status Mention: WARN*\nUsers who mention a group in their status will be warned. 3 warnings = auto-kick.')
+    reply('*🛡️ Anti Status Mention: ⚠️ WARN MODE*\n\nUsers who tag a group in their status will be warned in that group.\n3 warnings = automatic kick.\n\n_Bot must be admin in the group._')
 } else if (asmArg === 'delete' || asmArg === 'del') {
     global.antiStatusMention = true
     global.antiStatusMentionAction = 'delete'
-    reply('*Anti Status Mention: DELETE*\nMessages from users who mention a group in their status will be deleted in that group.')
+    reply('*🛡️ Anti Status Mention: 🗑️ DELETE MODE*\n\nWhen someone tags a group in their status, their future messages in that group will be automatically deleted.\n\n_Bot must be admin in the group._')
 } else if (asmArg === 'kick' || asmArg === 'remove') {
     global.antiStatusMention = true
     global.antiStatusMentionAction = 'kick'
-    reply('*Anti Status Mention: KICK*\nUsers who mention a group in their status will be removed from that group.')
+    reply('*🛡️ Anti Status Mention: 🚫 KICK MODE*\n\nUsers who tag a group in their status will be instantly removed from that group.\n\n_Bot must be admin in the group._')
+} else {
+    reply(`❌ Unknown option.\nUse: *on, off, warn, delete, kick*`)
 }
 }
 break
