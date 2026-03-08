@@ -4958,14 +4958,161 @@ else reply(`*😂 Joke:*\n${data.setup}\n\n${data.delivery}`)
 
 case 'quote':
 case 'motivation': {
+const motivations = [
+// Success & Hard Work
+{ q: "The only way to do great work is to love what you do.", a: "Steve Jobs" },
+{ q: "Success is not final, failure is not fatal: it is the courage to continue that counts.", a: "Winston Churchill" },
+{ q: "Don't watch the clock; do what it does. Keep going.", a: "Sam Levenson" },
+{ q: "The secret of getting ahead is getting started.", a: "Mark Twain" },
+{ q: "It always seems impossible until it's done.", a: "Nelson Mandela" },
+{ q: "Hard work beats talent when talent doesn't work hard.", a: "Tim Notke" },
+{ q: "Success usually comes to those who are too busy to be looking for it.", a: "Henry David Thoreau" },
+{ q: "The difference between ordinary and extraordinary is that little extra.", a: "Jimmy Johnson" },
+{ q: "Opportunities don't happen. You create them.", a: "Chris Grosser" },
+{ q: "Don't be afraid to give up the good to go for the great.", a: "John D. Rockefeller" },
+{ q: "I find that the harder I work, the more luck I seem to have.", a: "Thomas Jefferson" },
+{ q: "There are no shortcuts to any place worth going.", a: "Beverly Sills" },
+{ q: "Success is walking from failure to failure with no loss of enthusiasm.", a: "Winston Churchill" },
+{ q: "The road to success and the road to failure are almost exactly the same.", a: "Colin R. Davis" },
+{ q: "A successful man is one who can lay a firm foundation with the bricks others have thrown at him.", a: "David Brinkley" },
+// Perseverance & Resilience
+{ q: "Fall seven times, stand up eight.", a: "Japanese Proverb" },
+{ q: "The man who moves a mountain begins by carrying away small stones.", a: "Confucius" },
+{ q: "You don't have to be great to start, but you have to start to be great.", a: "Zig Ziglar" },
+{ q: "Our greatest glory is not in never falling, but in rising every time we fall.", a: "Confucius" },
+{ q: "Strength does not come from physical capacity. It comes from an indomitable will.", a: "Mahatma Gandhi" },
+{ q: "Tough times never last, but tough people do.", a: "Robert H. Schuller" },
+{ q: "The darkest hour has only sixty minutes.", a: "Morris Mandel" },
+{ q: "Rock bottom became the solid foundation on which I rebuilt my life.", a: "J.K. Rowling" },
+{ q: "When you reach the end of your rope, tie a knot in it and hang on.", a: "Franklin D. Roosevelt" },
+{ q: "Even the darkest night will end and the sun will rise.", a: "Victor Hugo" },
+{ q: "You may have to fight a battle more than once to win it.", a: "Margaret Thatcher" },
+{ q: "The gem cannot be polished without friction, nor man perfected without trials.", a: "Chinese Proverb" },
+{ q: "Hardships often prepare ordinary people for an extraordinary destiny.", a: "C.S. Lewis" },
+{ q: "Endurance is not just the ability to bear a hard thing, but to turn it into glory.", a: "William Barclay" },
+{ q: "Character cannot be developed in ease and quiet. Only through experience of trial and suffering can the soul be strengthened.", a: "Helen Keller" },
+// Mindset & Growth
+{ q: "Whether you think you can or you think you can't, you're right.", a: "Henry Ford" },
+{ q: "The mind is everything. What you think you become.", a: "Buddha" },
+{ q: "Your life does not get better by chance, it gets better by change.", a: "Jim Rohn" },
+{ q: "The only limit to our realization of tomorrow is our doubts of today.", a: "Franklin D. Roosevelt" },
+{ q: "It is during our darkest moments that we must focus to see the light.", a: "Aristotle" },
+{ q: "Believe you can and you're halfway there.", a: "Theodore Roosevelt" },
+{ q: "You are never too old to set another goal or to dream a new dream.", a: "C.S. Lewis" },
+{ q: "Act as if what you do makes a difference. It does.", a: "William James" },
+{ q: "What we think, we become.", a: "Buddha" },
+{ q: "Keep your face always toward the sunshine, and shadows will fall behind you.", a: "Walt Whitman" },
+{ q: "In the middle of every difficulty lies opportunity.", a: "Albert Einstein" },
+{ q: "We become what we repeatedly do.", a: "Aristotle" },
+{ q: "Change your thoughts and you change your world.", a: "Norman Vincent Peale" },
+{ q: "You have power over your mind, not outside events. Realize this, and you will find strength.", a: "Marcus Aurelius" },
+{ q: "Everything you've ever wanted is on the other side of fear.", a: "George Addair" },
+// Dreams & Vision
+{ q: "The future belongs to those who believe in the beauty of their dreams.", a: "Eleanor Roosevelt" },
+{ q: "Dream big and dare to fail.", a: "Norman Vaughan" },
+{ q: "All our dreams can come true, if we have the courage to pursue them.", a: "Walt Disney" },
+{ q: "The biggest adventure you can take is to live the life of your dreams.", a: "Oprah Winfrey" },
+{ q: "Go confidently in the direction of your dreams. Live the life you have imagined.", a: "Henry David Thoreau" },
+{ q: "A dream doesn't become reality through magic; it takes sweat, determination and hard work.", a: "Colin Powell" },
+{ q: "You are never too old to set another goal or to dream a new dream.", a: "Les Brown" },
+{ q: "Dreams don't work unless you do.", a: "John C. Maxwell" },
+{ q: "The only way to achieve the impossible is to believe it is possible.", a: "Charles Kingsleigh" },
+{ q: "What lies behind us and what lies before us are tiny matters compared to what lies within us.", a: "Ralph Waldo Emerson" },
+// Courage & Action
+{ q: "Courage is not the absence of fear, but action in spite of it.", a: "Mark Twain" },
+{ q: "Do one thing every day that scares you.", a: "Eleanor Roosevelt" },
+{ q: "You miss 100% of the shots you don't take.", a: "Wayne Gretzky" },
+{ q: "The secret to getting ahead is getting started.", a: "Mark Twain" },
+{ q: "Don't count the days, make the days count.", a: "Muhammad Ali" },
+{ q: "Life is short, and it's up to you to make it sweet.", a: "Sarah Louise Delany" },
+{ q: "The way to get started is to quit talking and begin doing.", a: "Walt Disney" },
+{ q: "If you want to live a happy life, tie it to a goal, not to people or things.", a: "Albert Einstein" },
+{ q: "First, think. Then dream. Then dare.", a: "Walt Disney" },
+{ q: "Just do it.", a: "Nike" },
+{ q: "Stop waiting for things to happen. Go out and make them happen.", a: "Unknown" },
+{ q: "You don't need to see the whole staircase, just take the first step.", a: "Martin Luther King Jr." },
+{ q: "Someone is sitting in the shade today because someone planted a tree a long time ago.", a: "Warren Buffett" },
+{ q: "Inaction breeds doubt and fear. Action breeds confidence and courage.", a: "Dale Carnegie" },
+// Purpose & Meaning
+{ q: "He who has a why to live can bear almost any how.", a: "Friedrich Nietzsche" },
+{ q: "The purpose of life is a life of purpose.", a: "Robert Byrne" },
+{ q: "Life is not measured by the number of breaths we take, but by the moments that take our breath away.", a: "Maya Angelou" },
+{ q: "You only live once, but if you do it right, once is enough.", a: "Mae West" },
+{ q: "In the end, it's not the years in your life that count. It's the life in your years.", a: "Abraham Lincoln" },
+{ q: "To live is the rarest thing in the world. Most people exist, that is all.", a: "Oscar Wilde" },
+{ q: "The meaning of life is to find your gift. The purpose of life is to give it away.", a: "Pablo Picasso" },
+{ q: "Don't ask what the world needs. Ask what makes you come alive and go do it.", a: "Howard Thurman" },
+{ q: "Your time is limited, don't waste it living someone else's life.", a: "Steve Jobs" },
+{ q: "Every moment is a fresh beginning.", a: "T.S. Eliot" },
+// Self-Belief
+{ q: "No one can make you feel inferior without your consent.", a: "Eleanor Roosevelt" },
+{ q: "You are enough, a thousand times enough.", a: "Atticus" },
+{ q: "Be yourself; everyone else is already taken.", a: "Oscar Wilde" },
+{ q: "To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.", a: "Ralph Waldo Emerson" },
+{ q: "You yourself, as much as anybody in the entire universe, deserve your love and affection.", a: "Buddha" },
+{ q: "Knowing yourself is the beginning of all wisdom.", a: "Aristotle" },
+{ q: "The only person you are destined to become is the person you decide to be.", a: "Ralph Waldo Emerson" },
+{ q: "Wherever you go, no matter what the weather, always bring your own sunshine.", a: "Anthony J. D'Angelo" },
+{ q: "With confidence, you have won before you have started.", a: "Marcus Garvey" },
+{ q: "Once you choose hope, anything's possible.", a: "Christopher Reeve" },
+// Leadership & Impact
+{ q: "A leader is one who knows the way, goes the way, and shows the way.", a: "John C. Maxwell" },
+{ q: "Leadership is not about being in charge. It is about taking care of those in your charge.", a: "Simon Sinek" },
+{ q: "The best time to plant a tree was 20 years ago. The second best time is now.", a: "Chinese Proverb" },
+{ q: "Innovation distinguishes between a leader and a follower.", a: "Steve Jobs" },
+{ q: "If your actions inspire others to dream more, learn more, do more and become more, you are a leader.", a: "John Quincy Adams" },
+{ q: "Alone we can do so little; together we can do so much.", a: "Helen Keller" },
+{ q: "The greatest use of a life is to spend it on something that will outlast it.", a: "William James" },
+{ q: "Be the change you wish to see in the world.", a: "Mahatma Gandhi" },
+{ q: "Service to others is the rent you pay for your room here on earth.", a: "Muhammad Ali" },
+// Wisdom & Philosophy  
+{ q: "The unexamined life is not worth living.", a: "Socrates" },
+{ q: "We suffer more in imagination than in reality.", a: "Seneca" },
+{ q: "Waste no more time arguing about what a good man should be. Be one.", a: "Marcus Aurelius" },
+{ q: "You have power over your mind, not outside events.", a: "Marcus Aurelius" },
+{ q: "He who angers you conquers you.", a: "Elizabeth Kenny" },
+{ q: "The quality of a person's life is in direct proportion to their commitment to excellence.", a: "Vince Lombardi" },
+{ q: "Simplicity is the ultimate sophistication.", a: "Leonardo da Vinci" },
+{ q: "The only true wisdom is in knowing you know nothing.", a: "Socrates" },
+{ q: "Patience is bitter, but its fruit is sweet.", a: "Jean-Jacques Rousseau" },
+{ q: "Do not go where the path may lead; go instead where there is no path and leave a trail.", a: "Ralph Waldo Emerson" },
+// Daily Grind
+{ q: "Today's struggle is tomorrow's strength.", a: "Unknown" },
+{ q: "One day or day one. You decide.", a: "Unknown" },
+{ q: "Work hard in silence. Let your success be the noise.", a: "Frank Ocean" },
+{ q: "Stay focused, go after your dreams and keep moving toward your goals.", a: "LL Cool J" },
+{ q: "Push yourself, because no one else is going to do it for you.", a: "Unknown" },
+{ q: "Great things never come from comfort zones.", a: "Unknown" },
+{ q: "Wake up with determination. Go to bed with satisfaction.", a: "Unknown" },
+{ q: "Do something today that your future self will thank you for.", a: "Sean Patrick Flanery" },
+{ q: "Little things make big days.", a: "Unknown" },
+{ q: "It's going to be hard, but hard is not impossible.", a: "Unknown" },
+{ q: "Don't stop when you're tired. Stop when you're done.", a: "Unknown" },
+{ q: "Discipline is choosing between what you want now and what you want most.", a: "Abraham Lincoln" },
+{ q: "Success is the sum of small efforts repeated day in and day out.", a: "Robert Collier" },
+{ q: "Your only limit is your mind.", a: "Unknown" },
+{ q: "Hustle until your haters ask if you're hiring.", a: "Unknown" },
+// Faith & Hope
+{ q: "Faith is taking the first step even when you can't see the whole staircase.", a: "Martin Luther King Jr." },
+{ q: "Hope is the thing with feathers that perches in the soul.", a: "Emily Dickinson" },
+{ q: "God has a plan for your life. Trust the process.", a: "Unknown" },
+{ q: "When nothing goes right, go left.", a: "Unknown" },
+{ q: "Every day may not be good, but there's something good in every day.", a: "Alice Morse Earle" },
+{ q: "You are braver than you believe, stronger than you seem, and smarter than you think.", a: "A.A. Milne" },
+{ q: "The comeback is always stronger than the setback.", a: "Unknown" },
+{ q: "What God has for you, it is for you.", a: "Unknown" },
+{ q: "Storms make trees take deeper roots.", a: "Dolly Parton" },
+{ q: "After every storm, there is a rainbow. If you have eyes to see it.", a: "Paul Walker" }
+]
+let pick = motivations[Math.floor(Math.random() * motivations.length)]
 try {
-let res = await fetch('https://api.quotable.io/random')
+let res = await fetch('https://api.quotable.io/random?tags=inspirational|motivational|success|wisdom')
 let data = await res.json()
-reply(`*💬 Quote:*\n"${data.content}"\n\n— *${data.author}*`)
-} catch {
-let quotes = ['"The only way to do great work is to love what you do." — Steve Jobs', '"Innovation distinguishes between a leader and a follower." — Steve Jobs', '"Life is what happens when you\'re busy making other plans." — John Lennon', '"The future belongs to those who believe in the beauty of their dreams." — Eleanor Roosevelt']
-reply(quotes[Math.floor(Math.random() * quotes.length)])
+if (data?.content && data?.author) {
+pick = { q: data.content, a: data.author }
 }
+} catch {}
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  💫 *MOTIVATION*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n❝ ${pick.q} ❞\n\n— *${pick.a}*`)
 } break
 
 case 'fact': {
