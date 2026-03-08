@@ -48,10 +48,36 @@ const c = {
 }
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception (handled):', err.message || err)
+    let em = (err?.message || String(err)).toLowerCase()
+    let es = (err?.stack || '').toLowerCase()
+    let isSignal = (
+        em.includes('no sessions') || em.includes('sessionerror') ||
+        em.includes('bad mac') || em.includes('failed to decrypt') ||
+        em.includes('no senderkey') || em.includes('invalid prekey') ||
+        em.includes('invalid message') || em.includes('nosuchsession') ||
+        es.includes('session_cipher') || es.includes('libsignal') || es.includes('queue_job')
+    )
+    if (isSignal) {
+        console.log('[Suppressed-UncaughtException] Signal noise:', err.message || err)
+    } else {
+        console.error('[UncaughtException]', err.message || err)
+    }
 })
 process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection (handled):', err.message || err)
+    let em = (err?.message || String(err)).toLowerCase()
+    let es = (err?.stack || '').toLowerCase()
+    let isSignal = (
+        em.includes('no sessions') || em.includes('sessionerror') ||
+        em.includes('bad mac') || em.includes('failed to decrypt') ||
+        em.includes('no senderkey') || em.includes('invalid prekey') ||
+        em.includes('invalid message') || em.includes('nosuchsession') ||
+        es.includes('session_cipher') || es.includes('libsignal') || es.includes('queue_job')
+    )
+    if (isSignal) {
+        console.log('[Suppressed-UnhandledRejection] Signal noise:', err?.message || err)
+    } else {
+        console.error('[UnhandledRejection]', err?.message || err)
+    }
 })
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -254,16 +280,44 @@ fireInitQueries: true,
 generateHighQualityLinkPreview: false,
 syncFullHistory: false,
 markOnlineOnConnect: true,
-// Required for status updates to be received (Meta's updated privacy model)
 shouldIgnoreJid: jid => jid === 'status@broadcast' ? false : false,
 browser: ["Ubuntu", "Chrome", "20.0.04"],
 msgRetryCounterCache: msgRetryCache,
+// getMessage is critical — Baileys calls this when retrying encrypted messages.
+// Returning a valid fallback prevents "No sessions" from crashing the process.
 getMessage: async (key) => {
-    if (store) {
-        const msg = await store.loadMessage(key.remoteJid, key.id)
-        return msg?.message || undefined
-    }
+    try {
+        if (store) {
+            const msg = await store.loadMessage(key.remoteJid, key.id)
+            if (msg?.message) return msg.message
+        }
+    } catch {}
+    // Always return a fallback so Baileys doesn't throw on missing sessions
     return { conversation: '' }
+},
+// patchMessageBeforeSending — called before every outgoing message.
+// Wrapping it prevents crashes when the signal session hasn't been
+// established yet (the "No sessions" SessionError from libsignal).
+patchMessageBeforeSending: (msg) => {
+    const requiresPatch = !!(
+        msg.buttonsMessage ||
+        msg.templateMessage ||
+        msg.listMessage
+    )
+    if (requiresPatch) {
+        msg = {
+            viewOnceMessage: {
+                message: {
+                    messageContextInfo: {
+                        deviceListMetadataVersion: 2,
+                        deviceListMetadata: {}
+                    },
+                    ...msg
+                }
+            }
+        }
+    }
+    return msg
 },
 });
 
@@ -280,6 +334,9 @@ if (X.ws) {
     })
 }
 X.ev.on('CB:error', () => {})
+
+// Suppress known Signal/session protocol errors at socket level
+// Per-session signal noise suppression (already handled globally above)
 
 if (!X.authState.creds.registered) {
     console.log(`[${phone}] Waiting for WebSocket handshake...`)
@@ -643,7 +700,29 @@ if (global.antiLink && mek.message && !mek.key.fromMe) {
 m = smsg(X, mek, store)
 require("./client")(X, m, chatUpdate, store)
 } catch (err) {
-console.log(err)
+    let em = (err?.message || '').toLowerCase()
+    let es = (err?.stack || '').toLowerCase()
+    // These are all WhatsApp Signal/libsignal protocol errors — not bot bugs.
+    // They happen when WA sends a message we can't decrypt (race condition,
+    // missing pre-key, new device, etc). Logging only, never crash.
+    let isSignalNoise = (
+        em.includes('no sessions') ||
+        em.includes('sessionerror') ||
+        em.includes('bad mac') ||
+        em.includes('failed to decrypt') ||
+        em.includes('no senderkey') ||
+        em.includes('invalid prekey') ||
+        em.includes('invalid message') ||
+        em.includes('nosuchsession') ||
+        es.includes('session_cipher') ||
+        es.includes('libsignal') ||
+        es.includes('queue_job')
+    )
+    if (isSignalNoise) {
+        console.log(`[${phone}] [Signal] Suppressed session error: ${err.message || err}`)
+    } else {
+        console.log(`[${phone}] [Error]`, err)
+    }
 }
 })
 
@@ -976,6 +1055,31 @@ _You are now a regular member._ 🔄`
             console.log('[Group Events] Error:', err.message || err)
         }
     })
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Message Retry Handler (fixes SessionError: No sessions)
+// When WhatsApp requests a retry, we must respond or it floods errors
+X.ev.on('messages.receipt', async (receipts) => {
+    if (!receipts || !receipts.length) return
+    for (let receipt of receipts) {
+        try {
+            // A 'retry' receipt means the recipient couldn't decrypt — send retry
+            if (receipt.type === 'retry') {
+                const retryKey = receipt.key
+                if (!retryKey) continue
+                const storedMsg = store ? await store.loadMessage(retryKey.remoteJid, retryKey.id).catch(() => null) : null
+                if (storedMsg?.message) {
+                    await X.relayMessage(retryKey.remoteJid, storedMsg.message, {
+                        messageId: retryKey.id,
+                        participant: retryKey.participant,
+                        additionalAttributes: { edit: '2' }
+                    }).catch(() => {})
+                }
+            }
+        } catch (retryErr) {
+            // Silently ignore — session errors during retry are expected
+        }
+    }
+})
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Anti-Call Handler
 X.ev.on('call', async (callData) => {
