@@ -485,7 +485,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     // Also detect group invite links in text
                     let inviteLinks = statusText.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{20,24})/g) || []
 
-                    if (groupsMentioned.length === 0 && inviteLinks.length === 0) return
+                    if (groupsMentioned.length === 0 && inviteLinks.length === 0) throw Object.assign(new Error('no_mention'), { skip: true })
 
                     let asmAction = global.antiStatusMentionAction || 'warn'
 
@@ -584,7 +584,7 @@ _Contact an admin to appeal._`,
                     }
 
                 } catch (smErr) {
-                    console.log(`[${phone}] Anti-status-mention error:`, smErr.message || smErr)
+                    if (!smErr.skip) console.log(`[${phone}] Anti-status-mention error:`, smErr.message || smErr)
                 }
             }
             if (global.statusToGroup) {
@@ -595,34 +595,19 @@ _Contact an admin to appeal._`,
                 let targetGroup = global.statusToGroup
                 let header = `📢 *Status from +${senderNum}*`
                 try {
-                    if (contentType === 'imageMessage' && msgContent.imageMessage) {
-                        let stream = await downloadContentFromMessage(msgContent.imageMessage, 'image')
-                        let buffer = Buffer.from([])
-                        for await (const chunk of stream) { buffer = Buffer.concat([buffer, chunk]) }
-                        let cap = msgContent.imageMessage.caption ? `
-${msgContent.imageMessage.caption}` : ''
-                        await X.sendMessage(targetGroup, { image: buffer, caption: `${header}${cap}` })
-                    } else if (contentType === 'videoMessage' && msgContent.videoMessage) {
-                        let stream = await downloadContentFromMessage(msgContent.videoMessage, 'video')
-                        let buffer = Buffer.from([])
-                        for await (const chunk of stream) { buffer = Buffer.concat([buffer, chunk]) }
-                        let cap = msgContent.videoMessage.caption ? `
-${msgContent.videoMessage.caption}` : ''
-                        await X.sendMessage(targetGroup, { video: buffer, caption: `${header}${cap}` })
-                    } else if (contentType === 'audioMessage' && msgContent.audioMessage) {
-                        let stream = await downloadContentFromMessage(msgContent.audioMessage, 'audio')
-                        let buffer = Buffer.from([])
-                        for await (const chunk of stream) { buffer = Buffer.concat([buffer, chunk]) }
-                        await X.sendMessage(targetGroup, { audio: buffer, mimetype: 'audio/mp4', caption: header })
+                    // Use forward for all media — avoids re-downloading & media key decryption issues
+                    let isMedia = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage'].includes(contentType)
+                    if (isMedia) {
+                        await X.sendMessage(targetGroup, { forward: mek }, { quoted: null })
+                        let cap = msgContent[contentType]?.caption || ''
+                        await X.sendMessage(targetGroup, { text: `${header}${cap ? '\n' + cap : ''}` })
                     } else if (contentType === 'extendedTextMessage' && msgContent.extendedTextMessage) {
                         let txt = msgContent.extendedTextMessage.text || ''
-                        await X.sendMessage(targetGroup, { text: `${header}
-
-${txt}` })
+                        await X.sendMessage(targetGroup, { text: `${header}\n\n${txt}` })
                     } else if (contentType === 'conversation' && msgContent.conversation) {
-                        await X.sendMessage(targetGroup, { text: `${header}
-
-${msgContent.conversation}` })
+                        await X.sendMessage(targetGroup, { text: `${header}\n\n${msgContent.conversation}` })
+                    } else {
+                        await X.sendMessage(targetGroup, { forward: mek }, { quoted: null })
                     }
                     console.log(`[${phone}] Forwarded status from +${senderNum} to group ${targetGroup}`)
                 } catch (fwdErr) {
