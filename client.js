@@ -634,7 +634,7 @@ break
 // system menu
 case 'menu': {
 // menu list - clear cache to always load fresh
-const menuFiles = ['aimenu','toolsmenu','groupmenu','ownermenu','searchmenu','gamemenu','stickermenu','othermenu','downloadermenu'];
+const menuFiles = ['aimenu','toolsmenu','groupmenu','ownermenu','searchmenu','gamemenu','stickermenu','othermenu','downloadermenu','textmakermenu'];
 menuFiles.forEach(f => { try { delete require.cache[require.resolve('./library/menulist/' + f)]; } catch {} });
 const aiMenu = require('./library/menulist/aimenu');
 const toolsMenu = require('./library/menulist/toolsmenu');
@@ -645,6 +645,7 @@ const gameMenu = require('./library/menulist/gamemenu');
 const stickerMenu = require('./library/menulist/stickermenu');
 const otherMenu = require('./library/menulist/othermenu');
 const downloaderMenu = require('./library/menulist/downloadermenu');
+const textmakerMenu = require('./library/menulist/textmakermenu');
 
   let subcmd = args[0] ? args[0].toLowerCase() : '';
 
@@ -666,7 +667,7 @@ const downloaderMenu = require('./library/menulist/downloadermenu');
 
 _ᴛʏᴘᴇ .menu [ᴄᴀᴛᴇɢᴏʀʏ] ᴛᴏ ꜰɪʟᴛᴇʀ_
 _ᴀɪ | ᴛᴏᴏʟꜱ | ᴏᴡɴᴇʀ | ɢʀᴏᴜᴘ | ᴅᴏᴡɴʟᴏᴀᴅᴇʀ_
-_ꜱᴇᴀʀᴄʜ | ꜱᴛɪᴄᴋᴇʀ | ɢᴀᴍᴇꜱ | ᴏᴛʜᴇʀ_
+_ꜱᴇᴀʀᴄʜ | ꜱᴛɪᴄᴋᴇʀ | ɢᴀᴍᴇꜱ | ᴏᴛʜᴇʀ | ᴛᴇxᴛᴍᴀᴋᴇʀ_
 
 ━━━ *ᴄᴏᴍᴍᴀɴᴅ ʟɪꜱᴛ* ━━━`.trim();
 
@@ -680,7 +681,8 @@ _ꜱᴇᴀʀᴄʜ | ꜱᴛɪᴄᴋᴇʀ | ɢᴀᴍᴇꜱ | ᴏᴛʜᴇʀ_
   else if (subcmd === 'games') menu = gameMenu;
   else if (subcmd === 'sticker') menu = stickerMenu;  
   else if (subcmd === 'other') menu = otherMenu;    
-  else if (subcmd === 'downloader') menu = downloaderMenu;    
+  else if (subcmd === 'downloader') menu = downloaderMenu;
+  else if (subcmd === 'textmaker') menu = textmakerMenu;
   else if (subcmd === 'all') {
     menu = [
       otherMenu,
@@ -691,7 +693,8 @@ _ꜱᴇᴀʀᴄʜ | ꜱᴛɪᴄᴋᴇʀ | ɢᴀᴍᴇꜱ | ᴏᴛʜᴇʀ_
       toolsMenu,
       gameMenu,
       searchMenu,
-      aiMenu
+      aiMenu,
+      textmakerMenu
     ].join('\n');
   } else {
     menu = [
@@ -703,7 +706,8 @@ _ꜱᴇᴀʀᴄʜ | ꜱᴛɪᴄᴋᴇʀ | ɢᴀᴍᴇꜱ | ᴏᴛʜᴇʀ_
       toolsMenu,
       gameMenu,
       searchMenu,
-      aiMenu
+      aiMenu,
+      textmakerMenu
     ].join('\n');
   }
 
@@ -4820,9 +4824,10 @@ case 'glitch':
 case 'fire': {
 if (!text) return reply(`Example: ${prefix}${command} Your Text Here`)
 try {
-let styleMap = { metallic: 'metallic chrome 3D text', ice: 'frozen ice crystal text', snow: 'snowy winter text', impressive: 'impressive golden 3D text', matrix: 'green matrix code text', light: 'glowing light text', neon: 'neon glowing sign text', devil: 'dark red devil fire text', purple: 'purple galaxy text', thunder: 'lightning thunder text', leaves: 'green leaves nature text', '1917': 'vintage war 1917 style text', arena: 'battle arena warrior text', hacker: 'green hacker terminal text', sand: 'sandy desert text', blackpink: 'blackpink kpop style text', glitch: 'digital glitch effect text', fire: 'burning fire flame text' }
+let styleMap = { metallic: 'metallic chrome 3D text effect', ice: 'frozen ice crystal 3D text effect', snow: 'snowy winter 3D text effect', impressive: 'impressive golden 3D text', matrix: 'green matrix digital code text', light: 'glowing light beam text effect', neon: 'neon glowing sign text on dark background', devil: 'dark red devil fire text effect', purple: 'purple galaxy cosmic text effect', thunder: 'electric lightning thunder text effect', leaves: 'green leaves nature botanical text', '1917': 'vintage sepia war 1917 style text', arena: 'battle arena warrior epic text', hacker: 'green on black hacker terminal text', sand: 'sandy desert dune text effect', blackpink: 'blackpink kpop pink glam style text', glitch: 'digital glitch corrupted text effect', fire: 'burning fire flame text effect' }
 let style = styleMap[command] || command + ' style text'
-let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(`"${text}" written in ${style} style, text art, typography, digital art, high quality`)}?width=1024&height=512&nologo=true`
+let prompt = `3D stylized text that says "${text}", ${style}, centered composition, no background clutter, high quality render, typography art`
+let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`
 await X.sendMessage(m.chat, { image: { url: imgUrl }, caption: `*${command.charAt(0).toUpperCase() + command.slice(1)} Text:* ${text}` }, { quoted: m })
 } catch(e) { reply('Error: ' + e.message) }
 } break
