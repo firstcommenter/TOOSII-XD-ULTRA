@@ -1118,27 +1118,41 @@ X.ev.on('messages.update', async (updates) => {
                 if (senderJid === botJid || senderJid === selfJid) return
                 try {
                     let msgStore = store
-                    if (msgStore && msgStore.messages && msgStore.messages[chat]) {
-                        let msgs = msgStore.messages[chat]
-                        let deletedMsg = msgs.array ? msgs.array.find(m => m.key.id === update.key.id) : null
-                        if (deletedMsg && deletedMsg.message) {
-                            let delType = getContentType(deletedMsg.message)
-                            let delBody = deletedMsg.message.conversation ||
-                                         (deletedMsg.message.extendedTextMessage && deletedMsg.message.extendedTextMessage.text) ||
-                                         (deletedMsg.message.imageMessage && deletedMsg.message.imageMessage.caption) ||
-                                         (deletedMsg.message.videoMessage && deletedMsg.message.videoMessage.caption) || ''
-                            let notifText = `*🗑️ Anti-Delete Alert*\n\n👤 *From:* @${senderNum}\n💬 *Chat:* ${chatName}\n📄 *Type:* ${delType}${delBody ? '\n📝 *Content:* ' + delBody : '\n📝 *Content:* [media/no text]'}`
-                            await X.sendMessage(selfJid, { text: notifText, mentions: [senderJid] })
-                            // Forward the actual media if it exists
-                            if (deletedMsg.message.imageMessage || deletedMsg.message.videoMessage || deletedMsg.message.audioMessage || deletedMsg.message.documentMessage || deletedMsg.message.stickerMessage) {
-                                try {
-                                    await X.sendMessage(selfJid, { forward: deletedMsg }, { quoted: null })
-                                } catch (fwdErr) {
-                                    console.log('[Anti-Delete] Forward error:', fwdErr.message || fwdErr)
-                                }
+                    let deletedMsg = null
+                    // Support both Map-based store (new) and array-based store (legacy)
+                    if (msgStore && msgStore.messages) {
+                        let chatMsgs = typeof msgStore.messages.get === 'function'
+                            ? msgStore.messages.get(chat)
+                            : msgStore.messages[chat]
+                        if (chatMsgs) {
+                            if (typeof chatMsgs.get === 'function') {
+                                // Map-based store
+                                deletedMsg = chatMsgs.get(update.key.id) || null
+                            } else if (chatMsgs.array) {
+                                // Legacy array-based store
+                                deletedMsg = chatMsgs.array.find(m => m.key.id === update.key.id) || null
                             }
-                        } else {
-                            await X.sendMessage(selfJid, { text: `*🗑️ Anti-Delete Alert*\n\n👤 *From:* @${senderNum}\n💬 *Chat:* ${chatName}\n📝 *Content:* Message not cached`, mentions: [senderJid] })
+                        }
+                    }
+                    // Also try loadMessage async fallback
+                    if (!deletedMsg && msgStore && typeof msgStore.loadMessage === 'function') {
+                        try { deletedMsg = await msgStore.loadMessage(chat, update.key.id) || null } catch (_) {}
+                    }
+                    if (deletedMsg && deletedMsg.message) {
+                        let delType = getContentType(deletedMsg.message)
+                        let delBody = deletedMsg.message.conversation ||
+                                     (deletedMsg.message.extendedTextMessage && deletedMsg.message.extendedTextMessage.text) ||
+                                     (deletedMsg.message.imageMessage && deletedMsg.message.imageMessage.caption) ||
+                                     (deletedMsg.message.videoMessage && deletedMsg.message.videoMessage.caption) || ''
+                        let notifText = `*🗑️ Anti-Delete Alert*\n\n👤 *From:* @${senderNum}\n💬 *Chat:* ${chatName}\n📄 *Type:* ${delType}${delBody ? '\n📝 *Content:* ' + delBody : '\n📝 *Content:* [media/no text]'}`
+                        await X.sendMessage(selfJid, { text: notifText, mentions: [senderJid] })
+                        // Forward the actual media if it exists
+                        if (deletedMsg.message.imageMessage || deletedMsg.message.videoMessage || deletedMsg.message.audioMessage || deletedMsg.message.documentMessage || deletedMsg.message.stickerMessage) {
+                            try {
+                                await X.sendMessage(selfJid, { forward: deletedMsg }, { quoted: null })
+                            } catch (fwdErr) {
+                                console.log('[Anti-Delete] Forward error:', fwdErr.message || fwdErr)
+                            }
                         }
                     } else {
                         await X.sendMessage(selfJid, { text: `*🗑️ Anti-Delete Alert*\n\n👤 *From:* @${senderNum}\n💬 *Chat:* ${chatName}\n📝 *Content:* Message not cached`, mentions: [senderJid] })
