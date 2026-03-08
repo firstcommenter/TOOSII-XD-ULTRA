@@ -55,6 +55,8 @@ process.on('uncaughtException', (err) => {
         em.includes('bad mac') || em.includes('failed to decrypt') ||
         em.includes('no senderkey') || em.includes('invalid prekey') ||
         em.includes('invalid message') || em.includes('nosuchsession') ||
+        em.includes('websocket was closed') || em.includes('connection closed') ||
+        em.includes('econnreset') || em.includes('socket hang up') ||
         es.includes('session_cipher') || es.includes('libsignal') || es.includes('queue_job')
     )
     if (isSignal) {
@@ -71,6 +73,8 @@ process.on('unhandledRejection', (err) => {
         em.includes('bad mac') || em.includes('failed to decrypt') ||
         em.includes('no senderkey') || em.includes('invalid prekey') ||
         em.includes('invalid message') || em.includes('nosuchsession') ||
+        em.includes('websocket was closed') || em.includes('connection closed') ||
+        em.includes('econnreset') || em.includes('socket hang up') ||
         es.includes('session_cipher') || es.includes('libsignal') || es.includes('queue_job')
     )
     if (isSignal) {
@@ -303,13 +307,11 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 global.generatePairCode = async function(phoneNumber) {
     const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
 
-    // Retry the whole thing up to 3 times if WS closes before we get the code
     for (let attempt = 1; attempt <= 3; attempt++) {
         const tmpDir = path.join(SESSIONS_DIR, '_pair_tmp_' + Date.now())
         if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
         const { state: tmpState } = await useMultiFileAuthState(tmpDir)
 
-        // Use SAME config as the main socket so WA accepts the connection
         const tmpSocket = makeWASocket({
             logger: pino({ level: 'silent' }),
             printQRInTerminal: false,
@@ -318,12 +320,18 @@ global.generatePairCode = async function(phoneNumber) {
             defaultQueryTimeoutMs: 0,
             keepAliveIntervalMs: 10000,
             emitOwnEvents: true,
-            fireInitQueries: true,
+            fireInitQueries: false,   // false for fresh auth — prevents immediate WS close
             generateHighQualityLinkPreview: false,
             syncFullHistory: false,
             markOnlineOnConnect: false,
             browser: ['TOOSII-XD-ULTRA', 'Desktop', '0.0.0'],
         })
+
+        // Suppress WS-level errors on tmp socket
+        if (tmpSocket.ws) {
+            tmpSocket.ws.on('error', () => {})
+        }
+        tmpSocket.ev.on('CB:error', () => {})
 
         function cleanupTmp() {
             try { tmpSocket.end() } catch {}
@@ -333,11 +341,10 @@ global.generatePairCode = async function(phoneNumber) {
             }, 3000)
         }
 
-        // Track last close reason so we can give a useful error
         let lastCloseCode = null
         let wsConnected = false
 
-        // Wait for WS handshake — retry if it closes before connecting
+        // Wait for WS to reach 'connecting' state
         const handshakeOk = await new Promise((resolve) => {
             let done = false
             const timeout = setTimeout(() => {
@@ -346,19 +353,16 @@ global.generatePairCode = async function(phoneNumber) {
             tmpSocket.ev.on('connection.update', (update) => {
                 if (done) return
                 if (update.connection === 'connecting') {
-                    wsConnected = true  // WS layer is up
+                    wsConnected = true
+                    done = true; clearTimeout(timeout); resolve(true)
                 }
-                if (update.connection === 'open' || update.qr || update.connection === 'connecting') {
+                if (update.connection === 'open' || update.qr) {
+                    wsConnected = true
                     done = true; clearTimeout(timeout); resolve(true)
                 }
                 if (update.connection === 'close') {
                     lastCloseCode = update.lastDisconnect?.error?.output?.statusCode
-                    if (!wsConnected) {
-                        // WS never even connected — retry
-                        done = true; clearTimeout(timeout); resolve(false)
-                    }
-                    // If it connected then closed, still try to request the code
-                    done = true; clearTimeout(timeout); resolve(true)
+                    done = true; clearTimeout(timeout); resolve(false)
                 }
             })
         })
@@ -370,37 +374,35 @@ global.generatePairCode = async function(phoneNumber) {
             continue
         }
 
-        // Settle time
-        await new Promise(r => setTimeout(r, 3000))
+        // Settle — let WA server register the socket
+        await new Promise(r => setTimeout(r, 4000))
 
-        // Request the code
+        // Request code
         let code
         try {
             code = await tmpSocket.requestPairingCode(cleanPhone)
-            if (!code) throw new Error('WhatsApp returned empty pairing code')
+            if (!code) throw new Error('No code returned')
         } catch (e) {
             cleanupTmp()
             if (attempt < 3) {
-                console.log(`[pair] Code request failed (attempt ${attempt}/3): ${e.message}. Retrying in 5s...`)
+                console.log(`[pair] Code request failed (${attempt}/3): ${e.message}. Retrying in 5s...`)
                 await new Promise(r => setTimeout(r, 5000))
                 continue
             }
             throw e
         }
 
-        const raw = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
-        const formatted = raw.match(/.{1,4}/g)?.join('-') || raw
+        const formatted = code.replace(/[^A-Z0-9]/gi, '').toUpperCase().match(/.{1,4}/g)?.join('-') || code
 
-        // Keep socket alive until user links or 90s timeout
+        // Keep socket alive — code is invalid if socket dies before user links
         await new Promise((resolve) => {
             const giveUp = setTimeout(() => {
-                console.log(`[pair] Code timed out (90s), cleaning up`)
+                console.log(`[pair] Code timed out (90s)`)
                 cleanupTmp(); resolve()
             }, 90000)
-
             tmpSocket.ev.on('connection.update', (update) => {
                 if (update.connection === 'open') {
-                    console.log(`[pair] Device linked successfully!`)
+                    console.log(`[pair] ✅ Device linked!`)
                     clearTimeout(giveUp)
                     setTimeout(() => { cleanupTmp(); resolve() }, 3000)
                 }
@@ -414,7 +416,7 @@ global.generatePairCode = async function(phoneNumber) {
         return formatted
     }
 
-    throw new Error('Failed to generate pairing code after 3 attempts. Try again in 2 minutes.')
+    throw new Error('Failed after 3 attempts. Wait 2 minutes and try again.')
 }
 
 async function connectSession(phone, isPairing = false) {
@@ -552,10 +554,15 @@ if (!X.authState.creds.registered) {
     console.log(`${c.yellow}${c.bold}→${c.r} ${c.white}You have ~60 seconds to enter the code${c.r}`)
     console.log('')
 
-    // generatePairCode now awaits internally until linked or timed out
-    // After it returns, creds.json exists — reconnect the main session
-    console.log(`[${phone}] Pairing complete. Starting main session...`)
-    await connectSession(phone)
+    // generatePairCode awaits internally until user links or 90s timeout
+    // After it returns, creds.json should exist — start the main session
+    const sessDir = path.join(SESSIONS_DIR, phone)
+    if (fs.existsSync(path.join(sessDir, 'creds.json'))) {
+        console.log(`[${phone}] ✅ Pairing complete. Starting main session...`)
+        await connectSession(phone)
+    } else {
+        console.log(`[${phone}] Code timed out or linking failed. Run option 1 again.`)
+    }
     return
 } else {
     console.log(`[${phone}] Reconnecting existing session...`)
