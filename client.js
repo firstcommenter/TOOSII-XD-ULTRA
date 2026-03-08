@@ -3554,15 +3554,78 @@ else if (pbArg === 'off') { global.pmBlocker = false; reply('*PM Blocker OFF*') 
 else reply(`*PM Blocker: ${global.pmBlocker ? 'ON' : 'OFF'}*\nUsage: ${prefix}pmblocker on/off`)
 } break
 
+case 'pp':
+case 'getpp': {
+// Get profile picture of sender, mentioned user, quoted user, or bot itself
+try {
+let target, label
+if (m.mentionedJid && m.mentionedJid[0]) {
+    target = m.mentionedJid[0]
+    label = '+' + target.split('@')[0].split(':')[0]
+} else if (m.quoted) {
+    target = m.quoted.sender || m.quoted.participant || m.quoted.key?.participant
+    label = '+' + (target || '').split('@')[0].split(':')[0]
+} else if (text && /^[0-9]+$/.test(text.replace(/[^0-9]/g,''))) {
+    target = text.replace(/[^0-9]/g,'') + '@s.whatsapp.net'
+    label = '+' + text.replace(/[^0-9]/g,'')
+} else {
+    target = m.sender
+    label = '+' + m.sender.split('@')[0].split(':')[0]
+}
+if (!target) target = m.sender
+let ppUrl = null
+try { ppUrl = await X.profilePictureUrl(target, 'image') } catch {}
+if (!ppUrl) {
+    return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🖼️ *PROFILE PICTURE*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+❌ *No profile picture found for ${label}*
+
+_This user has their privacy set to hide their profile photo, or the number is not on WhatsApp._`)
+}
+let ppBuf = await getBuffer(ppUrl)
+if (!ppBuf || ppBuf.length < 100) throw new Error('Failed to download picture')
+await X.sendMessage(m.chat, {
+    image: ppBuf,
+    caption: `┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🖼️ *PROFILE PICTURE*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+👤 *User:* ${label}`
+}, { quoted: m })
+} catch(e) {
+reply(`❌ *Failed to fetch profile picture.*
+_${e.message || 'User may have privacy restrictions.'}_`)
+}
+} break
+
 case 'setpp': {
 if (!isOwner) return reply(mess.OnlyOwner)
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`Reply to an image with ${prefix}setpp to set bot profile picture`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🖼️ *SET BOT PROFILE PIC*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+*Usage:* Reply to an image with *${prefix}setpp*
+
+_The image will be set as the bot's profile picture._`)
 try {
-let media = await X.downloadAndSaveMediaMessage(m.quoted, 'setpp_temp')
-await X.updateProfilePicture(X.user.id, { url: media })
-fs.unlinkSync(media)
-reply('*Bot profile picture updated!*')
-} catch(e) { reply('Failed to update profile picture: ' + e.message) }
+let imgBuf = await m.quoted.download()
+if (!imgBuf || imgBuf.length < 100) throw new Error('Failed to download image')
+await X.updateProfilePicture(X.user.id, imgBuf)
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🖼️ *PROFILE PIC UPDATED*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+✅ *Bot profile picture has been updated successfully.*
+
+_Changes may take a few moments to appear on WhatsApp._`)
+} catch(e) {
+let errMsg = (e?.message || '').toLowerCase()
+if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
+else reply(`❌ *Failed to update profile picture.*
+_${e.message || 'Unknown error'}_`)
+}
 } break
 
 case 'clearsession': {
