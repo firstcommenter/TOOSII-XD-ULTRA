@@ -155,20 +155,20 @@ const pushname = m.pushName || `${senderNumber}`
 const isBot = botNumber.includes(senderNumber)
 const quoted = m.quoted ? m.quoted : m
 const mime = (quoted.msg || quoted).mimetype || ''
-const groupMetadata = isGroup ? await X.groupMetadata(from).catch(e => {}) : ''
-const groupName = isGroup ? groupMetadata.subject : ''
-const participants = isGroup ? await groupMetadata.participants : ''
-const groupAdmins = isGroup ? await getGroupAdmins(participants) : ''
+const groupMetadata = isGroup ? await X.groupMetadata(from).catch(e => null) : null
+const groupName = isGroup && groupMetadata ? groupMetadata.subject || '' : ''
+const participants = isGroup && groupMetadata ? groupMetadata.participants || [] : []
+const groupAdmins = isGroup && participants.length ? await getGroupAdmins(participants) : []
 
-const isBotAdmins = isGroup && participants ? participants.some(p => {
+const isBotAdmins = isGroup && participants.length ? participants.some(p => {
     return isParticipantBot(p) && (p.admin === 'admin' || p.admin === 'superadmin')
 }) : false
 
-const isAdmins = isGroup ? (isOwner || (participants ? participants.some(p => {
+const isAdmins = isGroup ? (isOwner || (participants.length ? participants.some(p => {
     return isParticipantSender(p) && (p.admin === 'admin' || p.admin === 'superadmin')
 }) : false)) : false
 
-const isSuperAdmin = isGroup && participants ? participants.some(p => {
+const isSuperAdmin = isGroup && participants.length ? participants.some(p => {
     return isParticipantSender(p) && p.admin === 'superadmin'
 }) : false
 //━━━━━━━━━━━━━━━━━━━━━━━━//
