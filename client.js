@@ -1827,14 +1827,14 @@ break
                if (!isAdmins && !isOwner) return reply(mess.admin)
                let welArg = (args[0] || '').toLowerCase()
                if (!welArg) {
-                  let welState = global.welcome ? 'ON' : 'OFF'
-                  reply(`*Welcome/Goodbye Messages: ${welState}*\n\nUsage:\n${prefix}${command} on - Enable\n${prefix}${command} off - Disable`)
-               } else if (welArg === 'on' || welArg === 'enable' || welArg === 'hidup') {
+                  let welState = global.welcome ? '✅ ON' : '❌ OFF'
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *WELCOME / GOODBYE*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Status:* ${welState}\n\nWhen enabled, the bot sends a professional welcome message when a member joins and a goodbye message when one leaves.\n\n*Usage:*\n• ${prefix}welcome on  — Enable\n• ${prefix}welcome off — Disable`)
+               } else if (welArg === 'on' || welArg === 'enable') {
                   global.welcome = true
-                  reply('*Welcome/Goodbye Messages ON*\nNew members will be greeted and departures announced.')
-               } else if (welArg === 'off' || welArg === 'disable' || welArg === 'mati') {
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *WELCOME / GOODBYE*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ *Enabled in ${groupName || 'this group'}*\n\nThe bot will now greet new members and announce when members leave.`)
+               } else if (welArg === 'off' || welArg === 'disable') {
                   global.welcome = false
-                  reply('*Welcome/Goodbye Messages OFF*')
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *WELCOME / GOODBYE*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n❌ *Disabled in ${groupName || 'this group'}*\n\nWelcome and goodbye messages have been turned off.`)
                }
             }
             break
@@ -1845,14 +1845,14 @@ break
                if (!isAdmins && !isOwner) return reply(mess.admin)
                let evArg = (args[0] || '').toLowerCase()
                if (!evArg) {
-                  let evState = global.adminevent ? 'ON' : 'OFF'
-                  reply(`*Admin Events (Promote/Demote): ${evState}*\n\nUsage:\n${prefix}${command} on - Enable\n${prefix}${command} off - Disable`)
-               } else if (evArg === 'on' || evArg === 'enable' || evArg === 'hidup') {
+                  let evState = global.adminevent ? '✅ ON' : '❌ OFF'
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🌟 *ADMIN EVENTS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Status:* ${evState}\n\nWhen enabled, the bot announces admin promotions and demotions in the group.\n\n*Usage:*\n• ${prefix}events on  — Enable\n• ${prefix}events off — Disable`)
+               } else if (evArg === 'on' || evArg === 'enable') {
                   global.adminevent = true
-                  reply('*Admin Events ON*\nPromote/demote notifications will be sent in the group.')
-               } else if (evArg === 'off' || evArg === 'disable' || evArg === 'mati') {
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🌟 *ADMIN EVENTS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ *Enabled in ${groupName || 'this group'}*\n\nAdmin promotions and demotions will be announced in this group.`)
+               } else if (evArg === 'off' || evArg === 'disable') {
                   global.adminevent = false
-                  reply('*Admin Events OFF*')
+                  reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🌟 *ADMIN EVENTS*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n❌ *Disabled in ${groupName || 'this group'}*\n\nAdmin event notifications have been turned off.`)
                }
             }
             break
@@ -2094,11 +2094,11 @@ break
                                 if (!isBotAdmins) return reply(mess.botAdmin);
                                 try {
                                     await X.groupRevokeInvite(m.chat)
-                                    reply('✅ *Group invite link has been revoked.*')
+                                    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🚫 *LINK REVOKED*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ The group invite link has been *successfully revoked.*\n\n_Anyone with the old link can no longer join._\n_Use ${prefix}link or ${prefix}resetlink to get a new one._`)
                                 } catch(err) {
                                     let errMsg = (err?.message || '').toLowerCase()
                                     if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
-                                    else reply(mess.error)
+                                    else reply(`❌ *Failed to revoke group link.*\n_${err.message || 'Unknown error'}_`)
                                 }
                                 }
                                 break
@@ -3765,14 +3765,15 @@ case 'setgname': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
-if (!text) return reply(`📌 *Usage:* ${prefix}setgname [new name]`)
+if (!text) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  ✏️ *SET GROUP NAME*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Usage:* ${prefix}setgname [new name]\n\n*Example:*\n${prefix}setgname My Awesome Group`)
 try {
+let oldName = groupName || 'Unknown'
 await X.groupUpdateSubject(m.chat, text)
-reply('✅ *Group name updated.*')
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  ✏️ *GROUP NAME UPDATED*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n┌─────────────────────\n│ 📛 Old : ${oldName}\n│ ✅ New : ${text}\n└─────────────────────\n\n_Group name successfully changed._`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
-else reply(mess.error)
+else reply(`❌ *Failed to update group name.*\n_${err.message || 'Unknown error'}_`)
 }
 } break
 
@@ -3780,15 +3781,15 @@ case 'setgpp': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`📌 Reply to an image with ${prefix}setgpp`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🖼️ *SET GROUP PHOTO*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Usage:* Reply to an image with *${prefix}setgpp*\n\n_The image will be set as the group profile picture._`)
 try {
 let media = await m.quoted.download()
 await X.updateProfilePicture(m.chat, media)
-reply('✅ *Group profile picture updated!*')
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🖼️ *GROUP PHOTO UPDATED*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ *${groupName || 'Group'} profile picture has been updated successfully.*`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
-else reply('❌ Failed: ' + err.message)
+else reply(`❌ *Failed to update group photo.*\n_${err.message || 'Unknown error'}_`)
 }
 } break
 
@@ -3827,11 +3828,11 @@ if (!isBotAdmins) return reply(mess.botAdmin)
 try {
 await X.groupRevokeInvite(m.chat)
 let newCode = await X.groupInviteCode(m.chat)
-reply(`🔗 *Group link reset!*\n\n📎 New link: https://chat.whatsapp.com/${newCode}`)
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🔄 *GROUP LINK RESET*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ The old invite link has been *revoked* and a new one has been generated.\n\n┌─────────────────────\n│ 🔗 *New Invite Link:*\n│ https://chat.whatsapp.com/${newCode}\n└─────────────────────\n\n_Share this link to invite new members._`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
-else reply(mess.error)
+else reply(`❌ *Failed to reset group link.*\n_${err.message || 'Unknown error'}_`)
 }
 } break
 
@@ -3841,11 +3842,12 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
 try {
 let code = await X.groupInviteCode(m.chat)
-reply(`🔗 *Group Invite Link:*\n\n📎 https://chat.whatsapp.com/${code}`)
+let memberCount = participants.length
+reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🔗 *GROUP INVITE LINK*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n┌─────────────────────\n│ 🏘️ Group   : ${groupName || 'This Group'}\n│ 👥 Members : ${memberCount}\n└─────────────────────\n\n🔗 *Link:*\nhttps://chat.whatsapp.com/${code}\n\n_Share this link to invite others._\n_Use ${prefix}resetlink to revoke and regenerate._`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
-else reply(mess.error)
+else reply(`❌ *Failed to get group link.*\n_${err.message || 'Unknown error'}_`)
 }
 } break
 
@@ -3853,9 +3855,16 @@ case 'goodbye': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let gbArg = (args[0] || '').toLowerCase()
-if (gbArg === 'on') { global.welcome = true; reply('👋 *Goodbye Messages ON*') }
-else if (gbArg === 'off') { global.welcome = false; reply('❌ *Goodbye Messages OFF*') }
-else reply(`👋 *Goodbye: ${global.welcome ? '✅ ON' : '❌ OFF'}*\n\n📌 Usage: ${prefix}goodbye on/off`)
+if (gbArg === 'on') {
+    global.welcome = true
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *GOODBYE MESSAGES*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ *Enabled in ${groupName || 'this group'}*\n\nThe bot will now send a farewell message when a member leaves or is removed.`)
+} else if (gbArg === 'off') {
+    global.welcome = false
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *GOODBYE MESSAGES*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n❌ *Disabled in ${groupName || 'this group'}*\n\nGoodbye messages have been turned off.`)
+} else {
+    let gbState = global.welcome ? '✅ ON' : '❌ OFF'
+    reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  👋 *GOODBYE MESSAGES*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Status:* ${gbState}\n\nSends a farewell message when a member leaves or is removed.\n\n*Usage:*\n• ${prefix}goodbye on  — Enable\n• ${prefix}goodbye off — Disable\n\n_Note: This shares the same toggle as ${prefix}welcome_`)
+}
 } break
 
 // GROUP TOOLS COMMANDS
