@@ -174,7 +174,28 @@ const isSuperAdmin = isGroup && participants.length ? participants.some(p => {
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Setting Console
 if (m.message) {
-console.log(chalk.black(chalk.bgWhite('[ New Message ]')), chalk.black(chalk.bgGreen(new Date)), chalk.black(chalk.bgBlue(budy || m.mtype)) + '\n' + chalk.magenta('» Dari'), chalk.green(pushname), chalk.yellow(m.sender) + '\n' + chalk.blueBright('» Di'), chalk.green(m.isGroup ? pushname : 'Private Chat', from))
+    const _mtype = Object.keys(m.message)[0] || 'unknown'
+    // Skip noisy protocol/system messages — only log real user content
+    const _skipTypes = ['protocolMessage','senderKeyDistributionMessage','messageContextInfo','ephemeralMessage']
+    if (!_skipTypes.includes(_mtype)) {
+        const _time = new Date().toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        const _date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        const _body = budy || (m.mtype ? m.mtype.replace('Message','') : _mtype.replace('Message',''))
+        const _preview = _body.length > 60 ? _body.slice(0, 60) + '\u2026' : _body
+        const _chatLabel = m.isGroup
+            ? 'Group   ' + chalk.cyan(pushname) + chalk.dim(' [' + from.split('@')[0] + ']')
+            : 'Private ' + chalk.cyan(pushname) + chalk.dim(' [' + m.sender.split('@')[0] + ']')
+        const _icon = m.isGroup ? '\uD83D\uDC65' : '\uD83D\uDCAC'
+        const _typeIcons = {imageMessage:'\uD83D\uDDBC\uFE0F ',videoMessage:'\uD83C\uDFA5 ',audioMessage:'\uD83C\uDFB5 ',stickerMessage:'\uD83C\uDF00 ',documentMessage:'\uD83D\uDCC4 ',locationMessage:'\uD83D\uDCCD ',contactMessage:'\uD83D\uDC64 '}
+        const _tIcon = _typeIcons[_mtype] || ''
+        console.log(
+            '\n' +
+            chalk.bgCyan(chalk.black(' MSG ')) + ' ' + chalk.dim(_date) + ' ' + chalk.bold(_time) + '\n' +
+            chalk.dim('  \u251C ') + chalk.yellow('From    ') + chalk.green(pushname) + chalk.dim(' (' + m.sender.split('@')[0] + ')') + '\n' +
+            chalk.dim('  \u251C ') + chalk.yellow(_icon + ' Chat    ') + _chatLabel + '\n' +
+            chalk.dim('  \u2514 ') + chalk.yellow('\uD83D\uDCAC Text    ') + chalk.white(_tIcon + _preview)
+        )
+    }
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Auto Fake Presence (typing/recording/online)
