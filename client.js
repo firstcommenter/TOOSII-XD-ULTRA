@@ -4012,7 +4012,7 @@ if (pairPhone.length < 7 || pairPhone.length > 15) {
     return reply(`❌ *Invalid phone number.*\nMust be 7–15 digits with country code.\n\n*Example:* ${prefix}pair 254712345678`)
 }
 try {
-    await reply('🔗 _Generating pairing code via isolated session...\nThis takes up to 20 seconds. Your bot will stay online._')
+    await reply('🔗 _Generating pairing code...\nThis takes up to 30 seconds. Do NOT enter the code until you receive it here. Your bot will stay online._')
     // Use the safe global helper — spawns a SEPARATE temp socket
     // so the active bot session is never touched and never logs out
     if (typeof global.generatePairCode !== 'function') {
@@ -4022,7 +4022,7 @@ try {
     if (!code) throw new Error('No code returned from WhatsApp')
     code = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
     let formatted = code.match(/.{1,4}/g)?.join('-') || code
-    await reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🔗 *PAIRING CODE READY!*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n📱 *Phone:* +${pairPhone}\n\n┌─────────────────────\n│  🔑  *${formatted}*\n└─────────────────────\n\n*How to link:*\n➊ Open WhatsApp on the new phone\n➋ Settings › Linked Devices\n➌ Link a Device\n➍ Link with phone number\n➎ Enter the code above\n\n⏳ _Code expires in ~60 seconds._\n✅ _Your active bot session was NOT affected._`)
+    await reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🔗 *PAIRING CODE READY!*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n📱 *Phone:* +${pairPhone}\n\n┌─────────────────────\n│  🔑  *${formatted}*\n└─────────────────────\n\n*How to link:*\n➊ Open WhatsApp on the new phone\n➋ Settings › Linked Devices\n➌ Link a Device\n➍ Link with phone number\n➎ Enter the code above\n\n⏳ _Code valid for ~60 seconds. Enter it immediately after receiving this message._\n✅ _Your active bot session was NOT affected._`)
 } catch(e) {
     let msg = (e.message || '').toLowerCase()
     if (msg.includes('bad request') || msg.includes('invalid') || msg.includes('not a valid')) {
