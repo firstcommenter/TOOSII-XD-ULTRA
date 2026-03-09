@@ -5942,70 +5942,133 @@ case 'fire': {
 let tmText = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
 if (!tmText) return reply(`Example: ${prefix}${command} Your Text Here\n_Or reply to a message containing the text_`)
 
-const _tmStyleMap = { metallic: 'metallic chrome 3D text effect', ice: 'frozen ice crystal 3D text effect', snow: 'snowy winter 3D text effect', impressive: 'impressive golden 3D text', matrix: 'green matrix digital code text', light: 'glowing light beam text effect', neon: 'neon glowing sign text on dark background', devil: 'dark red devil fire text effect', purple: 'purple galaxy cosmic text effect', thunder: 'electric lightning thunder text effect', leaves: 'green leaves nature botanical text', '1917': 'vintage sepia war 1917 style text', arena: 'battle arena warrior epic text', hacker: 'green on black hacker terminal text', sand: 'sandy desert dune text effect', blackpink: 'blackpink kpop pink glam style text', glitch: 'digital glitch corrupted text effect', fire: 'burning fire flame text effect' }
-const _tmStyle = _tmStyleMap[command] || command + ' style text'
-const _tmPrompt = `3D stylized text that says "${tmText}", ${_tmStyle}, centered composition, high quality render, typography art`
-const _tmCaption = `*${command.charAt(0).toUpperCase() + command.slice(1)} Text:* ${tmText}`
-const _tmSeed = Math.floor(Math.random() * 999999)
-
-// Helper: try to download a URL as a buffer, return null on any failure
-const _tmFetch = async (url) => {
-    try {
-        const _r = await axios.get(url, { responseType: 'arraybuffer', timeout: 25000, headers: { 'User-Agent': 'Mozilla/5.0' } })
-        const _b = Buffer.from(_r.data)
-        return _b.length > 5000 ? _b : null
-    } catch { return null }
+// ── Style config: bg color, text color, shadow/glow color per theme ──────────
+const _tmStyles = {
+    metallic:   { bg: [30,30,40],    fg: [200,210,220], glow: [150,160,170], label: '🔩 Metallic' },
+    ice:        { bg: [10,30,60],    fg: [180,230,255], glow: [100,200,255], label: '🧊 Ice' },
+    snow:       { bg: [220,235,255], fg: [255,255,255], glow: [180,200,240], label: '❄️ Snow' },
+    impressive: { bg: [20,10,0],     fg: [255,200,50],  glow: [255,150,0],   label: '✨ Impressive' },
+    matrix:     { bg: [0,10,0],      fg: [0,255,70],    glow: [0,180,40],    label: '🖥️ Matrix' },
+    light:      { bg: [0,0,20],      fg: [255,255,200], glow: [255,230,100], label: '💡 Light' },
+    neon:       { bg: [5,0,20],      fg: [255,50,200],  glow: [200,0,255],   label: '🌟 Neon' },
+    devil:      { bg: [20,0,0],      fg: [255,50,50],   glow: [200,0,0],     label: '😈 Devil' },
+    purple:     { bg: [10,0,30],     fg: [180,100,255], glow: [120,0,255],   label: '💜 Purple' },
+    thunder:    { bg: [10,10,30],    fg: [255,255,100], glow: [200,200,0],   label: '⚡ Thunder' },
+    leaves:     { bg: [0,20,0],      fg: [100,220,80],  glow: [50,180,30],   label: '🍃 Leaves' },
+    '1917':     { bg: [40,30,20],    fg: [200,170,120], glow: [150,120,80],  label: '🎖️ 1917' },
+    arena:      { bg: [20,10,0],     fg: [255,150,50],  glow: [200,80,0],    label: '⚔️ Arena' },
+    hacker:     { bg: [0,5,0],       fg: [0,200,60],    glow: [0,255,80],    label: '👾 Hacker' },
+    sand:       { bg: [60,45,20],    fg: [220,190,120], glow: [200,160,80],  label: '🏜️ Sand' },
+    blackpink:  { bg: [10,0,10],     fg: [255,100,180], glow: [255,20,150],  label: '🌸 Blackpink' },
+    glitch:     { bg: [0,0,20],      fg: [255,0,80],    glow: [0,255,200],   label: '📺 Glitch' },
+    fire:       { bg: [20,5,0],      fg: [255,120,20],  glow: [255,50,0],    label: '🔥 Fire' }
 }
 
-// 4 completely different providers — tries each in order until one works
-const _tmProviders = [
-    // 1. Pollinations flux model (best quality)
-    () => `https://image.pollinations.ai/prompt/${encodeURIComponent(_tmPrompt)}?model=flux&width=1024&height=512&seed=${_tmSeed}&nologo=true`,
-    // 2. Pollinations default model with different seed (different server path)
-    () => `https://image.pollinations.ai/prompt/${encodeURIComponent(_tmPrompt)}?width=1024&height=512&seed=${_tmSeed + 1}&nologo=true&model=turbo`,
-    // 3. Lexica aperture (no rate limit, no key needed)
-    async () => {
-        const _res = await axios.get(`https://lexica.art/api/v1/search?q=${encodeURIComponent(_tmPrompt)}`, { timeout: 10000 })
-        const _imgs = _res?.data?.images
-        if (_imgs && _imgs.length > 0) return _imgs[Math.floor(Math.random() * Math.min(5, _imgs.length))].src
-        return null
-    },
-    // 4. Picsum + text overlay as last resort (always works)
-    () => `https://via.placeholder.com/1024x512/1a1a2e/ffffff?text=${encodeURIComponent(tmText.slice(0, 30))}`
-]
+const _st = _tmStyles[command] || _tmStyles.neon
+const _tmCaption = `${_st.label} Text: ${tmText}`
 
 try {
-    await reply('🎨 _Generating image..._')
-    let _tmBuffer = null
-    let _providerUsed = -1
+    const Jimp = require('jimp')
+    const W = 900, H = 300
+    const img = new Jimp(W, H)
 
-    for (let _pi = 0; _pi < _tmProviders.length; _pi++) {
-        try {
-            const _urlOrFn = _tmProviders[_pi]
-            let _url = typeof _urlOrFn === 'function' ? await _urlOrFn() : _urlOrFn
-            if (!_url) continue
-            if (typeof _url === 'string' && _url.startsWith('http')) {
-                _tmBuffer = await _tmFetch(_url)
-            }
-            if (_tmBuffer && _tmBuffer.length > 5000) {
-                _providerUsed = _pi
-                break
-            }
-        } catch { continue }
+    // Fill background
+    const [br, bg, bb] = _st.bg
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            // Subtle gradient: slightly lighter at center
+            const dx = (x - W/2) / W, dy = (y - H/2) / H
+            const fade = Math.max(0, 1 - (dx*dx + dy*dy) * 2)
+            const r = Math.min(255, br + fade * 20) | 0
+            const g = Math.min(255, bg + fade * 20) | 0
+            const b = Math.min(255, bb + fade * 20) | 0
+            img.setPixelColor(Jimp.rgbaToInt(r, g, b, 255), x, y)
+        }
     }
 
-    if (!_tmBuffer || _tmBuffer.length < 5000) {
-        // Last resort: send placeholder URL directly — always visible
-        await X.sendMessage(m.chat, {
-            image: { url: `https://via.placeholder.com/1024x512/1a1a2e/00d4ff?text=${encodeURIComponent(tmText.slice(0, 40))}` },
-            caption: _tmCaption + '\n\n_⚠️ All image servers busy — using placeholder_'
-        }, { quoted: m })
-    } else {
-        await X.sendMessage(m.chat, { image: _tmBuffer, caption: _tmCaption }, { quoted: m })
+    // Load built-in font — jimp ships with bitmap fonts, no external files needed
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
+    const fontSm = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
+
+    // Measure text width to center it
+    const tw = Jimp.measureText(font, tmText)
+    const th = Jimp.measureTextHeight(font, tmText, W - 40)
+    const tx = Math.max(20, (W - Math.min(tw, W - 40)) / 2)
+    const ty = (H - th) / 2
+
+    // Draw glow layers (offset copies in glow color for bloom effect)
+    const glowImg = new Jimp(W, H, 0x00000000)
+    const offsets = [[-3,0],[3,0],[0,-3],[0,3],[-2,-2],[2,2],[-2,2],[2,-2]]
+    for (const [ox, oy] of offsets) {
+        glowImg.print(font, tx + ox, ty + oy, { text: tmText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, W - 40, H)
     }
+    // Tint glow to theme color
+    glowImg.scan(0, 0, W, H, function(x, y, idx) {
+        if (this.bitmap.data[idx + 3] > 0) {
+            this.bitmap.data[idx]     = _st.glow[0]
+            this.bitmap.data[idx + 1] = _st.glow[1]
+            this.bitmap.data[idx + 2] = _st.glow[2]
+        }
+    })
+    img.composite(glowImg, 0, 0, { mode: Jimp.BLEND_SCREEN, opacitySource: 0.6, opacityDest: 1 })
+
+    // Draw main text in theme fg color
+    const textImg = new Jimp(W, H, 0x00000000)
+    textImg.print(font, tx, ty, { text: tmText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, W - 40, H)
+    textImg.scan(0, 0, W, H, function(x, y, idx) {
+        if (this.bitmap.data[idx + 3] > 0) {
+            this.bitmap.data[idx]     = _st.fg[0]
+            this.bitmap.data[idx + 1] = _st.fg[1]
+            this.bitmap.data[idx + 2] = _st.fg[2]
+        }
+    })
+    img.composite(textImg, 0, 0)
+
+    // Special effects per style
+    if (command === 'glitch') {
+        // Horizontal RGB split on a random strip
+        for (let i = 0; i < 8; i++) {
+            const gy = Math.floor(Math.random() * H)
+            const gh = Math.floor(Math.random() * 6) + 2
+            const shift = Math.floor(Math.random() * 12) - 6
+            for (let y2 = gy; y2 < Math.min(H, gy + gh); y2++) {
+                for (let x2 = 0; x2 < W; x2++) {
+                    const sx = Math.max(0, Math.min(W - 1, x2 + shift))
+                    const c = img.getPixelColor(sx, y2)
+                    const {r, g, b, a} = Jimp.intToRGBA(c)
+                    img.setPixelColor(Jimp.rgbaToInt(r, 0, b, a), x2, y2)
+                }
+            }
+        }
+    }
+    if (command === 'matrix' || command === 'hacker') {
+        // Scanlines
+        for (let y2 = 0; y2 < H; y2 += 3) {
+            for (let x2 = 0; x2 < W; x2++) {
+                const c = Jimp.intToRGBA(img.getPixelColor(x2, y2))
+                img.setPixelColor(Jimp.rgbaToInt(c.r * 0.7 | 0, c.g * 0.7 | 0, c.b * 0.7 | 0, 255), x2, y2)
+            }
+        }
+    }
+
+    // Small label bottom-right
+    img.print(fontSm, W - 220, H - 40, _st.label)
+
+    const _buf = await img.getBufferAsync(Jimp.MIME_JPEG)
+    await X.sendMessage(m.chat, { image: _buf, caption: _tmCaption }, { quoted: m })
+
 } catch(e) {
-    // Absolute fallback — plain text response so user knows what happened
-    reply(`⏳ *Image servers are busy right now.*\n\nTry again in a few seconds.\n\n_Style:_ ${_tmStyle}\n_Text:_ ${tmText}`)
+    // Final fallback: try pollinations, if that fails tell user
+    try {
+        const _prompt = encodeURIComponent(`stylized 3D text "${tmText}", ${_st.label} effect, dark background, typography`)
+        const _seed = Math.floor(Math.random() * 999999)
+        const _buf2 = await getBuffer(`https://image.pollinations.ai/prompt/${_prompt}?model=flux&width=900&height=300&seed=${_seed}&nologo=true`)
+        if (_buf2 && _buf2.length > 5000) {
+            await X.sendMessage(m.chat, { image: _buf2, caption: _tmCaption }, { quoted: m })
+        } else throw new Error('empty')
+    } catch {
+        reply(`❌ *Text maker failed:* ${e.message}\n_Try again or check bot logs._`)
+    }
 }
 } break
 
