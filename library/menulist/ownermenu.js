@@ -50,6 +50,19 @@ const ownerMenu = `
 ┃➤ .autolikestatus [ᴇᴍᴏᴊɪ/ᴏꜰꜰ]
 ┗❒
 
+┏❒ *🤖 ᴀɪ ᴄʜᴀᴛʙᴏᴛ ᴍᴏᴅᴇꜱ* ❒
+┃➤ .setaimode status
+┃➤ .setaimode global ᴏɴ/ᴏꜰꜰ
+┃➤ .setaimode dm ᴏɴ/ᴏꜰꜰ
+┃➤ .setaimode dm add [ɴᴜᴍ]
+┃➤ .setaimode dm remove [ɴᴜᴍ]
+┃➤ .setaimode group ᴏɴ/ᴏꜰꜰ
+┃➤ .setaimode group add
+┃➤ .setaimode group remove
+┃➤ .setaimode group list
+┃➤ .setaimode reset
+┗❒
+
 ┏❒ *ʙʟᴏᴄᴋ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ* ❒
 ┃➤ .block @ᴜꜱᴇʀ
 ┃➤ .unblock @ᴜꜱᴇʀ
