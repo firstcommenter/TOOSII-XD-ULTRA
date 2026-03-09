@@ -3274,6 +3274,143 @@ try {
     reply(`🤖 *ChatBoAI*\n\n${_cbaReply}`)
 } catch(e) { reply('❌ ChatBoAI error: ' + (e.message || 'Unknown').slice(0, 100)) }
 } break
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// AI ChatBot — Separate DM / Group / Global modes (Owner Control)
+case 'setaimode':
+case 'aimode': {
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _mode = (args[0] || '').toLowerCase()
+    const _action = (args[1] || '').toLowerCase()
+
+    // .setaimode status — show current config
+    if (_mode === 'status' || _mode === 'info' || !_mode) {
+        const _dmState = global.aiBotDM ? '✅ ON' : '❌ OFF'
+        const _grpState = global.aiBotGroup ? '✅ ON' : '❌ OFF'
+        const _globalState = global.aiBotGlobal ? '✅ ON' : '❌ OFF'
+        const _grpCount = Object.keys(global.aiBotGroupChats || {}).length
+        const _dmCount = Object.keys(global.aiBotDMChats || {}).length
+        return reply(
+`┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   🤖 *AI ChatBot Modes*
+┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📨 *DM Mode:* ${_dmState}
+   ↳ Replies to all private chats
+   ↳ Active DM chats: ${_dmCount}
+
+👥 *Group Mode:* ${_grpState}
+   ↳ Replies in specific groups
+   ↳ Active groups: ${_grpCount}
+
+🌐 *Global Mode:* ${_globalState}
+   ↳ Replies everywhere
+
+┌─────────────────────────
+│ *Commands (Owner Only):*
+│
+│ ${prefix}setaimode dm on/off
+│ ${prefix}setaimode group on/off
+│ ${prefix}setaimode global on/off
+│ ${prefix}setaimode group add [jid]
+│ ${prefix}setaimode group remove [jid]
+│ ${prefix}setaimode dm add [number]
+│ ${prefix}setaimode dm remove [number]
+│ ${prefix}setaimode reset — clear all
+└─────────────────────────`)
+    }
+
+    // Initialize stores
+    if (!global.aiBotGroupChats) global.aiBotGroupChats = {}
+    if (!global.aiBotDMChats) global.aiBotDMChats = {}
+
+    if (_mode === 'global') {
+        if (_action === 'on' || _action === 'enable') {
+            global.aiBotGlobal = true
+            global.aiBotDM = false
+            global.aiBotGroup = false
+            return reply('🌐 *AI Global Mode: ✅ ON*\n_Bot will now reply to ALL messages everywhere._\n⚠️ _DM and Group modes auto-disabled (global overrides)._')
+        }
+        if (_action === 'off' || _action === 'disable') {
+            global.aiBotGlobal = false
+            return reply('🌐 *AI Global Mode: ❌ OFF*')
+        }
+        return reply(`Usage: ${prefix}setaimode global on/off`)
+    }
+
+    if (_mode === 'dm') {
+        if (_action === 'on' || _action === 'enable') {
+            global.aiBotDM = true
+            global.aiBotGlobal = false
+            return reply('📨 *AI DM Mode: ✅ ON*\n_Bot will now auto-reply to all private DM messages._\n_Global mode was disabled._')
+        }
+        if (_action === 'off' || _action === 'disable') {
+            global.aiBotDM = false
+            return reply('📨 *AI DM Mode: ❌ OFF*\n_Bot will no longer auto-reply to DMs._')
+        }
+        // Add specific DM number
+        if (_action === 'add') {
+            let _dmNum = (args[2] || '').replace(/[^0-9]/g, '')
+            if (!_dmNum) return reply(`Usage: ${prefix}setaimode dm add [number]\nExample: ${prefix}setaimode dm add 254712345678`)
+            let _dmJid = _dmNum + '@s.whatsapp.net'
+            global.aiBotDMChats[_dmJid] = true
+            return reply(`📨 *DM Whitelist Added*\n+${_dmNum} will now receive AI replies.`)
+        }
+        if (_action === 'remove') {
+            let _dmNum2 = (args[2] || '').replace(/[^0-9]/g, '')
+            if (!_dmNum2) return reply(`Usage: ${prefix}setaimode dm remove [number]`)
+            let _dmJid2 = _dmNum2 + '@s.whatsapp.net'
+            delete global.aiBotDMChats[_dmJid2]
+            return reply(`📨 *DM Whitelist Removed*\n+${_dmNum2} removed from AI DM list.`)
+        }
+        return reply(`Usage: ${prefix}setaimode dm on/off/add/remove`)
+    }
+
+    if (_mode === 'group') {
+        if (_action === 'on' || _action === 'enable') {
+            global.aiBotGroup = true
+            global.aiBotGlobal = false
+            return reply('👥 *AI Group Mode: ✅ ON*\n_Bot will auto-reply in whitelisted groups._\n_Use_ ' + prefix + 'setaimode group add _to whitelist a group._\n_Global mode was disabled._')
+        }
+        if (_action === 'off' || _action === 'disable') {
+            global.aiBotGroup = false
+            return reply('👥 *AI Group Mode: ❌ OFF*\n_Bot will stop auto-replying in groups._')
+        }
+        // Add current group or specified JID
+        if (_action === 'add') {
+            let _grpJid = args[2] || (m.isGroup ? from : null)
+            if (!_grpJid) return reply(`Run this command inside the target group, or provide the group JID.\nUsage: ${prefix}setaimode group add [groupJID]`)
+            if (!_grpJid.endsWith('@g.us')) _grpJid = _grpJid + '@g.us'
+            global.aiBotGroupChats[_grpJid] = true
+            let _grpName = m.isGroup && _grpJid === from ? groupName : _grpJid
+            return reply(`👥 *Group Added to AI Whitelist*\n_${_grpName}_ will now get AI replies.`)
+        }
+        if (_action === 'remove') {
+            let _grpJid2 = args[2] || (m.isGroup ? from : null)
+            if (!_grpJid2) return reply(`Run inside the group or provide JID.\nUsage: ${prefix}setaimode group remove [groupJID]`)
+            if (!_grpJid2.endsWith('@g.us')) _grpJid2 = _grpJid2 + '@g.us'
+            delete global.aiBotGroupChats[_grpJid2]
+            return reply(`👥 *Group Removed from AI Whitelist*\n${_grpJid2} removed.`)
+        }
+        if (_action === 'list') {
+            let _keys = Object.keys(global.aiBotGroupChats || {})
+            if (!_keys.length) return reply('👥 No groups whitelisted yet.\nUse ' + prefix + 'setaimode group add inside a group.')
+            return reply(`👥 *Whitelisted Groups (${_keys.length}):*\n\n` + _keys.map((k, i) => `${i+1}. ${k}`).join('\n'))
+        }
+        return reply(`Usage: ${prefix}setaimode group on/off/add/remove/list`)
+    }
+
+    if (_mode === 'reset' || _mode === 'clear') {
+        global.aiBotDM = false
+        global.aiBotGroup = false
+        global.aiBotGlobal = false
+        global.aiBotGroupChats = {}
+        global.aiBotDMChats = {}
+        return reply('🔄 *AI ChatBot Reset*\n_All AI modes disabled and whitelists cleared._')
+    }
+
+    return reply(`❌ Unknown mode: *${_mode}*\n\nValid modes: dm, group, global, status, reset`)
+} break
 case 'blackbox-pro':{  
   if (!text) return reply('Please enter your question?');
   try {
@@ -6509,6 +6646,45 @@ if (global.chatBot && budy && !budy.startsWith('>') && !budy.startsWith('=>') &&
         }
     } catch (chatErr) {
         console.log('[ChatBot] Error:', chatErr.message || chatErr)
+    }
+}
+
+// ── AI ChatBot — Separate DM / Group / Global Modes (.setaimode) ────────
+// Skip if already handled by chatBoAIChats or chatBot, or if it's a command
+if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAIChats[m.chat]) && !global.chatBot) {
+    let _aiShouldReply = false
+
+    // 1. Global mode — reply everywhere
+    if (global.aiBotGlobal) {
+        _aiShouldReply = true
+    }
+
+    // 2. DM mode — reply in private chats
+    if (!_aiShouldReply && global.aiBotDM && !m.isGroup) {
+        // If specific DM whitelist is set, only reply to those numbers
+        const _dmKeys = Object.keys(global.aiBotDMChats || {})
+        if (_dmKeys.length > 0) {
+            _aiShouldReply = !!global.aiBotDMChats[from]
+        } else {
+            // No whitelist = reply to ALL DMs
+            _aiShouldReply = true
+        }
+    }
+
+    // 3. Group mode — reply in whitelisted groups
+    if (!_aiShouldReply && global.aiBotGroup && m.isGroup) {
+        _aiShouldReply = !!(global.aiBotGroupChats && global.aiBotGroupChats[from])
+    }
+
+    if (_aiShouldReply) {
+        try {
+            const _modeLabel = global.aiBotGlobal ? '🌐' : m.isGroup ? '👥' : '📨'
+            await react('🤖')
+            const _modeReply = await _runChatBoAI(budy, true)
+            if (_modeReply?.trim()) reply(_modeReply.trim())
+        } catch (_modeErr) {
+            console.log('[AI-Mode] Error:', _modeErr.message || _modeErr)
+        }
     }
 }
 }
