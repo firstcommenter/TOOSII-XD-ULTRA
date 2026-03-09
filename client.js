@@ -14,7 +14,8 @@ by Toosii Tech • 2024 - 2026
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
 require("./logger")   // ← Smart log suppressor (load FIRST)
-require("./setting")const { downloadContentFromMessage, proto, generateWAMessage, getContentType, prepareWAMessageMedia, generateWAMessageFromContent, GroupSettingChange, jidDecode, WAGroupMetadata, emitGroupParticipantsUpdate, emitGroupUpdate, generateMessageID, jidNormalizedUser, generateForwardMessageContent, WAGroupInviteMessageGroupMetadata, GroupMetadata, Headers, delay, WA_DEFAULT_EPHEMERAL, WADefault, getAggregateVotesInPollMessage, generateWAMessageContent, areJidsSameUser, useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWaconnet, makeInMemoryStore, MediaType, WAMessageStatus, downloadAndSaveMediaMessage, AuthenticationState, initInMemoryKeyStore, MiscMessageGenerationOptions, useSingleFileAuthState, BufferJSON, WAMessageProto, MessageOptions, WAFlag, WANode, WAMetric, ChatModification, MessageTypeProto, WALocationMessage, ReconnectMode, WAContextInfo, ProxyAgent, waChatKey, MimetypeMap, MediaPathMap, WAContactMessage, WAContactsArrayMessage, WATextMessage, WAMessageContent, WAMessage, BaileysError, WA_MESSAGE_STATUS_TYPE, MediaConnInfo, URL_REGEX, WAUrlInfo, WAMediaUpload, mentionedJid, processTime, Browser, MessageType,
+require("./setting")
+const { downloadContentFromMessage, proto, generateWAMessage, getContentType, prepareWAMessageMedia, generateWAMessageFromContent, GroupSettingChange, jidDecode, WAGroupMetadata, emitGroupParticipantsUpdate, emitGroupUpdate, generateMessageID, jidNormalizedUser, generateForwardMessageContent, WAGroupInviteMessageGroupMetadata, GroupMetadata, Headers, delay, WA_DEFAULT_EPHEMERAL, WADefault, getAggregateVotesInPollMessage, generateWAMessageContent, areJidsSameUser, useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWaconnet, makeInMemoryStore, MediaType, WAMessageStatus, downloadAndSaveMediaMessage, AuthenticationState, initInMemoryKeyStore, MiscMessageGenerationOptions, useSingleFileAuthState, BufferJSON, WAMessageProto, MessageOptions, WAFlag, WANode, WAMetric, ChatModification, MessageTypeProto, WALocationMessage, ReconnectMode, WAContextInfo, ProxyAgent, waChatKey, MimetypeMap, MediaPathMap, WAContactMessage, WAContactsArrayMessage, WATextMessage, WAMessageContent, WAMessage, BaileysError, WA_MESSAGE_STATUS_TYPE, MediaConnInfo, URL_REGEX, WAUrlInfo, WAMediaUpload, mentionedJid, processTime, Browser, MessageType,
 Presence, WA_MESSAGE_STUB_TYPES, Mimetype, relayWAMessage, Browsers, DisconnectReason, WAconnet, getStream, WAProto, isBaileys, AnyMessageContent, templateMessage, InteractiveMessage, Header } = require("gifted-baileys")
 const os = require('os')
 const fs = require('fs')
@@ -1135,8 +1136,284 @@ case 'ytplay': {
 }
 break;
 //━━━━━━━━━━━━━━━━━━━━━━━━//
-// Other Features
-case 'owner': case 'botowner':
+// Lyrics Command — multi-source with fallback chain
+case 'lyrics':
+case 'lyric':
+case 'songlyrics': {
+    if (!text) return reply(
+`🎵 *Lyrics Search*
+
+Usage: ${prefix}lyrics [song name] - [artist]
+Examples:
+• ${prefix}lyrics Lucid Dreams Juice WRLD
+• ${prefix}lyrics Blinding Lights - The Weeknd
+• ${prefix}lyrics HUMBLE Kendrick Lamar`)
+
+    await react('🎵')
+
+    // Parse "song - artist" or "song artist" from input
+    let _lyrQuery = text.trim()
+    let _lyrSong = _lyrQuery
+    let _lyrArtist = ''
+    const _dashSplit = _lyrQuery.split(/\s*-\s*/)
+    if (_dashSplit.length >= 2) {
+        _lyrSong = _dashSplit[0].trim()
+        _lyrArtist = _dashSplit.slice(1).join(' ').trim()
+    }
+
+    let _lyrResult = null
+    let _lyrSource = ''
+
+    // ── Source 1: lyrics.ovh (free, no key) ─────────────────────────
+    if (!_lyrResult && _lyrArtist) {
+        try {
+            const _r1 = await axios.get(
+                `https://api.lyrics.ovh/v1/${encodeURIComponent(_lyrArtist)}/${encodeURIComponent(_lyrSong)}`,
+                { timeout: 10000 }
+            )
+            if (_r1.data?.lyrics?.trim().length > 10) {
+                _lyrResult = { lyrics: _r1.data.lyrics.trim(), title: _lyrSong, artist: _lyrArtist }
+                _lyrSource = 'lyrics.ovh'
+            }
+        } catch {}
+    }
+
+    // ── Source 2: Lyrics.ovh search (no artist needed) ───────────────
+    if (!_lyrResult) {
+        try {
+            const _r2 = await axios.get(
+                `https://api.lyrics.ovh/suggest/${encodeURIComponent(_lyrQuery)}`,
+                { timeout: 10000 }
+            )
+            const _hit = _r2.data?.data?.[0]
+            if (_hit) {
+                const _r2b = await axios.get(
+                    `https://api.lyrics.ovh/v1/${encodeURIComponent(_hit.artist?.name || '')}/${encodeURIComponent(_hit.title || '')}`,
+                    { timeout: 10000 }
+                )
+                if (_r2b.data?.lyrics?.trim().length > 10) {
+                    _lyrResult = {
+                        lyrics: _r2b.data.lyrics.trim(),
+                        title: _hit.title || _lyrSong,
+                        artist: _hit.artist?.name || _lyrArtist,
+                        album: _hit.album?.title || '',
+                        thumbnail: _hit.album?.cover_medium || ''
+                    }
+                    _lyrSource = 'lyrics.ovh'
+                }
+            }
+        } catch {}
+    }
+
+    // ── Source 3: Musixmatch unofficial ──────────────────────────────
+    if (!_lyrResult) {
+        try {
+            const _mmSearch = await axios.get(
+                `https://api.musixmatch.com/ws/1.1/track.search?q_track_artist=${encodeURIComponent(_lyrQuery)}&page_size=1&page=1&s_track_rating=desc&apikey=0e9ce71d2f2c9251f74a9bfcd7e3aead`,
+                { timeout: 10000 }
+            )
+            const _mmTrack = _mmSearch.data?.message?.body?.track_list?.[0]?.track
+            if (_mmTrack) {
+                const _mmLyr = await axios.get(
+                    `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${_mmTrack.track_id}&apikey=0e9ce71d2f2c9251f74a9bfcd7e3aead`,
+                    { timeout: 10000 }
+                )
+                const _mmText = _mmLyr.data?.message?.body?.lyrics?.lyrics_body?.trim()
+                if (_mmText && _mmText.length > 10 && !_mmText.includes('******* This Lyrics')) {
+                    _lyrResult = {
+                        lyrics: _mmText,
+                        title: _mmTrack.track_name || _lyrSong,
+                        artist: _mmTrack.artist_name || _lyrArtist
+                    }
+                    _lyrSource = 'Musixmatch'
+                }
+            }
+        } catch {}
+    }
+
+    // ── Source 4: lrclib.net (has synced + plain lyrics, no key) ─────
+    if (!_lyrResult) {
+        try {
+            const _lcQ = encodeURIComponent(_lyrQuery)
+            const _lcRes = await axios.get(
+                `https://lrclib.net/api/search?q=${_lcQ}`,
+                { timeout: 10000 }
+            )
+            const _lcHit = _lcRes.data?.[0]
+            if (_lcHit && (_lcHit.plainLyrics || _lcHit.syncedLyrics)) {
+                // Prefer plain lyrics; strip timestamps from synced if needed
+                let _lcText = _lcHit.plainLyrics || ''
+                if (!_lcText && _lcHit.syncedLyrics) {
+                    _lcText = _lcHit.syncedLyrics
+                        .split('\n')
+                        .map(l => l.replace(/^\[\d+:\d+\.\d+\]\s*/, '').trim())
+                        .filter(Boolean)
+                        .join('\n')
+                }
+                if (_lcText.trim().length > 10) {
+                    _lyrResult = {
+                        lyrics: _lcText.trim(),
+                        title: _lcHit.trackName || _lyrSong,
+                        artist: _lcHit.artistName || _lyrArtist,
+                        album: _lcHit.albumName || ''
+                    }
+                    _lyrSource = 'lrclib.net'
+                }
+            }
+        } catch {}
+    }
+
+    // ── Source 5: Genius search via unofficial scrape helper ─────────
+    if (!_lyrResult) {
+        try {
+            const _gSearch = await axios.get(
+                `https://genius.com/api/search/multi?per_page=1&q=${encodeURIComponent(_lyrQuery)}`,
+                {
+                    timeout: 10000,
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+                }
+            )
+            const _gHits = _gSearch.data?.response?.sections?.find(s => s.type === 'song')?.hits
+            const _gHit = _gHits?.[0]?.result
+            if (_gHit) {
+                // Scrape the Genius page for plain lyrics
+                const _gPage = await axios.get(_gHit.url, {
+                    timeout: 12000,
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+                })
+                const _gHtml = _gPage.data || ''
+                // Extract lyrics from data-lyrics-container divs
+                const _lyricChunks = []
+                const _containerRe = /data-lyrics-container="true"[^>]*>([\s\S]*?)<\/div>/gi
+                let _cm
+                while ((_cm = _containerRe.exec(_gHtml)) !== null) {
+                    let _chunk = _cm[1]
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<[^>]+>/g, '')
+                        .replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+                        .replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                        .replace(/&nbsp;/g, ' ')
+                    _lyricChunks.push(_chunk.trim())
+                }
+                const _gLyrics = _lyricChunks.join('\n\n').trim()
+                if (_gLyrics.length > 20) {
+                    _lyrResult = {
+                        lyrics: _gLyrics,
+                        title: _gHit.title || _lyrSong,
+                        artist: _gHit.primary_artist?.name || _lyrArtist,
+                        thumbnail: _gHit.song_art_image_thumbnail_url || ''
+                    }
+                    _lyrSource = 'Genius'
+                }
+            }
+        } catch {}
+    }
+
+    // ── Source 6: AI fallback — generate from knowledge ──────────────
+    if (!_lyrResult) {
+        try {
+            const _aiLyr = await _runChatBoAI(
+                `Please provide the full song lyrics for "${_lyrQuery}". Format: first line = "Title: [title]", second line = "Artist: [artist]", then a blank line, then the complete lyrics. If you don't know the exact lyrics, say UNKNOWN.`,
+                false
+            )
+            if (_aiLyr && !_aiLyr.includes('UNKNOWN') && _aiLyr.length > 50) {
+                const _aiLines = _aiLyr.split('\n')
+                const _aiTitle = (_aiLines.find(l => /^title:/i.test(l)) || '').replace(/^title:\s*/i, '').trim() || _lyrSong
+                const _aiArtist = (_aiLines.find(l => /^artist:/i.test(l)) || '').replace(/^artist:\s*/i, '').trim() || _lyrArtist
+                const _aiText = _aiLines.filter(l => !/^(title|artist):/i.test(l)).join('\n').trim()
+                if (_aiText.length > 20) {
+                    _lyrResult = { lyrics: _aiText, title: _aiTitle, artist: _aiArtist }
+                    _lyrSource = 'AI'
+                }
+            }
+        } catch {}
+    }
+
+    // ── No result found ───────────────────────────────────────────────
+    if (!_lyrResult) {
+        return reply(
+`❌ *Lyrics Not Found*
+
+Could not find lyrics for: *${_lyrQuery}*
+
+Tips:
+• Try: ${prefix}lyrics [song name] - [artist name]
+• Check spelling
+• Use English title if available`)
+    }
+
+    // ── Format & send lyrics ──────────────────────────────────────────
+    const _cleanLyrics = _lyrResult.lyrics
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
+
+    // Split into chunks if lyrics are too long (WA message limit ~65KB)
+    const _MAX_CHUNK = 3500
+    const _lyrHeader =
+`┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🎵 *SONG LYRICS*
+┗━━━━━━━━━━━━━━━━━━━━━━━┛
+
+🎤 *Title:*  ${_lyrResult.title}
+👤 *Artist:* ${_lyrResult.artist}${_lyrResult.album ? `\n💿 *Album:*  ${_lyrResult.album}` : ''}
+📡 *Source:* ${_lyrSource}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`
+
+    if (_cleanLyrics.length <= _MAX_CHUNK) {
+        const _fullMsg = _lyrHeader + _cleanLyrics + '\n\n_─────────────────────────_\n_🤖 TOOSII-XD ULTRA_'
+        // Send with thumbnail if available
+        if (_lyrResult.thumbnail) {
+            try {
+                const _thumb = await getBuffer(_lyrResult.thumbnail)
+                await X.sendMessage(m.chat, { image: _thumb, caption: _fullMsg }, { quoted: m })
+            } catch {
+                reply(_fullMsg)
+            }
+        } else {
+            reply(_fullMsg)
+        }
+    } else {
+        // Send in multiple parts for long lyrics
+        const _parts = []
+        let _remaining = _cleanLyrics
+        while (_remaining.length > 0) {
+            // Try to break at a newline near the limit
+            let _cutAt = _MAX_CHUNK
+            if (_remaining.length > _MAX_CHUNK) {
+                const _breakAt = _remaining.lastIndexOf('\n', _MAX_CHUNK)
+                _cutAt = _breakAt > 500 ? _breakAt : _MAX_CHUNK
+            }
+            _parts.push(_remaining.slice(0, _cutAt).trim())
+            _remaining = _remaining.slice(_cutAt).trim()
+        }
+
+        // Part 1 — with header and thumbnail
+        const _part1 = _lyrHeader + _parts[0]
+        if (_lyrResult.thumbnail) {
+            try {
+                const _thumb = await getBuffer(_lyrResult.thumbnail)
+                await X.sendMessage(m.chat, { image: _thumb, caption: _part1 }, { quoted: m })
+            } catch {
+                await X.sendMessage(m.chat, { text: _part1 }, { quoted: m })
+            }
+        } else {
+            await X.sendMessage(m.chat, { text: _part1 }, { quoted: m })
+        }
+
+        // Remaining parts
+        for (let _pi = 1; _pi < _parts.length; _pi++) {
+            const _isLast = _pi === _parts.length - 1
+            await X.sendMessage(m.chat, {
+                text: `🎵 *[Part ${_pi + 1}/${_parts.length}]*\n\n${_parts[_pi]}${_isLast ? '\n\n_─────────────────────────_\n_🤖 TOOSII-XD ULTRA_' : ''}`
+            }, { quoted: m })
+            await new Promise(r => setTimeout(r, 500))
+        }
+    }
+} break
 let namaown = `Toosii Tech`
 var contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
 "contactMessage": {
