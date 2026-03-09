@@ -405,14 +405,14 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
     if (!mek.key.fromMe) {
         try {
             // Get the status poster's JID correctly
-            let statusPosterJid = mek.key.participant || mek.key.remoteJid
-            let botSelfJid = X.decodeJid(X.user.id)
+            // Normalize JID: strip device suffix (:0) so all operations use clean JID
+            let _rawPosterJid = mek.key.participant || mek.key.remoteJid
+            let statusPosterJid = _rawPosterJid.includes(':') ? _rawPosterJid.replace(/:.*@/, '@') : _rawPosterJid
+            let botSelfJid = X.decodeJid(X.user.id).replace(/:.*@/, '@')
 
             // ── Auto View Status (gifted-baileys 2.0.4+ protocol) ────
             if (global.autoViewStatus) {
                 try {
-                    // gifted-baileys 2.0.4+: readMessages with full status key
-                    // sendStatusReadReceipts: true in socket config handles server-side ACK automatically
                     await X.readMessages([{
                         remoteJid: 'status@broadcast',
                         id: mek.key.id,
@@ -420,55 +420,52 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     }])
                     console.log(`[${phone}] ✅ Auto-viewed status from ${statusPosterJid}`)
                 } catch (viewErr) {
-                    // Fallback: try with raw key
                     try { await X.readMessages([mek.key]) } catch {}
-                    console.log(`[${phone}] Auto-view fallback from ${statusPosterJid}:`, viewErr.message || viewErr)
+                    console.log(`[${phone}] Auto-view fallback:`, viewErr.message || viewErr)
                 }
             }
 
             // ── Auto Like Status (gifted-baileys 2.0.4+ protocol) ────
             if (global.autoLikeStatus && global.autoLikeEmoji) {
                 try {
-                    // Small delay so view receipt is registered before reaction
-                    await new Promise(r => setTimeout(r, 1000))
-                    // Send reaction via statusJidList — required for status reactions in gifted-baileys 2.0.4+
-                    await X.sendMessage('status@broadcast', {
-                        react: {
-                            text: global.autoLikeEmoji,
-                            key: {
-                                remoteJid: 'status@broadcast',
-                                id: mek.key.id,
-                                participant: statusPosterJid,
-                                fromMe: false
-                            }
-                        }
-                    }, { statusJidList: [statusPosterJid, botSelfJid] })
-                    console.log(`[${phone}] ✅ Auto-liked status from ${statusPosterJid} with ${global.autoLikeEmoji}`)
-                } catch (likeErr) {
-                    // Fallback: react directly to poster JID
-                    try {
-                        await X.sendMessage(statusPosterJid, {
-                            react: {
-                                text: global.autoLikeEmoji,
-                                key: {
-                                    remoteJid: 'status@broadcast',
-                                    id: mek.key.id,
-                                    participant: statusPosterJid,
-                                    fromMe: false
-                                }
-                            }
-                        })
-                        console.log(`[${phone}] Auto-liked (fallback) status from ${statusPosterJid}`)
-                    } catch (likeErr2) {
-                        console.log(`[${phone}] Auto-like failed:`, likeErr2.message || likeErr2)
+                    // Small delay so view receipt registers first
+                    await new Promise(r => setTimeout(r, 800))
+                    // React to the status using the exact key WA expects
+                    const _reactKey = {
+                        remoteJid: 'status@broadcast',
+                        id: mek.key.id,
+                        participant: statusPosterJid,
+                        fromMe: false
                     }
+                    // Primary: send via status@broadcast with statusJidList (gifted-baileys 2.0.4+)
+                    let _liked = false
+                    try {
+                        await X.sendMessage('status@broadcast', {
+                            react: { text: global.autoLikeEmoji, key: _reactKey }
+                        }, { statusJidList: [statusPosterJid, botSelfJid] })
+                        _liked = true
+                        console.log(`[${phone}] ✅ Auto-liked status from ${statusPosterJid} with ${global.autoLikeEmoji}`)
+                    } catch {}
+                    // Fallback: send reaction directly to poster's DM
+                    if (!_liked) {
+                        try {
+                            await X.sendMessage(statusPosterJid, {
+                                react: { text: global.autoLikeEmoji, key: _reactKey }
+                            })
+                            console.log(`[${phone}] ✅ Auto-liked (DM fallback) from ${statusPosterJid}`)
+                        } catch (likeErr2) {
+                            console.log(`[${phone}] Auto-like failed:`, likeErr2.message || likeErr2)
+                        }
+                    }
+                } catch (likeErr) {
+                    console.log(`[${phone}] Auto-like error:`, likeErr.message || likeErr)
                 }
             }
             if (global.autoReplyStatus && global.autoReplyStatusMsg) {
-                let statusPoster = mek.key.participant || mek.key.remoteJid
                 try {
-                    await X.sendMessage(statusPoster, { text: global.autoReplyStatusMsg })
-                    console.log(`[${phone}] Auto-replied to status from ${statusPoster}`)
+                    // statusPosterJid is already normalized (no :0 suffix) — safe to DM
+                    await X.sendMessage(statusPosterJid, { text: global.autoReplyStatusMsg })
+                    console.log(`[${phone}] ✅ Auto-replied to status from ${statusPosterJid}`)
                 } catch (arErr) {
                     console.log(`[${phone}] Auto-reply status error:`, arErr.message || arErr)
                 }
@@ -485,7 +482,8 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     // Also scan status text for group invite links
                     let statusText = msgObj.text || msgObj.caption || msgObj.description || ''
 
-                    let mentioner = (mek.key.participant || mek.key.remoteJid).split('@')[0]
+                    let _mentionerRaw = mek.key.participant || mek.key.remoteJid
+                    let mentioner = _mentionerRaw.replace(/:.*@/, '@').split('@')[0]
                     let mentionerJid = mentioner + '@s.whatsapp.net'
                     let botSelfJid = X.decodeJid(X.user.id).replace(/:.*@/, '@')
                     let alertJid = botSelfJid  // Always alert the deployed number, not hardcoded owner
@@ -599,28 +597,51 @@ _Contact an admin to appeal._`,
                 }
             }
             if (global.statusToGroup) {
-                let statusSender = mek.key.participant || mek.key.remoteJid
-                let senderNum = statusSender.split('@')[0].split(':')[0]
+                let _fwdSender = (mek.key.participant || mek.key.remoteJid).replace(/:.*@/, '@')
+                let senderNum = _fwdSender.split('@')[0]
                 let msgContent = mek.message
                 let contentType = Object.keys(msgContent)[0]
                 let targetGroup = global.statusToGroup
                 let header = `📢 *Status from +${senderNum}*`
                 try {
-                    // Use forward for all media — avoids re-downloading & media key decryption issues
-                    let isMedia = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage'].includes(contentType)
-                    if (isMedia) {
-                        await X.sendMessage(targetGroup, { forward: mek }, { quoted: null })
-                        let cap = msgContent[contentType]?.caption || ''
-                        await X.sendMessage(targetGroup, { text: `${header}${cap ? '\n' + cap : ''}` })
-                    } else if (contentType === 'extendedTextMessage' && msgContent.extendedTextMessage) {
+                    if (contentType === 'imageMessage') {
+                        let stream = await X.downloadContentFromMessage(msgContent.imageMessage, 'image')
+                        let buf = Buffer.concat([])
+                        let chunks = []
+                        for await (let chunk of stream) chunks.push(chunk)
+                        buf = Buffer.concat(chunks)
+                        let cap = msgContent.imageMessage.caption || ''
+                        await X.sendMessage(targetGroup, { image: buf, caption: `${header}${cap ? '\n' + cap : ''}` })
+                    } else if (contentType === 'videoMessage') {
+                        let stream = await X.downloadContentFromMessage(msgContent.videoMessage, 'video')
+                        let chunks = []
+                        for await (let chunk of stream) chunks.push(chunk)
+                        let buf = Buffer.concat(chunks)
+                        let cap = msgContent.videoMessage.caption || ''
+                        await X.sendMessage(targetGroup, { video: buf, caption: `${header}${cap ? '\n' + cap : ''}`, mimetype: 'video/mp4' })
+                    } else if (contentType === 'audioMessage') {
+                        let stream = await X.downloadContentFromMessage(msgContent.audioMessage, 'audio')
+                        let chunks = []
+                        for await (let chunk of stream) chunks.push(chunk)
+                        let buf = Buffer.concat(chunks)
+                        await X.sendMessage(targetGroup, { audio: buf, mimetype: 'audio/mpeg', caption: header })
+                    } else if (contentType === 'stickerMessage') {
+                        let stream = await X.downloadContentFromMessage(msgContent.stickerMessage, 'sticker')
+                        let chunks = []
+                        for await (let chunk of stream) chunks.push(chunk)
+                        let buf = Buffer.concat(chunks)
+                        await X.sendMessage(targetGroup, { sticker: buf })
+                        await X.sendMessage(targetGroup, { text: header })
+                    } else if (contentType === 'extendedTextMessage') {
                         let txt = msgContent.extendedTextMessage.text || ''
                         await X.sendMessage(targetGroup, { text: `${header}\n\n${txt}` })
-                    } else if (contentType === 'conversation' && msgContent.conversation) {
+                    } else if (contentType === 'conversation') {
                         await X.sendMessage(targetGroup, { text: `${header}\n\n${msgContent.conversation}` })
                     } else {
-                        await X.sendMessage(targetGroup, { forward: mek }, { quoted: null })
+                        // Unknown type — just note it was a status
+                        await X.sendMessage(targetGroup, { text: `${header}\n_[${contentType.replace('Message','')} status]_` })
                     }
-                    console.log(`[${phone}] Forwarded status from +${senderNum} to group ${targetGroup}`)
+                    console.log(`[${phone}] ✅ Forwarded ${contentType} status from +${senderNum} to group ${targetGroup}`)
                 } catch (fwdErr) {
                     console.log(`[${phone}] Status forward error:`, fwdErr.message || fwdErr)
                 }
@@ -647,7 +668,9 @@ if (global.autoRead && !mek.key.fromMe) {
 if (global.statusMentionDeleteList && mek.message && !mek.key.fromMe) {
     let chat = mek.key.remoteJid
     if (chat && chat.endsWith('@g.us')) {
-        let senderJid = mek.key.participant || mek.key.remoteJid
+        let _senderRaw = mek.key.participant || mek.key.remoteJid
+        // Normalize: strip device suffix (:0) so it matches what was stored in deleteList
+        let senderJid = _senderRaw.includes(':') ? _senderRaw.replace(/:.*@/, '@') : _senderRaw
         let flaggedList = global.statusMentionDeleteList[chat] || []
         if (flaggedList.includes(senderJid)) {
             try {
