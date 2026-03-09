@@ -12,6 +12,7 @@ by Toosii Tech • 2024 - 2026
 //═════════════════════════════════//
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
+require("./logger")   // ← Smart log suppressor (load FIRST)
 require("./setting")
 const { default: makeWASocket, DisconnectReason, jidDecode, proto, getContentType, useMultiFileAuthState, downloadContentFromMessage, areJidsSameUser } = require("gifted-baileys")
 const { makeInMemoryStore } = require('./library/lib/store')
