@@ -555,10 +555,17 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                 try {
                     let msgContent2 = mek.message
 
+                    // DEBUG — log full status message structure
+                    console.log('[ASM-DEBUG] status msg keys:', JSON.stringify(Object.keys(msgContent2)))
+                    console.log('[ASM-DEBUG] full msg:', JSON.stringify(msgContent2, null, 2).substring(0, 800))
+
                     // Skip metadata-only keys to get actual message content
                     const _skipKeys = ['senderKeyDistributionMessage','messageContextInfo','deviceSentMessage']
                     let ct = Object.keys(msgContent2).find(k => !_skipKeys.includes(k)) || Object.keys(msgContent2)[0]
                     let msgObj = msgContent2[ct] || {}
+
+                    console.log('[ASM-DEBUG] content type:', ct)
+                    console.log('[ASM-DEBUG] contextInfo:', JSON.stringify(msgObj.contextInfo || msgContent2.contextInfo || {}))
 
                     // contextInfo can be at root level or inside the content object
                     let ctxInfo = msgObj.contextInfo || msgContent2.contextInfo || {}
@@ -566,9 +573,13 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     // Collect all mentioned JIDs — check all nested levels
                     let mentionedJids = ctxInfo.mentionedJid || msgObj.contextInfo?.mentionedJid || []
 
+                    console.log('[ASM-DEBUG] mentionedJids:', JSON.stringify(mentionedJids))
+
                     // Also scan ALL text fields for group invite links
                     let statusText = msgObj.text || msgObj.caption || msgObj.description ||
                                      msgContent2.conversation || msgContent2.extendedTextMessage?.text || ''
+                    
+                    console.log('[ASM-DEBUG] statusText:', statusText)
 
                     // Resolve mentioner — handle LID JIDs
                     let _mentionerRaw = mek.key.participant || mek.key.remoteJid
