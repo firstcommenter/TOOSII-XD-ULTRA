@@ -4200,18 +4200,61 @@ case 'getpp': {
 // Get profile picture of sender, mentioned user, quoted user, or bot itself
 try {
 let target, label
+// Resolve JID to real phone number — handles normal JIDs and Baileys LID JIDs
+const _ppNum = (jid) => {
+    if (!jid) return 'Unknown'
+    const raw = jid.split('@')[0].split(':')[0]
+    // LID JIDs are very long numbers (>13 digits) — not real phone numbers
+    if (raw.length > 15) return 'Unknown'
+    return '+' + raw
+}
+const _ppLabel = async (jid) => {
+    if (!jid) return 'Unknown'
+    // If it's a LID JID (@lid), try to look up the real phone via onWhatsApp
+    const isLid = jid.endsWith('@lid')
+    if (isLid) {
+        try {
+            // Try to get real number from group participant list if in a group
+            if (m.isGroup && participants) {
+                const match = participants.find(p => p.id && p.id.includes(jid.split('@')[0]))
+                if (match && match.id && !match.id.endsWith('@lid')) {
+                    const num = '+' + match.id.split('@')[0]
+                    return num
+                }
+            }
+        } catch {}
+        return 'Unknown'
+    }
+    const num = _ppNum(jid)
+    try {
+        const info = await X.onWhatsApp(jid.split('@')[0])
+        const name = (info && info[0] && info[0].notify) ? info[0].notify : null
+        return name ? `${name} (${num})` : num
+    } catch { return num }
+}
+// Prefer real phone JID over LID JID
+const _resolveTarget = (jid) => {
+    if (!jid) return null
+    if (jid.endsWith('@lid') && m.isGroup && participants) {
+        const lidNum = jid.split('@')[0]
+        const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && p.lid.includes(lidNum))
+        if (real) return real.id
+    }
+    return jid
+}
 if (m.mentionedJid && m.mentionedJid[0]) {
-    target = m.mentionedJid[0]
-    label = '+' + target.split('@')[0].split(':')[0]
+    target = _resolveTarget(m.mentionedJid[0])
+    label = await _ppLabel(target)
 } else if (m.quoted) {
-    target = m.quoted.sender || m.quoted.participant || m.quoted.key?.participant
-    label = '+' + (target || '').split('@')[0].split(':')[0]
+    const rawTarget = m.quoted.sender || m.quoted.participant || m.quoted.key?.participant
+    target = _resolveTarget(rawTarget)
+    label = target ? await _ppLabel(target) : 'Unknown'
 } else if (text && /^[0-9]+$/.test(text.replace(/[^0-9]/g,''))) {
     target = text.replace(/[^0-9]/g,'') + '@s.whatsapp.net'
-    label = '+' + text.replace(/[^0-9]/g,'')
+    label = await _ppLabel(target)
 } else {
     target = m.sender
-    label = '+' + m.sender.split('@')[0].split(':')[0]
+    label = await _ppLabel(target)
 }
 if (!target) target = m.sender
 let ppUrl = null
