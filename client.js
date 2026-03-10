@@ -821,6 +821,7 @@ const textmakerMenu = require('./library/menulist/textmakermenu');
 ┃➤ ᴄᴏᴍᴍᴀɴᴅꜱ : ${totalfitur()}
 ┃➤ ᴄᴏɴᴛᴀᴄᴛ : +254748340864
 ┃➤ ᴛᴇʟᴇɢʀᴀᴍ : @toosiitech
+┃➤ sᴇssɪᴏɴ : ${global.sessionUrl}
 ┗❒
 
 _ᴛʏᴘᴇ .menu [ᴄᴀᴛᴇɢᴏʀʏ] ᴛᴏ ꜰɪʟᴛᴇʀ_
@@ -1443,6 +1444,7 @@ case 'botinfo': {
 │
 │ 📞 Contact: ${global.ownerNumber}
 │ 📲 Telegram: @toosiitech
+│ 🔑 Session: ${global.sessionUrl}
 │
 ╰━━━━━━━━━━━━━━━━━╯
 
