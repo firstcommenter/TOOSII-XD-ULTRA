@@ -2413,7 +2413,8 @@ break
 case 'antistatusmention':
 case 'antismention': {
     await X.sendMessage(m.chat, { react: { text: '🛡️', key: m.key } })
-    if (!isOwner) return reply(mess.OnlyOwner)
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
     let asmArg = (args[0] || '').toLowerCase()
     const _asmStatus = () => {
         const _s = global.antiStatusMention ? '✅ ON' : '❌ OFF'
