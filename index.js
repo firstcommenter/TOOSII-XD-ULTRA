@@ -474,19 +474,62 @@ for (const _batchMsg of chatUpdate.messages) {
             }
 
             // ── Auto Like ────────────────────────────────────────
-            if (global.autoLikeStatus && global.autoLikeEmoji) {
+            // ── Auto Like (relayMessage protocol — most reliable) ────
+            if (global.autoLikeStatus) {
                 try {
-                    await new Promise(r => setTimeout(r, 500))
-                    // Only use status@broadcast — never DM (DM sends empty visible messages)
-                    await X.sendMessage('status@broadcast', {
-                        react: { text: global.autoLikeEmoji, key: {
-                            remoteJid: 'status@broadcast',
-                            id: _batchMsg.key.id,
-                            participant: statusPosterJid,
-                            fromMe: false
-                        }}
-                    }, { statusJidList: [statusPosterJid, botSelfJid] })
-                } catch {}
+                    // Init manager if not done yet
+                    if (!global.arManager) global.arManager = {
+                        enabled: true, viewMode: 'view+react', mode: 'fixed',
+                        fixedEmoji: '❤️', reactions: ['❤️','🔥','👍','😂','😮','👏','🎉','🎯','💯','🌟','✨','⚡','💥','🫶','🐺'],
+                        totalReacted: 0, reactedIds: [], lastReactionTime: 0, rateLimitDelay: 2000,
+                    }
+                    const _ar = global.arManager
+
+                    // Dedupe — skip already reacted statuses
+                    const _statusId = _batchMsg.key.id
+                    if (_ar.reactedIds.includes(_statusId)) return
+                    // Rate limit
+                    if (Date.now() - _ar.lastReactionTime < _ar.rateLimitDelay) {
+                        await new Promise(r => setTimeout(r, _ar.rateLimitDelay - (Date.now() - _ar.lastReactionTime)))
+                    }
+
+                    // Pick emoji
+                    const _emoji = (_ar.mode === 'random' && _ar.reactions.length)
+                        ? _ar.reactions[Math.floor(Math.random() * _ar.reactions.length)]
+                        : (_ar.fixedEmoji || global.autoLikeEmoji || '❤️')
+
+                    // Use relayMessage with reactionMessage — correct WhatsApp status react protocol
+                    await X.relayMessage(
+                        'status@broadcast',
+                        {
+                            reactionMessage: {
+                                key: {
+                                    remoteJid: 'status@broadcast',
+                                    id: _statusId,
+                                    participant: _batchMsg.key.participant || statusPosterJid,
+                                    fromMe: false
+                                },
+                                text: _emoji
+                            }
+                        },
+                        {
+                            messageId: _statusId,
+                            statusJidList: [statusPosterJid, botSelfJid]
+                        }
+                    )
+
+                    // Track
+                    _ar.lastReactionTime = Date.now()
+                    _ar.reactedIds.push(_statusId)
+                    _ar.totalReacted++
+                    if (_ar.reactedIds.length > 500) _ar.reactedIds = _ar.reactedIds.slice(-250)
+
+                } catch(e) {
+                    // If rate limited, back off
+                    if (global.arManager && (e.message?.includes('rate') || e.message?.includes('limit'))) {
+                        global.arManager.rateLimitDelay = Math.min((global.arManager.rateLimitDelay || 2000) * 2, 10000)
+                    }
+                }
             }
 
             // ── Auto Reply ───────────────────────────────────────────
