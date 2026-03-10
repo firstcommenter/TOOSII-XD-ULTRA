@@ -80,6 +80,7 @@ global.author = "© Toosii Tech"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Social Links
 global.telegram = "https://t.me/toosiitech"
+global.sessionUrl = "https://toosii-xd-session-generator-woyo.onrender.com/pair"
 global.ownerNumber = "+254748340864"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Respon Message
