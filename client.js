@@ -465,31 +465,102 @@ if (
   }
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
-// autoshalat
+// autoshalat — dynamic timezone + prayer times by phone country code
 X.autoshalat = X.autoshalat ? X.autoshalat : {}
         let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? X.user.id : m.sender
         let id = m.chat 
     if(id in X.autoshalat) {
     return false
     }
-    let jadwalSholat = {
-    shubuh: '04:29',
-    terbit: '05:44',
-    dhuha: '06:02',
-    dzuhur: '12:02',
-    ashar: '15:15',
-    magrib: '18:11',
-    isya: '19:01',
+
+    // Detect timezone & region from sender's country code
+    const _senderNum = (m.sender || '').split('@')[0]
+    const _cc = _senderNum.startsWith('254') ? '254' :
+                _senderNum.startsWith('255') ? '255' :
+                _senderNum.startsWith('256') ? '256' :
+                _senderNum.startsWith('257') ? '257' :
+                _senderNum.startsWith('250') ? '250' :
+                _senderNum.startsWith('251') ? '251' :
+                _senderNum.startsWith('252') ? '252' :
+                _senderNum.startsWith('253') ? '253' :
+                _senderNum.startsWith('62')  ? '62'  :
+                _senderNum.startsWith('60')  ? '60'  :
+                _senderNum.startsWith('92')  ? '92'  :
+                _senderNum.startsWith('880') ? '880' :
+                _senderNum.startsWith('91')  ? '91'  :
+                _senderNum.startsWith('966') ? '966' :
+                _senderNum.startsWith('971') ? '971' :
+                _senderNum.startsWith('20')  ? '20'  :
+                _senderNum.startsWith('212') ? '212' :
+                _senderNum.startsWith('234') ? '234' : '254'
+
+    const _tzMap = {
+        '254': { tz: 'Africa/Nairobi',     region: 'Kenya' },
+        '255': { tz: 'Africa/Dar_es_Salaam', region: 'Tanzania' },
+        '256': { tz: 'Africa/Kampala',     region: 'Uganda' },
+        '257': { tz: 'Africa/Bujumbura',   region: 'Burundi' },
+        '250': { tz: 'Africa/Kigali',      region: 'Rwanda' },
+        '251': { tz: 'Africa/Addis_Ababa', region: 'Ethiopia' },
+        '252': { tz: 'Africa/Mogadishu',   region: 'Somalia' },
+        '253': { tz: 'Africa/Djibouti',    region: 'Djibouti' },
+        '62':  { tz: 'Asia/Jakarta',       region: 'Indonesia' },
+        '60':  { tz: 'Asia/Kuala_Lumpur',  region: 'Malaysia' },
+        '92':  { tz: 'Asia/Karachi',       region: 'Pakistan' },
+        '880': { tz: 'Asia/Dhaka',         region: 'Bangladesh' },
+        '91':  { tz: 'Asia/Kolkata',       region: 'India' },
+        '966': { tz: 'Asia/Riyadh',        region: 'Saudi Arabia' },
+        '971': { tz: 'Asia/Dubai',         region: 'UAE' },
+        '20':  { tz: 'Africa/Cairo',       region: 'Egypt' },
+        '212': { tz: 'Africa/Casablanca',  region: 'Morocco' },
+        '234': { tz: 'Africa/Lagos',       region: 'Nigeria' },
     }
-    const datek = new Date((new Date).toLocaleString("en-US", {
-    timeZone: "Asia/Jakarta"  
-    }));
-    const hours = datek.getHours();
-    const minutes = datek.getMinutes();
+    const _tzInfo = _tzMap[_cc] || { tz: 'Africa/Nairobi', region: 'Kenya' }
+
+    // Fetch live prayer times from Aladhan API based on timezone
+    let jadwalSholat = {}
+    try {
+        const _prayerRes = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(_tzInfo.region)}&country=${encodeURIComponent(_tzInfo.region)}&method=3`)
+        const _prayerData = await _prayerRes.json()
+        if (_prayerData.code === 200 && _prayerData.data && _prayerData.data.timings) {
+            const t = _prayerData.data.timings
+            jadwalSholat = {
+                Fajr:    t.Fajr?.slice(0,5),
+                Sunrise: t.Sunrise?.slice(0,5),
+                Dhuhr:   t.Dhuhr?.slice(0,5),
+                Asr:     t.Asr?.slice(0,5),
+                Maghrib: t.Maghrib?.slice(0,5),
+                Isha:    t.Isha?.slice(0,5),
+            }
+        }
+    } catch {}
+
+    // Fallback: Nairobi approximate times
+    if (!Object.keys(jadwalSholat).length) {
+        jadwalSholat = { Fajr: '05:00', Sunrise: '06:15', Dhuhr: '12:20', Asr: '15:30', Maghrib: '18:25', Isha: '19:35' }
+    }
+
+    const datek = new Date((new Date).toLocaleString("en-US", { timeZone: _tzInfo.tz }))
+    const hours = datek.getHours()
+    const minutes = datek.getMinutes()
     const timeNow = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+
+    // Use pushname if available, otherwise clean number
+    const _displayName = (pushname && pushname !== _senderNum && pushname.length > 1)
+        ? pushname
+        : '+' + _senderNum
+
+    // Christian devotion times (Morning, Midday, Evening, Night)
+    const _christianTimes = {
+        '06:00': { name: 'Morning Devotion',  icon: '🌅', msg: 'Start your day with God. Take a moment to pray, read the Word, and commit your day to Him.' },
+        '12:00': { name: 'Midday Prayer',     icon: '☀️',  msg: 'Pause in the middle of your day. Give thanks, seek guidance, and renew your strength in Christ.' },
+        '18:00': { name: 'Evening Prayer',    icon: '🌇', msg: 'As the day winds down, give thanks for God\'s grace and protection throughout the day.' },
+        '21:00': { name: 'Night Prayer',      icon: '🌙', msg: 'Before you rest, lay your burdens before God. He watches over you through the night.' },
+    }
+
+    // Check Muslim prayer times
     for(let [sholat, waktu] of Object.entries(jadwalSholat)) {
     if(timeNow === waktu) {
-    let caption = `╔══════════════════════════╗\n║  🕌 *PRAYER TIME*\n╚══════════════════════════╝\n\n  As-salamu alaykum, *${pushname}*\n\n  ├ 🙏 *${sholat.charAt(0).toUpperCase() + sholat.slice(1)}* prayer time\n  ├ 🕐 *${waktu}*\n  └ 🌍 Sumatra region & surroundings\n\n  _Take your ablution and pray_ 🤲`
+    let caption = `╔══════════════════════════╗\n║  🕌 *PRAYER TIME*\n╚══════════════════════════╝\n\n  As-salamu alaykum, *${_displayName}*\n\n  ├ 🙏 *${sholat}* prayer time\n  ├ 🕐 *${waktu}*\n  └ 🌍 ${_tzInfo.region} & surroundings\n\n  _Take your ablution and pray_ 🤲`
     X.autoshalat[id] = [
     reply(caption),
     setTimeout(async () => {
@@ -497,6 +568,18 @@ X.autoshalat = X.autoshalat ? X.autoshalat : {}
     }, 57000)
     ]
     }
+    }
+
+    // Check Christian devotion times
+    if (_christianTimes[timeNow] && !(id in X.autoshalat)) {
+    const _dev = _christianTimes[timeNow]
+    let _devCaption = `╔══════════════════════════╗\n║  ✝️  *DEVOTION TIME*\n╚══════════════════════════╝\n\n  God bless you, *${_displayName}* 🙏\n\n  ├ ${_dev.icon} *${_dev.name}*\n  ├ 🕐 *${timeNow}*\n  └ 🌍 ${_tzInfo.region}\n\n  _${_dev.msg}_\n\n  _📖 "Call to me and I will answer you" — Jer 33:3_`
+    X.autoshalat[id] = [
+    reply(_devCaption),
+    setTimeout(async () => {
+    delete X.autoshalat[m.chat]
+    }, 57000)
+    ]
     }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Similarity
@@ -3829,6 +3912,59 @@ case 'muslimai':{
 }
 }
 break;
+
+case 'bible':
+case 'verse':
+case 'bibleverse': {
+    await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
+    if (!text) {
+        return reply(`╔══════════════════════════╗\n║  📖 *BIBLE SEARCH*\n╚══════════════════════════╝\n\n  Search any verse or topic.\n\n  *By reference:*\n  ├ ${prefix}bible John 3:16\n  ├ ${prefix}bible Romans 8:28\n  └ ${prefix}bible Psalm 23:1\n\n  *By topic/keyword:*\n  ├ ${prefix}bible love\n  ├ ${prefix}bible faith\n  └ ${prefix}bible strength`)
+    }
+    try {
+        const isRef = /^[1-3]?\s?[a-zA-Z]+\s+\d+:\d+/i.test(text.trim())
+        let verseText = '', reference = '', translation = 'KJV'
+
+        if (isRef) {
+            const _bRef = encodeURIComponent(text.trim())
+            let _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=kjv`)
+            let _bData = await _bRes.json()
+            if (_bData.error) {
+                _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=web`)
+                _bData = await _bRes.json()
+                if (_bData.error) return reply(`❌ *Verse not found:* _${text}_\n\n_Check spelling, e.g._ *John 3:16* _or_ *Psalm 23:1*`)
+                translation = 'WEB'
+            }
+            verseText = _bData.text?.trim()
+            reference = _bData.reference
+        } else {
+            const _aiRes = await fetch('https://text.pollinations.ai/openai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'openai', stream: false, max_tokens: 300,
+                    messages: [
+                        { role: 'system', content: 'You are a Bible scholar. When given a topic or keyword, respond with ONLY three lines: Line 1: the verse text. Line 2: the reference (e.g. John 3:16). Line 3: the translation (e.g. KJV). No extra text.' },
+                        { role: 'user', content: `Give me a Bible verse about: ${text}` }
+                    ]
+                })
+            })
+            const _aiData = await _aiRes.json()
+            const _aiLines = (_aiData.choices?.[0]?.message?.content || '').trim().split('\n').filter(Boolean)
+            verseText = _aiLines[0] || ''
+            reference = _aiLines[1] || `Topic: ${text}`
+            translation = _aiLines[2] || 'KJV'
+        }
+
+        if (!verseText) return reply(`❌ Could not find a verse for: _${text}_`)
+
+        reply(`╔══════════════════════════╗\n║  📖 *BIBLE VERSE*\n╚══════════════════════════╝\n\n  _❝ ${verseText} ❞_\n\n  ├ 📌 *${reference}*\n  └ 📚 *Translation* › ${translation}\n\n_⚡ TOOSII-XD ULTRA_`)
+
+    } catch(e) {
+        reply(`❌ *Bible search failed.*\n_${e.message || 'Please try again.'}_`)
+    }
+}
+break;
+
 
 case 'llama-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
