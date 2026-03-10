@@ -2106,7 +2106,7 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
     // Mode 1: post quoted media/text as status visible to group members
     if (!m.isGroup) return reply(`╔══════════════════════════╗\n║  📤 *STATUS TOOLS*\n╚══════════════════════════╝\n\n  *Post to group status:*\n  ├ Reply to media/text with *${prefix}togroupstatus*\n  └ Or: *${prefix}togroupstatus [text]*\n\n  *Auto-forward:*\n  ├ *${prefix}togroupstatus on*  — enable in group\n  ├ *${prefix}togroupstatus off* — disable\n  └ *${prefix}togroupstatus status* — check setting`)
     try {
-        let groupParticipants = participants.map(p => p.id)
+        let groupParticipants = participants.map(p => p.id).filter(id => id && id.endsWith('@s.whatsapp.net'))
         if (!groupParticipants.length) return reply('Could not fetch group participants. Try again.')
 
         if (m.quoted) {
@@ -5274,7 +5274,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let tagMsg = text || '📢 Tag All Members'
 let tagText = `*${tagMsg}*\n\n`
 let mentions = []
-for (let mem of participants) { tagText += `• @${mem.id.split('@')[0]}\n`; mentions.push(mem.id) }
+for (let mem of participants) { if (!mem.id.endsWith('@newsletter')) { tagText += `• @${mem.id.split('@')[0]}\n`; mentions.push(mem.id) } }
 X.sendMessage(from, { text: tagText, mentions }, { quoted: m })
 } break
 
@@ -5282,7 +5282,7 @@ case 'tag': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!text) return reply(`📌 *Usage:* ${prefix}tag [message]`)
-let tagMentions = participants.map(p => p.id)
+let tagMentions = participants.map(p => p.id).filter(id => !id.endsWith('@newsletter'))
 X.sendMessage(from, { text: text, mentions: tagMentions }, { quoted: m })
 } break
 
@@ -5291,7 +5291,7 @@ case 'hidetag': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let htText = text || ''
-let htMentions = participants.map(p => p.id)
+let htMentions = participants.map(p => p.id).filter(id => !id.endsWith('@newsletter'))
 X.sendMessage(from, { text: htText, mentions: htMentions }, { quoted: m })
 } break
 
@@ -5299,7 +5299,7 @@ case 'tagnoadmin': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-let nonAdmins = participants.filter(p => !p.admin).map(p => p.id)
+let nonAdmins = participants.filter(p => !p.admin && !p.id.endsWith('@newsletter')).map(p => p.id)
 let tnaText = `📢 *${text || 'Attention non-admins!'}*\n\n`
 nonAdmins.forEach(id => tnaText += `• @${id.split('@')[0]}\n`)
 X.sendMessage(from, { text: tnaText, mentions: nonAdmins }, { quoted: m })
@@ -5309,7 +5309,7 @@ case 'mention': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!text) return reply(`📌 *Usage:* ${prefix}mention [message]`)
-let mentionIds = participants.map(p => p.id)
+let mentionIds = participants.map(p => p.id).filter(id => !id.endsWith('@newsletter'))
 X.sendMessage(from, { text: text, mentions: mentionIds }, { quoted: m })
 } break
 
