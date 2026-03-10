@@ -2357,6 +2357,112 @@ if (!asmArg) {
 }
 break
 
+
+
+case 'antibot':
+case 'setantibot': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+
+    // Init globals
+    if (!global.antibotGroups) global.antibotGroups = {}
+    if (!global.knownBots)     global.knownBots = []
+
+    const _grpId = m.chat
+    const _abArg = (args[0] || '').toLowerCase().trim()
+    const _abSub = (args[1] || '').trim()
+
+    // Helper: check if a JID looks like a bot
+    const _isLikelyBot = (jid) => {
+        const num = jid.split('@')[0].split(':')[0]
+        // Known bot number patterns + manually added bots
+        if (global.knownBots.includes(num)) return true
+        // Common bot suffixes / patterns
+        if (num.endsWith('0') && num.length > 12) return false // too broad
+        return false
+    }
+
+    if (!_abArg || _abArg === 'status') {
+        const _on = global.antibotGroups[_grpId] ? '✅ ON' : '❌ OFF'
+        const _botList = global.knownBots.length
+            ? global.knownBots.map((n, i) => `  │  ${i+1}. +${n}`).join('\n')
+            : '  │  _None added yet_'
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SETTINGS*\n╚══════════════════════════╝\n\n  ├ 📊 *Status* › *${_on}*\n  ├ 🔢 *Known bots* › ${global.knownBots.length}\n\n  *Commands:*\n  ├ ${prefix}antibot on    — enable auto-removal\n  ├ ${prefix}antibot off   — disable\n  ├ ${prefix}antibot scan  — scan & remove bots now\n  ├ ${prefix}antibot add [number] — mark as bot\n  └ ${prefix}antibot list  — list known bots`)
+    }
+
+    if (_abArg === 'on') {
+        global.antibotGroups[_grpId] = true
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ✅ *Enabled* in this group\n  └ Any known bot joining will be removed automatically.`)
+    }
+
+    if (_abArg === 'off') {
+        global.antibotGroups[_grpId] = false
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ❌ *Disabled* in this group`)
+    }
+
+    if (_abArg === 'list') {
+        if (!global.knownBots.length) return reply(`╔══════════════════════════╗\n║  🤖 *KNOWN BOTS*\n╚══════════════════════════╝\n\n  └ _No bots added yet._\n\n  Use: ${prefix}antibot add [number]`)
+        const _list = global.knownBots.map((n, i) => `  ├ ${i+1}. +${n}`).join('\n')
+        return reply(`╔══════════════════════════╗\n║  🤖 *KNOWN BOTS LIST*\n╚══════════════════════════╝\n\n${_list}\n  └ Total: ${global.knownBots.length}`)
+    }
+
+    if (_abArg === 'add') {
+        if (!_abSub) return reply(`❌ Usage: *${prefix}antibot add [number]*\nExample: ${prefix}antibot add 254712345678`)
+        const _addNum = _abSub.replace(/[^0-9]/g, '')
+        if (!_addNum) return reply(`❌ Invalid number.`)
+        if (global.knownBots.includes(_addNum)) return reply(`⚠️ *+${_addNum}* is already in the bot list.`)
+        global.knownBots.push(_addNum)
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ✅ *+${_addNum}* added to known bots list.\n  └ They will be removed if antibot is ON.`)
+    }
+
+    if (_abArg === 'remove' || _abArg === 'del') {
+        if (!_abSub) return reply(`❌ Usage: *${prefix}antibot remove [number]*`)
+        const _rmNum = _abSub.replace(/[^0-9]/g, '')
+        const _rmIdx = global.knownBots.indexOf(_rmNum)
+        if (_rmIdx === -1) return reply(`⚠️ *+${_rmNum}* is not in the bot list.`)
+        global.knownBots.splice(_rmIdx, 1)
+        return reply(`✅ *+${_rmNum}* removed from known bots list.`)
+    }
+
+    if (_abArg === 'scan') {
+        try {
+            const _meta = await X.groupMetadata(_grpId)
+            const _participants = _meta.participants || []
+            const _botIsAdmin = _participants.some(p => {
+                const isBot = p.id.split('@')[0].split(':')[0] === X.user.id.split('@')[0].split(':')[0]
+                return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+            })
+            if (!_botIsAdmin) return reply(`❌ Bot must be *admin* to remove bots.`)
+
+            let _removed = []
+            let _found = []
+
+            for (const p of _participants) {
+                const _pNum = p.id.split('@')[0].split(':')[0]
+                if (global.knownBots.includes(_pNum)) {
+                    _found.push(_pNum)
+                    try {
+                        await X.groupParticipantsUpdate(_grpId, [p.id], 'remove')
+                        _removed.push(_pNum)
+                        await new Promise(r => setTimeout(r, 500))
+                    } catch {}
+                }
+            }
+
+            if (!_found.length) {
+                return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SCAN*\n╚══════════════════════════╝\n\n  ✅ Scan complete — no bots found.\n  └ ${_participants.length} members checked.`)
+            }
+
+            const _removedList = _removed.map(n => `  ├ 🚫 +${n}`).join('\n')
+            return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SCAN*\n╚══════════════════════════╝\n\n  ├ 👥 *Checked* › ${_participants.length} members\n  ├ 🔍 *Found*   › ${_found.length} bot(s)\n  └ 🚫 *Removed* › ${_removed.length}\n\n${_removedList}`)
+        } catch(e) {
+            return reply(`❌ Scan failed: ${e.message || e}`)
+        }
+    }
+}
+break
+
 case 'antilink':
 case 'setantilink': {
     await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
@@ -2391,6 +2497,127 @@ if (!adArg) {
     global.antiDelete = false
     reply('*🗑️ Anti-Delete: ❌ OFF*\n\nDeleted messages will no longer be tracked.')
 }
+}
+break
+
+
+case 'antibot':
+case 'setantibot': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+
+    // Init globals
+    if (!global.antiBot) global.antiBot = false
+    if (!global.antiBotGroups) global.antiBotGroups = {}
+    if (!global.knownBots) global.knownBots = []
+
+    // Known bot JID patterns — numbers that are commonly bots
+    const _botPatterns = [
+        /^0@/, /^1@/, /^status/,
+    ]
+    // Known bot pushname keywords
+    const _botNameKeywords = ['bot', 'Bot', 'BOT', 'robot', 'Robot', 'assistant', 'Assistant', 'ai', 'AI']
+
+    const _isBotNumber = (jid) => {
+        const num = jid.split('@')[0]
+        // Custom list
+        if (global.knownBots.includes(num)) return true
+        // Numbers ending in 0000, 1234, 9999 etc (common bot numbers)
+        if (/0{4,}$/.test(num) || /1234$/.test(num) || /9{4,}$/.test(num)) return true
+        return false
+    }
+
+    const _subArg = (args[0] || '').toLowerCase()
+    const _subArg2 = args.slice(1).join(' ').trim()
+
+    // ── status ────────────────────────────────────────────────────────
+    if (!_subArg || _subArg === 'status') {
+        const _grpEnabled = global.antiBotGroups[m.chat] ? '✅ ON' : '❌ OFF'
+        const _botList = global.knownBots.length
+            ? global.knownBots.map(n => `  • +${n}`).join('\n')
+            : '  _None added yet_'
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SETTINGS*\n╚══════════════════════════╝\n\n  ├ 📊 *This group* › ${_grpEnabled}\n  └ 🗂️  *Known bots* › ${global.knownBots.length}\n\n${_botList}\n\n  ├ ${prefix}antibot on     — enable here\n  ├ ${prefix}antibot off    — disable here\n  ├ ${prefix}antibot scan   — scan & remove bots\n  ├ ${prefix}antibot add [number] — mark as bot\n  └ ${prefix}antibot list   — list known bots`)
+    }
+
+    // ── on ────────────────────────────────────────────────────────────
+    if (_subArg === 'on' || _subArg === 'enable') {
+        global.antiBotGroups[m.chat] = true
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ✅ *Enabled in this group*\n  _Bots will be auto-removed when detected._`)
+    }
+
+    // ── off ───────────────────────────────────────────────────────────
+    if (_subArg === 'off' || _subArg === 'disable') {
+        global.antiBotGroups[m.chat] = false
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ❌ *Disabled in this group*`)
+    }
+
+    // ── add ───────────────────────────────────────────────────────────
+    if (_subArg === 'add') {
+        const _addNum = _subArg2.replace(/[^0-9]/g, '')
+        if (!_addNum) return reply(`❌ Provide a number. Example: ${prefix}antibot add 254712345678`)
+        if (global.knownBots.includes(_addNum)) return reply(`⚠️ *+${_addNum}* is already in the bot list.`)
+        global.knownBots.push(_addNum)
+        return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  ✅ *+${_addNum}* added to known bots list.`)
+    }
+
+    // ── remove ────────────────────────────────────────────────────────
+    if (_subArg === 'remove' || _subArg === 'del') {
+        const _remNum = _subArg2.replace(/[^0-9]/g, '')
+        if (!_remNum) return reply(`❌ Provide a number. Example: ${prefix}antibot remove 254712345678`)
+        global.knownBots = global.knownBots.filter(n => n !== _remNum)
+        return reply(`✅ *+${_remNum}* removed from known bots list.`)
+    }
+
+    // ── list ──────────────────────────────────────────────────────────
+    if (_subArg === 'list') {
+        if (!global.knownBots.length) return reply(`╔══════════════════════════╗\n║  🤖 *KNOWN BOTS*\n╚══════════════════════════╝\n\n  _No bots marked yet._\n  Use ${prefix}antibot add [number]`)
+        const _list = global.knownBots.map((n, i) => `  ${i+1}. +${n}`).join('\n')
+        return reply(`╔══════════════════════════╗\n║  🤖 *KNOWN BOTS LIST*\n╚══════════════════════════╝\n\n${_list}`)
+    }
+
+    // ── scan ──────────────────────────────────────────────────────────
+    if (_subArg === 'scan') {
+        try {
+            const _meta = await X.groupMetadata(m.chat)
+            const _botIsAdmin = _meta.participants.some(p => {
+                const isBot = p.id.split('@')[0] === X.user.id.split('@')[0]
+                return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+            })
+            if (!_botIsAdmin) return reply(`❌ Bot must be *admin* to remove members.`)
+
+            const _members = _meta.participants.filter(p => !p.id.endsWith('@lid'))
+            let _botsFound = []
+
+            for (const p of _members) {
+                const _num = p.id.split('@')[0]
+                const _isOwnerNum = global.owner.includes(_num)
+                const _isBotSelf = _num === X.user.id.split('@')[0]
+                if (_isOwnerNum || _isBotSelf) continue
+                if (_isBotNumber(p.id)) _botsFound.push(p.id)
+            }
+
+            if (!_botsFound.length) {
+                return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SCAN*\n╚══════════════════════════╝\n\n  ✅ No bots detected in this group.\n  _${_members.length} members scanned._`)
+            }
+
+            // Remove detected bots
+            let _removed = []
+            for (const _botJid of _botsFound) {
+                try {
+                    await X.groupParticipantsUpdate(m.chat, [_botJid], 'remove')
+                    _removed.push('+' + _botJid.split('@')[0])
+                    await new Promise(r => setTimeout(r, 500))
+                } catch {}
+            }
+
+            const _removedList = _removed.map(n => `  • ${n}`).join('\n')
+            return reply(`╔══════════════════════════╗\n║  🤖 *ANTIBOT SCAN DONE*\n╚══════════════════════════╝\n\n  ├ 🔍 *Scanned* › ${_members.length} members\n  ├ 🚫 *Removed* › ${_removed.length} bot(s)\n\n${_removedList}`)
+
+        } catch(e) {
+            return reply(`❌ Scan failed: ${e.message}`)
+        }
+    }
 }
 break
 
