@@ -13,6 +13,8 @@ by Toosii Tech • 2024 - 2026
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
 require("./logger")   // ← Smart log suppressor (load FIRST)
+// Load .env before anything else so SESSION_ID is available
+try { require("dotenv").config() } catch {} // dotenv optional — manual login still works
 require("./setting")
 const { default: makeWASocket, DisconnectReason, jidDecode, proto, getContentType, useMultiFileAuthState, downloadContentFromMessage, areJidsSameUser } = require("gifted-baileys")
 const { makeInMemoryStore } = require('./library/lib/store')
@@ -297,7 +299,16 @@ async function startBot() {
         console.log('')
     }
 
-    waitForConsoleInput()
+    // ── Auto-login from .env SESSION_ID ─────────────────────────────────────
+    const _envSession = (process.env.SESSION_ID || '').trim()
+    if (_envSession && _envSession.length > 20) {
+        console.log(`${c.green}[ ${_bn} ]${c.r} ${c.cyan}SESSION_ID found in .env — auto-logging in...${c.r}`)
+        console.log('')
+        await handleSessionLogin(_envSession)
+        waitForConsoleInput()
+    } else {
+        waitForConsoleInput()
+    }
 }
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
