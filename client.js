@@ -1868,16 +1868,17 @@ if (global.fakePresence === 'typing') {
 }
 break
 
+case 'autoonline':
 case 'fakeonline':
 case 'fonline': {
     await X.sendMessage(m.chat, { react: { text: '🟢', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 if (global.fakePresence === 'online') {
     global.fakePresence = 'off'
-    reply('Fake online *OFF*\nBot will no longer force online status.')
+    reply('❌ *Auto Online OFF*')
 } else {
     global.fakePresence = 'online'
-    reply('Fake online *ON*\nBot will now appear *online* whenever someone messages.')
+    reply('✅ *Auto Online ON* — bot appears as online.')
 }
 }
 break
@@ -1887,7 +1888,7 @@ case 'fpresence': {
     await X.sendMessage(m.chat, { react: { text: '👻', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let current = global.fakePresence || 'off'
-reply(`╔══════════════════════════╗\n║  👻 *PRESENCE STATUS*\n╚══════════════════════════╝\n\n  ├ 📊 *Mode* › *${current}*\n\n  ├ ${prefix}autotyping    — toggle typing\n  ├ ${prefix}autorecording — toggle recording\n  └ ${prefix}fakeonline    — toggle online\n\n  _Run again to turn off_`)
+reply(`╔══════════════════════════╗\n║  👻 *PRESENCE STATUS*\n╚══════════════════════════╝\n\n  ├ 📊 *Mode* › *${current}*\n\n  ├ ${prefix}autotyping    — toggle typing\n  ├ ${prefix}autorecording — toggle recording\n  └ ${prefix}autoonline    — toggle online\n\n  _Run again to turn off_`)
 }
 break
 
