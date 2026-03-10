@@ -540,11 +540,6 @@ for (const _batchMsg of chatUpdate.messages) {
     }
 }
 
-// ── Antidelete: store all incoming messages ──────────────────────────
-    for (const _adMsg of chatUpdate.messages) {
-        try { await _adStore(_adMsg) } catch {}
-    }
-
 mek = chatUpdate.messages[0]
 if (!mek.message) return
 mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
@@ -1242,71 +1237,105 @@ X.ev.on('call', async (callData) => {
 if (!global.adCache)      global.adCache = {}      // msgId → message data
 if (!global.adMediaCache) global.adMediaCache = {}  // msgId → buffer
 
-// ── Store messages as they arrive ─────────────────────────────────────────
+// ── Store messages as they arrive (antidelete cache) ─────────────────────
 const _adStore = async (msg) => {
-    if (!global.antiDelete) return
-    if (!msg || !msg.key || !msg.message) return
-    if (msg.key.fromMe) return
-    if (msg.key.remoteJid === 'status@broadcast') return
-    const _id = msg.key.id
-    if (global.adCache[_id]) return  // already stored
+    try {
+        if (!global.antiDelete) return
+        if (!msg?.key?.message && !msg?.message) return
+        if (msg.key.fromMe) return
+        if (msg.key.remoteJid === 'status@broadcast') return
+        const _id = msg.key.id
+        if (!_id) return
+        if (global.adCache[_id]) return  // already stored
 
-    const _chat = msg.key.remoteJid
-    const _sender = msg.key.participant || msg.key.remoteJid
-    const _senderNum = '+' + _sender.replace(/@.*/, '').split(':')[0]
-    const _pushName = msg.pushName || _senderNum
-    const _isGroup = _chat.endsWith('@g.us')
+        const _chat = msg.key.remoteJid
+        const _rawSender = msg.key.participant || msg.key.remoteJid
 
-    // Extract text and type
-    const _mc = msg.message
-    let _type = 'text', _text = '', _hasMedia = false, _mimetype = ''
-
-    if (_mc.conversation)                    { _text = _mc.conversation }
-    else if (_mc.extendedTextMessage?.text)  { _text = _mc.extendedTextMessage.text }
-    else if (_mc.imageMessage)    { _type = 'image';    _text = _mc.imageMessage.caption || ''; _hasMedia = true; _mimetype = _mc.imageMessage.mimetype || 'image/jpeg' }
-    else if (_mc.videoMessage)    { _type = 'video';    _text = _mc.videoMessage.caption || ''; _hasMedia = true; _mimetype = _mc.videoMessage.mimetype || 'video/mp4' }
-    else if (_mc.audioMessage)    { _type = _mc.audioMessage.ptt ? 'voice' : 'audio'; _hasMedia = true; _mimetype = _mc.audioMessage.mimetype || 'audio/ogg' }
-    else if (_mc.documentMessage) { _type = 'document'; _text = _mc.documentMessage.fileName || ''; _hasMedia = true; _mimetype = _mc.documentMessage.mimetype || 'application/octet-stream' }
-    else if (_mc.stickerMessage)  { _type = 'sticker';  _hasMedia = true; _mimetype = _mc.stickerMessage.mimetype || 'image/webp' }
-
-    if (!_text && !_hasMedia) return  // nothing recoverable
-
-    global.adCache[_id] = { id: _id, chat: _chat, sender: _sender, senderNum: _senderNum, pushName: _pushName, isGroup: _isGroup, type: _type, text: _text, hasMedia: _hasMedia, mimetype: _mimetype, msgObj: msg, ts: Date.now() }
-
-    if (!global.adState) global.adState = { enabled: true, mode: 'private', stats: { total: 0, retrieved: 0, media: 0 }, recentIds: [] }
-    global.adState.stats.total++
-
-    // Download media asynchronously after a short delay
-    if (_hasMedia) {
-        setTimeout(async () => {
+        // Resolve LID JIDs — LIDs are 17+ digit numbers ending @lid or @s.whatsapp.net with colon
+        let _resolvedSender = _rawSender
+        const _isLid = _rawSender.endsWith('@lid') || (_rawSender.includes(':') && !_rawSender.includes('@g.us'))
+        if (_isLid) {
             try {
-                const _buf = await msg.message && downloadContentFromMessage
-                    ? await (async () => {
-                        const _stream = await downloadContentFromMessage(_mc[_type + 'Message'] || _mc.audioMessage || _mc.documentMessage || _mc.stickerMessage, _type === 'voice' ? 'audio' : _type)
-                        const _chunks = []
-                        for await (const _c of _stream) _chunks.push(_c)
-                        return Buffer.concat(_chunks)
-                    })()
-                    : null
-                if (_buf && _buf.length > 0 && _buf.length < 15 * 1024 * 1024) {
-                    global.adMediaCache[_id] = { buffer: _buf, mimetype: _mimetype, type: _type }
-                    if (!global.adState) global.adState = { enabled: true, mode: 'private', stats: { total: 0, retrieved: 0, media: 0 }, recentIds: [] }
-                    global.adState.stats.media++
-                }
+                // Search store contacts for matching LID
+                const _allContacts = Object.keys(store.contacts || {})
+                const _lidPart = _rawSender.split('@')[0].split(':')[0]
+                const _match = _allContacts.find(k => 
+                    k.endsWith('@s.whatsapp.net') && 
+                    (store.contacts[k]?.lid?.includes(_lidPart) || k.split('@')[0] === _lidPart)
+                )
+                if (_match) _resolvedSender = _match
             } catch {}
-        }, 1500)
-    }
-
-    // Auto-clean cache older than 6 hours
-    const _now = Date.now()
-    if (!global.adLastClean || _now - global.adLastClean > 60 * 60 * 1000) {
-        global.adLastClean = _now
-        const _maxAge = 6 * 60 * 60 * 1000
-        for (const [k, v] of Object.entries(global.adCache)) {
-            if (_now - v.ts > _maxAge) { delete global.adCache[k]; delete global.adMediaCache[k] }
         }
-    }
+        // Clean number — remove colon suffix e.g. 254712:45@s → 25471245
+        const _cleanNum = _resolvedSender.replace(/@.*/, '').split(':')[0]
+        const _senderNum = '+' + _cleanNum
+        const _pushName = msg.pushName || ''
+        const _isGroup = _chat.endsWith('@g.us')
+
+        // Extract message content
+        const _mc = msg.message || {}
+        const _msgType = Object.keys(_mc).find(k => k !== 'messageContextInfo' && k !== 'senderKeyDistributionMessage') || ''
+        let _type = 'unknown', _text = '', _hasMedia = false, _mimetype = ''
+
+        if (_mc.conversation)                   { _type = 'text';     _text = _mc.conversation }
+        else if (_mc.extendedTextMessage?.text) { _type = 'text';     _text = _mc.extendedTextMessage.text }
+        else if (_mc.imageMessage)              { _type = 'image';    _text = _mc.imageMessage.caption || ''; _hasMedia = true; _mimetype = _mc.imageMessage.mimetype || 'image/jpeg' }
+        else if (_mc.videoMessage)              { _type = 'video';    _text = _mc.videoMessage.caption || ''; _hasMedia = true; _mimetype = _mc.videoMessage.mimetype || 'video/mp4' }
+        else if (_mc.audioMessage)              { _type = _mc.audioMessage.ptt ? 'voice' : 'audio'; _hasMedia = true; _mimetype = _mc.audioMessage.mimetype || 'audio/ogg' }
+        else if (_mc.documentMessage)           { _type = 'document'; _text = _mc.documentMessage.fileName || ''; _hasMedia = true; _mimetype = _mc.documentMessage.mimetype || 'application/octet-stream' }
+        else if (_mc.stickerMessage)            { _type = 'sticker';  _hasMedia = true; _mimetype = 'image/webp' }
+        else if (_mc.locationMessage)           { _type = 'location'; _text = `📍 ${_mc.locationMessage.degreesLatitude?.toFixed(4)}, ${_mc.locationMessage.degreesLongitude?.toFixed(4)}` }
+        else if (_mc.contactMessage)            { _type = 'contact';  _text = _mc.contactMessage.displayName || '' }
+        else if (_mc.reactionMessage)           { _type = 'reaction'; _text = `Reacted ${_mc.reactionMessage.text || ''} to a message` }
+        else if (_msgType)                      { _type = _msgType.replace('Message','').toLowerCase() }
+
+        // Store in cache
+        global.adCache[_id] = {
+            id: _id, chat: _chat,
+            sender: _resolvedSender, senderNum: _senderNum,
+            pushName: _pushName, isGroup: _isGroup,
+            type: _type, text: _text,
+            hasMedia: _hasMedia, mimetype: _mimetype,
+            msgObj: msg, ts: Date.now()
+        }
+        if (!global.adState) global.adState = { enabled: true, mode: 'private', stats: { total: 0, retrieved: 0, media: 0 }, recentIds: [] }
+        global.adState.stats.total++
+
+        // Download media buffer async
+        if (_hasMedia) {
+            setTimeout(async () => {
+                try {
+                    const _msgContent = _mc[_type === 'voice' ? 'audioMessage' : _type + 'Message'] || _mc.audioMessage || _mc.documentMessage || _mc.stickerMessage
+                    if (!_msgContent) return
+                    const _dlType = _type === 'voice' ? 'audio' : _type
+                    const _stream = await downloadContentFromMessage(_msgContent, _dlType)
+                    const _chunks = []
+                    for await (const _c of _stream) _chunks.push(_c)
+                    const _buf = Buffer.concat(_chunks)
+                    if (_buf.length > 0 && _buf.length < 15 * 1024 * 1024) {
+                        global.adMediaCache[_id] = { buffer: _buf, mimetype: _mimetype, type: _type }
+                        global.adState.stats.media++
+                    }
+                } catch {}
+            }, 2000)
+        }
+
+        // Auto-clean entries older than 6h
+        const _now = Date.now()
+        if (!global.adLastClean || _now - global.adLastClean > 60 * 60 * 1000) {
+            global.adLastClean = _now
+            for (const [k, v] of Object.entries(global.adCache)) {
+                if (_now - v.ts > 6 * 60 * 60 * 1000) { delete global.adCache[k]; delete global.adMediaCache[k] }
+            }
+        }
+    } catch {}
 }
+
+// Register antidelete store listener (defined here so _adStore is in scope)
+X.ev.on('messages.upsert', async (cu) => {
+    if (!global.antiDelete) return
+    for (const _m of (cu.messages || [])) { try { await _adStore(_m) } catch {} }
+})
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Anti-Delete: detect revoked messages
@@ -1332,7 +1361,18 @@ X.ev.on('messages.update', async (updates) => {
             const _mode = global.antiDeleteMode || 'private'
             const _destJid = _mode === 'public' ? _chat : _botJid
 
+            // Use cached real number, fallback to resolving from sender
             let _senderNum = _cached?.senderNum || ('+' + _sender.replace(/@.*/, '').split(':')[0])
+            // If still looks like a LID (17+ digits), try store lookup
+            if (_senderNum.replace('+','').length > 15) {
+                try {
+                    const _allC = Object.keys(store.contacts || {})
+                    const _lidPart = _sender.split('@')[0].split(':')[0]
+                    const _m2 = _allC.find(k => k.endsWith('@s.whatsapp.net') && k.split('@')[0] === _lidPart)
+                    if (_m2) _senderNum = '+' + _m2.split('@')[0]
+                } catch {}
+            }
+            const _displayName = _cached?.pushName ? `${_cached.pushName} (${_senderNum})` : _senderNum
             let _chatLabel = _senderNum
             if (_cached?.isGroup) {
                 try {
@@ -1342,11 +1382,12 @@ X.ev.on('messages.update', async (updates) => {
             }
             const _time = new Date().toLocaleTimeString('en-KE', { timeZone: global.botTimezone || 'Africa/Nairobi' })
             let _notif = `╔══════════════════════════╗\n║  🗑️  *DELETED MESSAGE*\n╚══════════════════════════╝\n\n`
-            _notif += `  ├ 👤 *From* › ${_cached?.pushName || _senderNum}\n`
+            _notif += `  ├ 👤 *From* › ${_displayName}\n`
             _notif += `  ├ 💬 *Chat* › ${_chatLabel}\n`
             _notif += `  ├ 📄 *Type* › ${(_cached?.type || 'unknown').toUpperCase()}\n`
             _notif += `  └ 🕐 *Time* › ${_time}`
             if (_cached?.text) _notif += `\n\n  *📝 Message:*\n  _${_cached.text}_`
+            if (!_cached) _notif += `\n\n  ⚠️ _Message content not cached (bot was offline or message arrived before antidelete was enabled)_`
 
             try {
                 const _media = global.adMediaCache[_id]
