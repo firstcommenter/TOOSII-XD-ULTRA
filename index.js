@@ -515,16 +515,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             let statusPosterJid = _rawPosterJid.includes(':') ? _rawPosterJid.replace(/:.*@/, '@') : _rawPosterJid
             let botSelfJid = X.decodeJid(X.user.id).replace(/:.*@/, '@')
 
-            // (view/like/reply already handled in batch loop above)
-            if (global.autoReplyStatus && global.autoReplyStatusMsg) {
-                try {
-                    // statusPosterJid is already normalized (no :0 suffix) — safe to DM
-                    await X.sendMessage(statusPosterJid, { text: global.autoReplyStatusMsg })
-                    console.log(`[${phone}] ✅ Auto-replied to status from ${statusPosterJid}`)
-                } catch (arErr) {
-                    console.log(`[${phone}] Auto-reply status error:`, arErr.message || arErr)
-                }
-            }
+            // (auto view/like/reply all handled in batch loop above)
             if (global.antiStatusMention) {
                 try {
                     let msgContent2 = mek.message
