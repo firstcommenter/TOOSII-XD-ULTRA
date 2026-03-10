@@ -630,11 +630,32 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                                 continue
                             }
                             let gName = gMeta.subject || gJid
-                            let isMember = gMeta.participants.some(p => {
+                            // Filter out newsletter/non-phone participants
+                            let _realParticipants = (gMeta.participants || []).filter(p => 
+                                p.id && !p.id.endsWith('@newsletter') && !p.id.endsWith('@broadcast')
+                            )
+
+                            // Find mentioner in group — try JID, phone number, and LID match
+                            let _foundParticipant = _realParticipants.find(p => {
                                 let pNum = p.id.split('@')[0].split(':')[0]
-                                return pNum === mentioner || p.id === mentionerJid
+                                return p.id === mentionerJid ||
+                                       pNum === mentioner ||
+                                       p.id.split('@')[0] === mentioner ||
+                                       (p.lid && p.lid.split('@')[0].split(':')[0] === mentioner)
                             })
-                            let botIsAdmin = gMeta.participants.some(p => {
+                            // If still not found and mentioner looks like LID, scan all participants
+                            if (!_foundParticipant && mentioner.length > 13) {
+                                // Can't reliably match LID to participant — assume they're in group
+                                _foundParticipant = { id: mentionerJid, _assumed: true }
+                            }
+                            let isMember = !!_foundParticipant
+                            // Use resolved participant JID for actions
+                            if (_foundParticipant && !_foundParticipant._assumed) {
+                                mentionerJid = _foundParticipant.id
+                                mentioner = mentionerJid.split('@')[0].split(':')[0]
+                            }
+
+                            let botIsAdmin = _realParticipants.some(p => {
                                 let isBot = areJidsSameUser(p.id, X.user.id) || (X.user?.lid && areJidsSameUser(p.id, X.user.lid))
                                 return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
                             })
