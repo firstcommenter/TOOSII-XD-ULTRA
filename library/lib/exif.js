@@ -26,12 +26,18 @@ const path = require("path")
 async function imageToWebp (media) {
 
     const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.jpg`)
+    // Detect real format from magic bytes to use correct extension
+    const _isWebp = media && media[0] === 0x52 && media[1] === 0x49 && media[8] === 0x57  // RIFF....WEBP
+    const _isPng  = media && media[0] === 0x89 && media[1] === 0x50  // PNG
+    const _ext    = _isWebp ? 'webp' : _isPng ? 'png' : 'jpg'
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.${_ext}`)
 
     fs.writeFileSync(tmpFileIn, media)
 
     await new Promise((resolve, reject) => {
-        ff(tmpFileIn)
+        const _cmd = ff()
+        if (_isWebp) _cmd.inputOption('-f webp')  // tell ffmpeg format explicitly
+        _cmd.input(tmpFileIn)
             .on("error", reject)
             .on("end", () => resolve(true))
             .addOutputOptions([
@@ -46,19 +52,25 @@ async function imageToWebp (media) {
 
     const buff = fs.readFileSync(tmpFileOut)
     fs.unlinkSync(tmpFileOut)
-    fs.unlinkSync(tmpFileIn)
+    try { fs.unlinkSync(tmpFileIn) } catch {}
     return buff
 }
 
 async function imageToWebp3 (media) {
 
     const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.jpg`)
+    // Detect real format from magic bytes
+    const _isWebp = media && media[0] === 0x52 && media[1] === 0x49 && media[8] === 0x57  // RIFF....WEBP
+    const _isPng  = media && media[0] === 0x89 && media[1] === 0x50  // PNG
+    const _ext    = _isWebp ? 'webp' : _isPng ? 'png' : 'jpg'
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.${_ext}`)
 
     fs.writeFileSync(tmpFileIn, media)
 
     await new Promise((resolve, reject) => {
-        ff(tmpFileIn)
+        const _cmd = ff()
+        if (_isWebp) _cmd.inputOption('-f webp')
+        _cmd.input(tmpFileIn)
             .on("error", reject)
             .on("end", () => resolve(true))
             .addOutputOptions([
@@ -73,7 +85,7 @@ async function imageToWebp3 (media) {
 
     const buff = fs.readFileSync(tmpFileOut)
     fs.unlinkSync(tmpFileOut)
-    fs.unlinkSync(tmpFileIn)
+    try { fs.unlinkSync(tmpFileIn) } catch {}
     return buff
 }
 
