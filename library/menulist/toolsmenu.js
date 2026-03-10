@@ -21,7 +21,7 @@ const toolsMenu = `
 ╔══════════════════════════╗
 ║  👻  *PRESENCE*
 ╚══════════════════════════╝
-  ├ .vv          ├ .fakeonline
+  ├ .vv          ├ .autoonline
   ├ .autorecording ├ .autotyping
   └ .fakestatus
 
