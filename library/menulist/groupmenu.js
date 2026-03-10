@@ -1,58 +1,59 @@
 const groupMenu = `
-┏❒ *ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ* ❒
-┃➤ .add [ɴᴜᴍʙᴇʀ]
-┃➤ .kick @ᴜꜱᴇʀ
-┃➤ .remove @ᴜꜱᴇʀ
-┃➤ .promote @ᴜꜱᴇʀ
-┃➤ .demote @ᴜꜱᴇʀ
-┃➤ .ban @ᴜꜱᴇʀ
-┃➤ .unban @ᴜꜱᴇʀ
-┃➤ .warn @ᴜꜱᴇʀ [ʀᴇᴀꜱᴏɴ]
-┃➤ .unwarn @ᴜꜱᴇʀ
-┃➤ .resetwarn @ᴜꜱᴇʀ
-┃➤ .warnlist
-┃➤ .approve [ᴀʟʟ/ɴᴜᴍʙᴇʀ]
-┃➤ .reject [ᴀʟʟ/ɴᴜᴍʙᴇʀ]
-┃➤ .delete ʀᴇᴘʟʏ ᴍꜱɢ
-┃➤ .mute
-┃➤ .unmute
-┃➤ .open
-┃➤ .close
-┗❒
+╔══════════════════════════╗
+║  👥  *GROUP MANAGEMENT*
+╚══════════════════════════╝
+  ├ .add        › [number]
+  ├ .kick       › @user
+  ├ .remove     › @user
+  ├ .promote    › @user
+  ├ .demote     › @user
+  ├ .ban        › @user
+  ├ .unban      › @user
+  ├ .warn       › @user [reason]
+  ├ .unwarn     › @user
+  ├ .resetwarn  › @user
+  ├ .warnlist
+  ├ .approve    › [all/number]
+  ├ .reject     › [all/number]
+  ├ .delete     › reply msg
+  ├ .mute  ├ .unmute
+  └ .open  └ .close
 
-┏❒ *ɢʀᴏᴜᴘ ꜱᴇᴛᴛɪɴɢꜱ* ❒
-┃➤ .setgname [ɴᴀᴍᴇ]
-┃➤ .setgdesc [ᴅᴇꜱᴄ]
-┃➤ .setgpp ʀᴇᴘʟʏ ɪᴍɢ
-┃➤ .link
-┃➤ .resetlink
-┃➤ .revoke
-┃➤ .welcome ᴏɴ/ᴏꜰꜰ
-┃➤ .goodbye ᴏɴ/ᴏꜰꜰ
-┃➤ .greet ᴏɴ/ᴏꜰꜰ
-┃➤ .left ᴏɴ/ᴏꜰꜰ
-┃➤ .events ᴏɴ/ᴏꜰꜰ
-┗❒
+╔══════════════════════════╗
+║  ⚙️  *GROUP SETTINGS*
+╚══════════════════════════╝
+  ├ .setgname › [name]
+  ├ .setgdesc › [desc]
+  ├ .setgpp   › reply img
+  ├ .link     ├ .resetlink
+  ├ .revoke
+  ├ .welcome  › on/off
+  ├ .goodbye  › on/off
+  ├ .greet    › on/off
+  ├ .left     › on/off
+  └ .events   › on/off
 
-┏❒ *ᴘʀᴏᴛᴇᴄᴛɪᴏɴ* ❒
-┃➤ .antilink ᴏɴ/ᴏꜰꜰ
-┃➤ .antibadword ᴏɴ/ᴏꜰꜰ
-┃➤ .antitag ᴏɴ/ᴏꜰꜰ
-┃➤ .antisticker ᴏɴ/ᴏꜰꜰ
-┃➤ .antidemote ᴏɴ/ᴏꜰꜰ
-┗❒
+╔══════════════════════════╗
+║  🛡️  *PROTECTION*
+╚══════════════════════════╝
+  ├ .antilink     › on/off
+  ├ .antibadword  › on/off
+  ├ .antitag      › on/off
+  ├ .antisticker  › on/off
+  └ .antidemote   › on/off
 
-┏❒ *ɢʀᴏᴜᴘ ᴛᴏᴏʟꜱ* ❒
-┃➤ .tagall [ᴍꜱɢ]
-┃➤ .tag [ᴍꜱɢ]
-┃➤ .hidetag [ᴍꜱɢ]
-┃➤ .tagnoadmin [ᴍꜱɢ]
-┃➤ .mention [ᴍꜱɢ]
-┃➤ .groupinfo
-┃➤ .admins
-┃➤ .vcf
-┃➤ .leave
-┃➤ .clear
-┗❒`
+╔══════════════════════════╗
+║  🔧  *GROUP TOOLS*
+╚══════════════════════════╝
+  ├ .tagall    › [msg]
+  ├ .tag       › [msg]
+  ├ .hidetag   › [msg]
+  ├ .tagnoadmin › [msg]
+  ├ .mention   › [msg]
+  ├ .groupinfo
+  ├ .admins
+  ├ .vcf
+  ├ .leave
+  └ .clear`
 
 module.exports = groupMenu
