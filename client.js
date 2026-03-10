@@ -1147,6 +1147,7 @@ break;
 case 'lyrics':
 case 'lyric':
 case 'songlyrics': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
     if (!text) return reply(
 `🎵 *Lyrics Search*
 
@@ -2216,6 +2217,7 @@ break
 
 case 'antilink':
 case 'setantilink': {
+    await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let alArg = (args[0] || '').toLowerCase()
@@ -2234,6 +2236,7 @@ break
 
 case 'antidelete':
 case 'setantidelete': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let adArg = (args[0] || '').toLowerCase()
 if (!adArg) {
@@ -2302,6 +2305,7 @@ break
 
 case 'restart':
 case 'reboot': {
+    await X.sendMessage(m.chat, { react: { text: '🔄', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 await reply(`🔄 *Restarting Bot...*\n\n⏳ _Bot will be back online shortly._\n\n_Powered by ${global.botname}_`)
 await sleep(2000)
@@ -2311,6 +2315,7 @@ process.exit(0)
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Update Command — fully functional with step-by-step feedback
 case 'update': {
+    await X.sendMessage(m.chat, { react: { text: '⬆️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 const repoUrl = global.repoUrl || ''
 if (!repoUrl) return reply(`❌ *No repo URL set!*\n\nAdd this to *setting.js*:\n\`global.repoUrl = "https://github.com/TOOSII102/TOOSII-XD-ULTRA"\``)
@@ -2596,6 +2601,7 @@ break
 
                         case 'kick':
                         case 'remove': {
+    await X.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
                                 if (!isBotAdmins) return reply(mess.botAdmin);
@@ -2620,6 +2626,7 @@ break
 
                         case 'del':
                         case 'delete': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
                                 if (!m.quoted) return reply(`*Usage:* Reply to a message with ${prefix + command} to delete it.`);
                                 let quotedKey = m.quoted.fakeObj ? { ...m.quoted.fakeObj.key } : { remoteJid: m.quoted.chat || m.chat, fromMe: m.quoted.fromMe || false, id: m.quoted.id }
                                 if (m.isGroup && !quotedKey.participant) {
@@ -2641,6 +2648,7 @@ break
                         break;
 
                         case 'warn': {
+    await X.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
                                 if (!isBotAdmins) return reply(mess.botAdmin);
@@ -2682,6 +2690,7 @@ break
 
                         case 'unwarn':
                         case 'resetwarn': {
+    await X.sendMessage(m.chat, { react: { text: '🔄', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
                                 let uwUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null;
@@ -2702,6 +2711,7 @@ break
 
                         case 'warnlist':
                         case 'warnings': {
+    await X.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup);
                                 if (!isOwner && !isAdmins) return reply(mess.admin);
                                 let wlDbPath = path.join(__dirname, 'database', 'warnings.json');
@@ -2789,6 +2799,7 @@ break
 
                         case 'approve':
                         case 'acceptjoin': {
+    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isAdmins && !isOwner) return reply(mess.admin)
                                 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -2819,6 +2830,7 @@ break
 
                         case 'reject':
                         case 'rejectjoin': {
+    await X.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
                                 if (!m.isGroup) return reply(mess.OnlyGrup)
                                 if (!isAdmins && !isOwner) return reply(mess.admin)
                                 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -2850,6 +2862,7 @@ break
 //━━━━━━━━━━━━━━━━━━━━━━━━//                            
 // search features
                         case 'wikimedia': {
+    await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
                                 if (!text) return reply(`*Example :*\n\n${prefix + command} Query`);
                                 try {
                                         const results = await wikimedia(text);
@@ -2864,6 +2877,7 @@ break
                         break;
 
                         case 'mangainfo': {
+    await X.sendMessage(m.chat, { react: { text: '📚', key: m.key } })
                                 const mangaName = args.join(' ');
                                 if (!mangaName) return reply(`*Example :*\n\n${prefix + command} Anime`);
                                 try {
@@ -2887,6 +2901,7 @@ break
                         }
 
                         case 'mangadetail': {
+    await X.sendMessage(m.chat, { react: { text: '📚', key: m.key } })
                                 const url = args[0];
                                 if (!url) return reply(`*Example :*\n\n${prefix + command} URL`);
                                 try {
@@ -2911,6 +2926,7 @@ break
                         }
 
                         case 'jkt48news': {
+    await X.sendMessage(m.chat, { react: { text: '📰', key: m.key } })
                                 const lang = args[0] || "id";
                                 try {
                                         const news = await jktNews(lang);
@@ -2969,6 +2985,7 @@ break
 
                         case 'kusonimeinfo':
                         case 'animeinfo': {
+    await X.sendMessage(m.chat, { react: { text: '🎌', key: m.key } })
                                 try {
                                         const animeList = await Kusonime.info();
                                         if (animeList.length === 0) {
@@ -2991,6 +3008,7 @@ break
 
                         case 'kusonimesearch':
                         case 'animesearch': {
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
                                 if (!text) return reply(`*Example :*\n\n${prefix + command} Anime`);
                                 try {
                                         const searchResults = await Kusonime.search(text);
@@ -3016,6 +3034,7 @@ break
                         case 'infobmkg':
                         case 'gempa':
                         case 'bmkg': {
+    await X.sendMessage(m.chat, { react: { text: '🌤️', key: m.key } })
                                 try {
                                         let result = await gempa();
                                         let gempaData = result.data;
@@ -3150,6 +3169,7 @@ break
                         break;
  
 case 'telestick': {
+    await X.sendMessage(m.chat, { react: { text: '📲', key: m.key } })
   async function telestick(url) {
     let match = url.match(/https:\/\/t\.me\/addstickers\/([^\/\?#]+)/)
     if (!match) return reply(`*Example :*\n\n${prefix + command} https://`);
@@ -3180,6 +3200,7 @@ case 'telestick': {
 break;
 
 case 'stikerly': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
 if (!text) return reply(`*Example :*\n\n ${prefix + command} anomali `)
 try {
 const searchRes = await fetch(`https://zenzxz.dpdns.org/search/stickerlysearch?query=${encodeURIComponent(text)}`)
@@ -4232,6 +4253,7 @@ case 'ai':{
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Game Features
 case 'tebakld': {
+    await X.sendMessage(m.chat, { react: { text: '🧩', key: m.key } })
   let leaderboard = loadLeaderboard();
 
   // Ubah jadi array dan urutkan berdasar score desc
@@ -4252,6 +4274,7 @@ case 'tebakld': {
 }
 break;
 case 'tebak': {
+    await X.sendMessage(m.chat, { react: { text: '🧩', key: m.key } })
   const quizPath = './database/tebakgame.json';
   if (!fs.existsSync(quizPath)) return reply('⚠️ Quiz data file not found.');
 
@@ -4294,6 +4317,7 @@ break;
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Info Bot             
 case 'debugrole': {
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
     if (!isOwner) return reply('Owner only.')
     let dbgMsg = `*🔍 ROLE DEBUG INFO*\n\n`
     dbgMsg += `*Bot Identity:*\n`
@@ -4330,6 +4354,7 @@ case 'info':
 case 'storage':
 case 'server':
 case 'srvinfo': {
+    await X.sendMessage(m.chat, { react: { text: command === 'ping' ? '🏓' : '🖥️', key: m.key } })
 
   function formatp(bytes) {
     if (bytes < 1024) return `${bytes} B`
@@ -4447,6 +4472,7 @@ else { global.autoReact = true; global.autoReactEmoji = arArg; reply(`*Auto Reac
 } break
 
 case 'pmblocker': {
+    await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let pbArg = (args[0] || '').toLowerCase()
 if (pbArg === 'on') { global.pmBlocker = true; reply('*PM Blocker ON*\nNon-owner PMs will be auto-blocked.') }
@@ -4456,6 +4482,7 @@ else reply(`*PM Blocker: ${global.pmBlocker ? 'ON' : 'OFF'}*\nUsage: ${prefix}pm
 
 case 'pp':
 case 'getpp': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 // Get profile picture of sender, mentioned user, quoted user, or bot itself
 try {
 let target, label
@@ -4501,6 +4528,7 @@ _${e.message || 'User may have privacy restrictions.'}_`)
 } break
 
 case 'setpp': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃  🖼️ *SET BOT PROFILE PIC*
@@ -4529,6 +4557,7 @@ _${e.message || 'Unknown error'}_`)
 } break
 
 case 'clearsession': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 try {
 const sessPath = path.join(__dirname, 'sessions')
@@ -4542,6 +4571,7 @@ reply(`*Cleared ${count} session files.*`)
 } break
 
 case 'cleartmp': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 try {
 const tmpPath = path.join(__dirname, 'tmp')
@@ -4554,6 +4584,7 @@ reply(`*Cleared ${files.length} temp files.*`)
 } break
 
 case 'sudo': {
+    await X.sendMessage(m.chat, { react: { text: '👑', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let sudoNum = (args[0] || '').replace(/[^0-9]/g, '')
 if (!sudoNum) return reply(`*Sudo Users:* ${global.owner.join(', ')}\n\nUsage:\n${prefix}sudo add [number]\n${prefix}sudo remove [number]`)
@@ -4571,6 +4602,7 @@ reply(`*Removed ${num} from sudo users.*`)
 } break
 
 case 'setowner': {
+    await X.sendMessage(m.chat, { react: { text: '👑', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let newOwner = (args[0] || '').replace(/[^0-9]/g, '')
 if (!newOwner) return reply(`*Current Owner Number:* ${global.ownerNumber}\nUsage: ${prefix}setowner [number]`)
@@ -4580,11 +4612,13 @@ reply(`*Owner number updated to ${newOwner}*`)
 } break
 
 case 'setmenu': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 reply('*Menu Categories:*\nai, tools, owner, group, downloader, search, sticker, games, other, fun, anime, textmaker, imgedit, github, converter\n\nUse .menu [category] to view specific menus.')
 } break
 
 case 'menuimage': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 if (m.quoted && /image/.test(m.quoted.mimetype || '')) {
 try {
@@ -4599,11 +4633,13 @@ reply(`*Menu image URL set.*`)
 } break
 
 case 'configimage': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 reply(`*Image Config:*\nMenu Thumb: ${global.menuThumb || global.thumb}\nBot Pic: ${global.botPic || 'Default'}\n\nUse ${prefix}menuimage to change menu image\nUse ${prefix}botpic to change bot picture`)
 } break
 
 case 'mode': {
+    await X.sendMessage(m.chat, { react: { text: '⚙️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let modeArg = (args[0] || '').toLowerCase()
 if (modeArg === 'public') {
@@ -4665,6 +4701,7 @@ X.sendMessage(from, { text: `🚫 *@${banUser.split('@')[0]} has been banned fro
 } break
 
 case 'unban': {
+    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let unbanUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
@@ -4715,6 +4752,7 @@ else reply(`🛡️ *Anti Demote: ${global.antiDemote ? '✅ ON' : '❌ OFF'}*\n
 } break
 
 case 'setgdesc': {
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -4730,6 +4768,7 @@ else reply(mess.error)
 } break
 
 case 'setgname': {
+    await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -4746,6 +4785,7 @@ else reply(`❌ *Failed to update group name.*\n_${err.message || 'Unknown error
 } break
 
 case 'setgpp': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -4808,6 +4848,7 @@ else reply(`❌ *Failed to reset group link.*\n_${err.message || 'Unknown error'
 } break
 
 case 'link': {
+    await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
@@ -4823,6 +4864,7 @@ else reply(`❌ *Failed to get group link.*\n_${err.message || 'Unknown error'}_
 } break
 
 case 'goodbye': {
+    await X.sendMessage(m.chat, { react: { text: '👋', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let gbArg = (args[0] || '').toLowerCase()
@@ -4851,6 +4893,7 @@ X.sendMessage(from, { text: tagText, mentions }, { quoted: m })
 } break
 
 case 'tag': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!text) return reply(`📌 *Usage:* ${prefix}tag [message]`)
 let tagMentions = participants.map(p => p.id)
@@ -4867,6 +4910,7 @@ X.sendMessage(from, { text: htText, mentions: htMentions }, { quoted: m })
 } break
 
 case 'tagnoadmin': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let nonAdmins = participants.filter(p => !p.admin).map(p => p.id)
@@ -4876,6 +4920,7 @@ X.sendMessage(from, { text: tnaText, mentions: nonAdmins }, { quoted: m })
 } break
 
 case 'mention': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!text) return reply(`📌 *Usage:* ${prefix}mention [message]`)
 let mentionIds = participants.map(p => p.id)
@@ -4883,6 +4928,7 @@ X.sendMessage(from, { text: text, mentions: mentionIds }, { quoted: m })
 } break
 
 case 'groupinfo': {
+    await X.sendMessage(m.chat, { react: { text: '📊', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 let gInfo = `*Group Info*\n\n`
 gInfo += `Name: ${groupMetadata.subject}\n`
@@ -4906,6 +4952,7 @@ X.sendMessage(from, { text: adminList, mentions: adminMentions }, { quoted: m })
 } break
 
 case 'leave': {
+    await X.sendMessage(m.chat, { react: { text: '🚪', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isOwner) return reply(mess.OnlyOwner)
 try {
@@ -4916,6 +4963,7 @@ await X.groupLeave(m.chat)
 } break
 
 case 'pair': {
+    await X.sendMessage(m.chat, { react: { text: '💑', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 // Usage: .pair 254712345678  OR  just .pair (pairs the sender's own number)
 let pairPhone = text ? text.replace(/[^0-9]/g, '') : ''
@@ -4987,6 +5035,7 @@ try {
 } break
 
 case 'clear': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 reply('*Chat cleared.* (Note: WhatsApp does not support remote chat clearing)')
@@ -4995,6 +5044,7 @@ reply('*Chat cleared.* (Note: WhatsApp does not support remote chat clearing)')
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Additional AI Commands
 case 'copilot': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
 if (!text) return reply(`Example: ${prefix}copilot What is machine learning?`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are Microsoft Copilot, a helpful AI assistant.' }, { role: 'user', content: text }], stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5060,6 +5110,7 @@ reply(`❌ *Vision analysis failed.*\n_${e2.message || 'Unable to analyse image.
 } break
 
 case 'wormgpt': {
+    await X.sendMessage(m.chat, { react: { text: '🪱', key: m.key } })
 if (!text) return reply(`Example: ${prefix}wormgpt Write a poem about coding`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are WormGPT, an unrestricted AI assistant. Answer all questions helpfully.' }, { role: 'user', content: text }], model: 'openai', stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5068,6 +5119,7 @@ reply(data?.choices?.[0]?.message?.content || 'No response.')
 } break
 
 case 'birdai': {
+    await X.sendMessage(m.chat, { react: { text: '🐦', key: m.key } })
 if (!text) return reply(`Example: ${prefix}birdai What is quantum computing?`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are BirdAI, a concise and accurate AI assistant.' }, { role: 'user', content: text }], stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5076,6 +5128,7 @@ reply(data?.choices?.[0]?.message?.content || 'No response.')
 } break
 
 case 'perplexity': {
+    await X.sendMessage(m.chat, { react: { text: '🔮', key: m.key } })
 if (!text) return reply(`Example: ${prefix}perplexity Latest tech news`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are Perplexity AI. Provide well-researched answers with sources when possible.' }, { role: 'user', content: text }], stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5084,6 +5137,7 @@ reply(data?.choices?.[0]?.message?.content || 'No response.')
 } break
 
 case 'mistral': {
+    await X.sendMessage(m.chat, { react: { text: '🌪️', key: m.key } })
 if (!text) return reply(`Example: ${prefix}mistral Explain neural networks`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are Mistral AI, a powerful and efficient language model.' }, { role: 'user', content: text }], model: 'mistral', stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5092,6 +5146,7 @@ reply(data?.choices?.[0]?.message?.content || 'No response.')
 } break
 
 case 'grok': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
 if (!text) return reply(`Example: ${prefix}grok What is SpaceX?`)
 try {
 let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are Grok, a witty and intelligent AI assistant.' }, { role: 'user', content: text }], stream: false }, { headers: { 'Content-Type': 'application/json' } })
@@ -5100,6 +5155,7 @@ reply(data?.choices?.[0]?.message?.content || 'No response.')
 } break
 
 case 'speechwrite': {
+    await X.sendMessage(m.chat, { react: { text: '🎙️', key: m.key } })
 if (!text) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🎤 *SPEECH WRITER*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\nWrite a professional speech on any topic.\n\n*Usage:* ${prefix}speechwrite [topic or description]\n\n*Examples:*\n• ${prefix}speechwrite graduation ceremony about perseverance\n• ${prefix}speechwrite wedding toast for my best friend\n• ${prefix}speechwrite motivational speech for a sports team\n• ${prefix}speechwrite farewell speech for a retiring colleague`)
 try {
 await reply('🎤 _Crafting your speech, please wait..._')
@@ -5121,6 +5177,7 @@ reply(`┏━━━━━━━━━━━━━━━━━━━━━━━�
 
 case 'imagine':
 case 'flux': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
 if (!text) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🎨 *AI IMAGE GENERATOR*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n*Usage:* ${prefix}${command} [description]\n\n*Examples:*\n• ${prefix}${command} a futuristic city at night with neon lights\n• ${prefix}${command} portrait of a lion wearing a crown, digital art\n• ${prefix}${command} beautiful sunset over the ocean, photorealistic\n\n_Use ${prefix}flux for Flux model, ${prefix}imagine for standard._`)
 try {
 await reply('🎨 _Generating your image, please wait..._')
@@ -5146,6 +5203,7 @@ await X.sendMessage(m.chat, { image: { url: fallbackUrl }, caption: `🎨 *Gener
 // Downloader Commands
 case 'video':
 case 'ytv': {
+    await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
 if (!text) return reply(`Example: ${prefix}${command} [youtube url or search query]`)
 try {
 let url = text
@@ -5206,6 +5264,7 @@ if (downloaded && videoBuffer) {
 } break
 
 case 'ytdocplay': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 if (!text) return reply(`Example: ${prefix}ytdocplay [search query]`)
 try {
 let search = await yts(text)
@@ -5262,6 +5321,7 @@ if (downloaded && audioBuffer) {
 } break
 
 case 'ytdocvideo': {
+    await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
 if (!text) return reply(`Example: ${prefix}ytdocvideo [search query]`)
 try {
 let search = await yts(text)
@@ -5317,6 +5377,7 @@ if (downloaded && videoBuffer) {
 } break
 
 case 'spotify': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 if (!text) return reply(`Example: ${prefix}spotify [song name]`)
 try {
 let search = await yts(text)
@@ -5352,6 +5413,7 @@ reply(`*APK Search Results:*\n\n${list}`)
 } break
 
 case 'gitclone': {
+    await X.sendMessage(m.chat, { react: { text: '📦', key: m.key } })
 if (!text) return reply(`Example: ${prefix}gitclone https://github.com/user/repo`)
 try {
 let repoUrl = text.replace(/\.git$/, '')
@@ -5367,6 +5429,7 @@ await X.sendMessage(m.chat, { document: { url: zipUrl }, mimetype: 'application/
 // Search & Tools Commands
 case 'yts':
 case 'ytsearch': {
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
 if (!text) return reply(`Example: ${prefix}${command} [query]`)
 try {
 let yts = require('yt-search')
@@ -5379,6 +5442,7 @@ reply(`*YouTube Search:* ${text}\n\n${results}`)
 
 case 'img':
 case 'image': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!text) return reply(`Example: ${prefix}${command} cats`)
 try {
 let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=512&height=512&nologo=true`
@@ -5387,6 +5451,7 @@ await X.sendMessage(m.chat, { image: { url: imgUrl }, caption: `*Image:* ${text}
 } break
 
 case 'movie': {
+    await X.sendMessage(m.chat, { react: { text: '🎬', key: m.key } })
 if (!text) return reply(`Example: ${prefix}movie Inception`)
 try {
 let res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=742b79da`)
@@ -5400,6 +5465,7 @@ await X.sendMessage(m.chat, { image: { url: data.Poster }, caption: info }, { qu
 } break
 
 case 'shazam': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 if (!m.quoted || !/audio|video/.test(m.quoted.mimetype || '')) return reply(`┏━━━━━━━━━━━━━━━━━━━━━━━┓\n┃  🎵 *SHAZAM - SONG FINDER*\n┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\nIdentify any song from an audio or video clip.\n\n*Usage:* Reply to an audio or video message with *${prefix}shazam*\n\n_Works with voice notes, music clips, videos, and audio files._`)
 try {
 await reply('🎵 _Listening and identifying the song, please wait..._')
@@ -5496,6 +5562,7 @@ reply(`❌ *Shazam failed.*\n_${e.message || 'Unable to identify the song. Try a
 
 case 'fetch':
 case 'get': {
+    await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
 if (!text) return reply(`Example: ${prefix}fetch https://example.com/api`)
 try {
 let res = await fetch(text)
@@ -5521,6 +5588,7 @@ reply(txt.slice(0, 4000))
 
 case 'ssweb':
 case 'ss': {
+    await X.sendMessage(m.chat, { react: { text: '📸', key: m.key } })
 if (!text) return reply(`Example: ${prefix}ssweb https://google.com`)
 try {
 let ssUrl = `https://image.thum.io/get/width/1280/crop/720/noanimate/${text}`
@@ -5530,6 +5598,7 @@ await X.sendMessage(m.chat, { image: { url: ssUrl }, caption: `*Screenshot:* ${t
 
 case 'trt':
 case 'translate': {
+    await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
 if (!text) return reply(`Example: ${prefix}trt en|hello world\nOr reply to a message: ${prefix}trt en`)
 try {
 let targetLang = 'en'
@@ -5553,12 +5622,14 @@ reply(`*Translation (${targetLang}):*\n${translated}`)
 } break
 
 case 'transcribe': {
+    await X.sendMessage(m.chat, { react: { text: '🎙️', key: m.key } })
 if (!m.quoted || !/audio/.test(m.quoted.mimetype || '')) return reply(`Reply to an audio with ${prefix}transcribe`)
 reply('*Transcribe:* Audio transcription requires a paid API. Use AI commands with audio description instead.')
 } break
 
 case 'locate':
 case 'location': {
+    await X.sendMessage(m.chat, { react: { text: '📍', key: m.key } })
 if (!text) return reply(`Example: ${prefix}location Nairobi, Kenya`)
 try {
 let res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1`, { headers: { 'User-Agent': 'ToosiiBot/1.0' } })
@@ -5570,6 +5641,7 @@ await X.sendMessage(m.chat, { location: { degreesLatitude: parseFloat(loc.lat), 
 } break
 
 case 'tourl': {
+    await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
 // Upload any media (image/video/audio/doc/sticker) and return a public CDN link
 if (!m.quoted) return reply(`📎 *Reply to any media* (image, video, audio, doc, sticker) with *${prefix}tourl*`)
 try {
@@ -5621,6 +5693,7 @@ try {
 } break
 
 case 'totext': {
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
 // Extract text from an image using OCR via pollinations vision API
 if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
     return reply(`📄 *Reply to an image* with *${prefix}totext* to extract all text from it\n\n_Works on screenshots, documents, signs, receipts, etc._`)
@@ -5668,6 +5741,7 @@ try {
 
 case 'toaudio':
 case 'tomp3': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 // Convert video → MP3 audio using ffmpeg
 const _qmime2 = m.quoted?.mimetype || m.quoted?.msg?.mimetype || ''
 if (!m.quoted || !/video|audio/.test(_qmime2)) return reply(`🎵 *Reply to a video* with *${prefix}tomp3* to extract its audio as MP3`)
@@ -5696,6 +5770,7 @@ try {
 
 case 'toppt':
 case 'tovoice': {
+    await X.sendMessage(m.chat, { react: { text: '🔊', key: m.key } })
 // Convert any audio or video → WhatsApp voice note (ogg opus ptt)
 const _qmime3 = m.quoted?.mimetype || m.quoted?.msg?.mimetype || ''
 if (!m.quoted || !/audio|video/.test(_qmime3)) return reply(`🎤 *Reply to an audio or video* with *${prefix}toppt* to convert it to a voice note`)
@@ -5723,6 +5798,7 @@ try {
 } break
 
 case 'removebg': {
+    await X.sendMessage(m.chat, { react: { text: '✂️', key: m.key } })
 // Remove image background — uses remove.bg API if key set, otherwise free fallback via photoroom
 if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
     return reply(`🖼️ *Reply to an image* with *${prefix}removebg* to remove its background`)
@@ -5786,6 +5862,7 @@ try {
 // Game Commands
 case 'tictactoe':
 case 'ttt': {
+    await X.sendMessage(m.chat, { react: { text: '❎', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 let tttUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : null
 if (!tttUser) return reply(`Usage: ${prefix}ttt @opponent`)
@@ -5799,6 +5876,7 @@ X.sendMessage(from, { text: `*Tic Tac Toe*\n\n@${sender.split('@')[0]} (X) vs @$
 } break
 
 case 'tttend': {
+    await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
 if (!global.tttGames || !global.tttGames[m.chat]) return reply('No game in progress.')
 delete global.tttGames[m.chat]
 reply('*Game ended.*')
@@ -5806,10 +5884,12 @@ reply('*Game ended.*')
 
 case 'connect4':
 case 'c4': {
+    await X.sendMessage(m.chat, { react: { text: '🔴', key: m.key } })
 reply('*Connect 4:* Coming soon! Use .ttt for Tic Tac Toe.')
 } break
 
 case 'hangman': {
+    await X.sendMessage(m.chat, { react: { text: '🎯', key: m.key } })
 if (!global.hangmanGames) global.hangmanGames = {}
 if (global.hangmanGames[m.chat]) return reply('A hangman game is already in progress! Use .hangmanend to end it.')
 let words = ['javascript', 'python', 'programming', 'computer', 'algorithm', 'database', 'internet', 'software', 'hardware', 'keyboard', 'function', 'variable', 'boolean', 'whatsapp', 'telegram', 'android', 'network', 'security', 'elephant', 'universe']
@@ -5820,6 +5900,7 @@ reply(`*Hangman Game*\n\n${display}\n\nLives: ${'❤️'.repeat(6)}\nLetters: ${
 } break
 
 case 'hangmanend': {
+    await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
 if (!global.hangmanGames || !global.hangmanGames[m.chat]) return reply('No hangman game in progress.')
 reply(`*Game ended.* The word was: *${global.hangmanGames[m.chat].word}*`)
 delete global.hangmanGames[m.chat]
@@ -5844,6 +5925,7 @@ reply(qText)
 } break
 
 case 'answer': {
+    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 if (!global.triviaGames || !global.triviaGames[m.chat]) return reply('No trivia in progress. Use .trivia to start.')
 let userAnswer = text?.toLowerCase().trim()
 if (!userAnswer) return reply('Please provide your answer.')
