@@ -2148,7 +2148,7 @@ case 'private': {
     await X.sendMessage(m.chat, { react: { text: '🔒', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = false
-reply(`*🔒 Bot Mode: PRIVATE*\n\nOnly the deployed number (*${botClean}*) can use commands.\n\n❌ All other users are now blocked from using any command.`)
+reply(`╔══════════════════════════╗\n║  🔒 *BOT MODE: PRIVATE*\n╚══════════════════════════╝\n\n  ✅ *Enabled*\n  └ Only *${botClean}* can use commands.\n  └ All other users are blocked.`)
 }
 break
 
@@ -2156,7 +2156,7 @@ case 'public': {
     await X.sendMessage(m.chat, { react: { text: '🔓', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = true
-reply(`*🌐 Bot Mode: PUBLIC*\n\n✅ All users can now use bot commands.\n\nOwner-only commands are still restricted to the deployed number.`)
+reply(`╔══════════════════════════╗\n║  🌐 *BOT MODE: PUBLIC*\n╚══════════════════════════╝\n\n  ✅ *Enabled*\n  └ All users can use bot commands.\n  └ Owner-only commands still restricted.`)
 }
 break
 
@@ -2224,7 +2224,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let newPrefix = (args[0] || '').trim()
 if (!newPrefix) {
     let currentPfx = global.botPrefix || '.'
-    reply(`*Current Prefix:* *${currentPfx}*\n\n*Usage:*\n• ${prefix}setprefix [character] — set a new prefix\n• ${prefix}setprefix reset — restore default (.)\n\n*Examples:*\n• ${prefix}setprefix .\n• ${prefix}setprefix /\n• ${prefix}setprefix #\n• ${prefix}setprefix !`)
+    reply(`╔══════════════════════════╗\n║  ⌨️  *SET PREFIX*\n╚══════════════════════════╝\n\n  ├ 📌 *Current* › *${currentPfx}*\n  ├ ${prefix}setprefix [char] — set new\n  └ ${prefix}setprefix reset  — restore (.)\n\n  _Examples: . / # !_`)
 } else if (newPrefix.toLowerCase() === 'reset' || newPrefix.toLowerCase() === 'default') {
     global.botPrefix = '.'
     reply(`*Prefix Reset* ✅\nBot prefix restored to default: *.*`)
@@ -2412,34 +2412,39 @@ break
 
 case 'antistatusmention':
 case 'antismention': {
-    await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
-if (!isOwner) return reply(mess.OnlyOwner)
-let asmArg = (args[0] || '').toLowerCase()
-if (!asmArg) {
-    let asmState = global.antiStatusMention ? '✅ ON' : '❌ OFF'
-    let asmAction = global.antiStatusMentionAction || 'warn'
-    reply(`*🛡️ Anti Status Mention: ${asmState}*\n*Current Action: ${asmAction.toUpperCase()}*\n\nPrevents anyone from tagging your groups in their WhatsApp status.\n\n*Usage:*\n• ${prefix}antistatusmention on\n• ${prefix}antistatusmention off\n• ${prefix}antistatusmention warn — 3 warnings then auto-kick\n• ${prefix}antistatusmention delete — delete their messages in the group\n• ${prefix}antistatusmention kick — instant removal\n\n_Bot must be admin in the group for actions to work._`)
-} else if (asmArg === 'on' || asmArg === 'enable') {
-    global.antiStatusMention = true
-    reply(`*🛡️ Anti Status Mention: ✅ ON*\nAction: *${(global.antiStatusMentionAction || 'warn').toUpperCase()}*\n\nAnyone who tags a group in their status will be actioned.\n_Bot must be admin in the group._`)
-} else if (asmArg === 'off' || asmArg === 'disable') {
-    global.antiStatusMention = false
-    reply('*🛡️ Anti Status Mention: ❌ OFF*\n\nGroup tagging in statuses will no longer be actioned.')
-} else if (asmArg === 'warn') {
-    global.antiStatusMention = true
-    global.antiStatusMentionAction = 'warn'
-    reply('*🛡️ Anti Status Mention: ⚠️ WARN MODE*\n\nUsers who tag a group in their status will be warned in that group.\n3 warnings = automatic kick.\n\n_Bot must be admin in the group._')
-} else if (asmArg === 'delete' || asmArg === 'del') {
-    global.antiStatusMention = true
-    global.antiStatusMentionAction = 'delete'
-    reply('*🛡️ Anti Status Mention: 🗑️ DELETE MODE*\n\nWhen someone tags a group in their status, their future messages in that group will be automatically deleted.\n\n_Bot must be admin in the group._')
-} else if (asmArg === 'kick' || asmArg === 'remove') {
-    global.antiStatusMention = true
-    global.antiStatusMentionAction = 'kick'
-    reply('*🛡️ Anti Status Mention: 🚫 KICK MODE*\n\nUsers who tag a group in their status will be instantly removed from that group.\n\n_Bot must be admin in the group._')
-} else {
-    reply(`❌ Unknown option.\nUse: *on, off, warn, delete, kick*`)
-}
+    await X.sendMessage(m.chat, { react: { text: '🛡️', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    let asmArg = (args[0] || '').toLowerCase()
+    const _asmStatus = () => {
+        const _s = global.antiStatusMention ? '✅ ON' : '❌ OFF'
+        const _a = (global.antiStatusMentionAction || 'warn').toUpperCase()
+        const _aIcon = _a === 'WARN' ? '⚠️' : _a === 'KICK' ? '🚫' : '🗑️'
+        return `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ├ 📊 *Status* › ${_s}\n  ├ ${_aIcon} *Action* › ${_a}\n  └ ℹ️  *Info*   › Blocks group tags in statuses\n\n  *Commands:*\n  ├ ${prefix}antistatusmention on\n  ├ ${prefix}antistatusmention off\n  ├ ${prefix}antistatusmention warn   — 3 strikes then kick\n  ├ ${prefix}antistatusmention delete — auto-delete their msgs\n  └ ${prefix}antistatusmention kick   — instant removal\n\n  _Bot must be admin in the group._`
+    }
+    if (!asmArg) {
+        reply(_asmStatus())
+    } else if (asmArg === 'on' || asmArg === 'enable') {
+        global.antiStatusMention = true
+        const _a = (global.antiStatusMentionAction || 'warn').toUpperCase()
+        reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ✅ *Enabled*\n  └ Action: *${_a}*\n\n  _Anyone who tags a group in their status\n  will be ${_a === 'WARN' ? 'warned (3x = kick)' : _a === 'KICK' ? 'instantly kicked' : 'have messages deleted'}._`)
+    } else if (asmArg === 'off' || asmArg === 'disable') {
+        global.antiStatusMention = false
+        reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ❌ *Disabled*\n  └ Group tagging in statuses no longer actioned.`)
+    } else if (asmArg === 'warn') {
+        global.antiStatusMention = true
+        global.antiStatusMentionAction = 'warn'
+        reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ⚠️ *WARN MODE — Enabled*\n  └ 3 warnings → automatic kick\n\n  _Bot must be admin in the group._`)
+    } else if (asmArg === 'delete' || asmArg === 'del') {
+        global.antiStatusMention = true
+        global.antiStatusMentionAction = 'delete'
+        reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  🗑️ *DELETE MODE — Enabled*\n  └ Their messages auto-deleted from group\n\n  _Bot must be admin in the group._`)
+    } else if (asmArg === 'kick' || asmArg === 'remove') {
+        global.antiStatusMention = true
+        global.antiStatusMentionAction = 'kick'
+        reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  🚫 *KICK MODE — Enabled*\n  └ Instant removal from group\n\n  _Bot must be admin in the group._`)
+    } else {
+        reply(`❌ Unknown option. Use: *on, off, warn, delete, kick*`)
+    }
 }
 break
 
@@ -2560,7 +2565,7 @@ if (!alArg) {
     reply(`*Anti-Link: ${alState}*\nWhen ON, messages containing links are deleted and the sender is warned.\n\nUsage:\n${prefix}antilink on\n${prefix}antilink off`)
 } else if (alArg === 'on' || alArg === 'enable') {
     global.antiLink = true
-    reply('*Anti-Link ON*\nMessages with links will be deleted. Bot must be admin.')
+    reply(`╔══════════════════════════╗\n║  🔗 *ANTI-LINK: ON*\n╚══════════════════════════╝\n\n  ✅ Links will be deleted.\n  _Bot must be admin._`)
 } else if (alArg === 'off' || alArg === 'disable') {
     global.antiLink = false
     reply('*Anti-Link OFF*')
@@ -5002,13 +5007,13 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let modeArg = (args[0] || '').toLowerCase()
 if (modeArg === 'public') {
     X.public = true
-    reply(`*⚡ Bot Mode: PUBLIC*\n\n✅ Everyone can use bot commands.\nAll users have access to the bot.`)
+    reply(`╔══════════════════════════╗\n║  🌐 *BOT MODE: PUBLIC*\n╚══════════════════════════╝\n\n  ✅ Everyone can use bot commands.`)
 } else if (modeArg === 'private' || modeArg === 'self') {
     X.public = false
-    reply(`*🔒 Bot Mode: PRIVATE*\n\n🚫 Only the owner can use bot commands.\nOther users will be ignored.`)
+    reply(`╔══════════════════════════╗\n║  🔒 *BOT MODE: PRIVATE*\n╚══════════════════════════╝\n\n  🚫 Only the owner can use commands.`)
 } else {
     let currentMode = X.public !== false ? 'PUBLIC ✅' : 'PRIVATE 🔒'
-    reply(`*⚙️ Bot Mode Settings*\n\n📌 Current Mode: *${currentMode}*\n\n*Usage:*\n• ${prefix}mode public — Anyone can use the bot\n• ${prefix}mode private — Only owner can use the bot`)
+    reply(`╔══════════════════════════╗\n║  ⚙️  *BOT MODE*\n╚══════════════════════════╝\n\n  ├ 📊 *Current* › ${currentMode}\n  ├ ${prefix}mode public  — all users\n  └ ${prefix}mode private — owner only`)
 }
 } break
 
