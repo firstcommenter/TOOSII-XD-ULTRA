@@ -1,60 +1,45 @@
-<p align="center">
-  <img src="https://files.catbox.moe/qbcebp.jpg" width="200" height="200" style="border-radius: 50%;" alt="TOOSII-XD ULTRA">
-</p>
+<div align="center">
 
-<h1 align="center">TOOSII-XD ULTRA</h1>
+<img src="https://files.catbox.moe/qbcebp.jpg" width="150" style="border-radius:50%" alt="TOOSII-XD ULTRA" />
 
-<p align="center">
-  <b>WhatsApp Multi-Device Bot</b><br>
-  <i>Built with gifted-baileys | by Toosii Tech</i>
-</p>
+<br/>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blue?style=flat-square" alt="Version">
-  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-green?style=flat-square&logo=node.js" alt="Node">
-  <img src="https://img.shields.io/badge/platform-WhatsApp-25D366?style=flat-square&logo=whatsapp&logoColor=white" alt="WhatsApp">
-  <img src="https://img.shields.io/badge/license-Proprietary-red?style=flat-square" alt="License">
-</p>
+# ⚡ TOOSII-XD ULTRA
 
-<p align="center">
-  <a href="https://wa.me/254748340864">WhatsApp</a> &bull;
-  <a href="https://t.me/toosiitech">Telegram</a> &bull;
-  <a href="https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g">Community Group</a>
-</p>
+### *The most powerful WhatsApp Multi-Device Bot*
 
----
+<br/>
 
-## Overview
+[![Version](https://img.shields.io/badge/Version-2.0.0-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://github.com/TOOSII102/TOOSII-XD-ULTRA)
+[![Node](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![Platform](https://img.shields.io/badge/Platform-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://whatsapp.com)
+[![Stars](https://img.shields.io/github/stars/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=FFD700&logo=github)](https://github.com/TOOSII102/TOOSII-XD-ULTRA/stargazers)
+[![Forks](https://img.shields.io/github/forks/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=25D366&logo=github)](https://github.com/TOOSII102/TOOSII-XD-ULTRA/fork)
 
-**TOOSII-XD ULTRA** is a feature-rich WhatsApp Multi-Device Bot powered by the Baileys Web API. It supports over 150+ commands across AI chat, media downloading, sticker creation, group management, games, and more. Designed as a pure console application for maximum compatibility with hosting panels.
+<br/>
+
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-Contact-25D366?style=flat-square&logo=whatsapp&logoColor=white)](https://wa.me/254748340864)
+[![Telegram](https://img.shields.io/badge/Telegram-Channel-2CA5E0?style=flat-square&logo=telegram&logoColor=white)](https://t.me/toosiitech)
+[![Community](https://img.shields.io/badge/WhatsApp-Community-25D366?style=flat-square&logo=whatsapp&logoColor=white)](https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g)
+[![Session Generator](https://img.shields.io/badge/🔑_Session-Generator-128C7E?style=flat-square)](https://toosii-xd-session-generator-woyo.onrender.com/pair)
+
+</div>
 
 ---
 
-## Features
+<div align="center">
 
-| Category | Highlights |
-|---|---|
-| **AI Chat** | Pollinations AI, Quantum AI, ChatBot mode |
-| **Downloaders** | YouTube (audio/video), Instagram, TikTok, Facebook, MediaFire |
-| **Stickers** | Image/video to sticker, Telegram sticker packs, emoji mix |
-| **Group Management** | Add, kick, promote, demote, mute, open/close, warn system, anti-link, anti-tag, anti-sticker, anti-badword, anti-demote |
-| **Media Tools** | Quote cards, BRAT generator, text effects (neon, fire, matrix, etc.), profile picture tools |
-| **Search** | Wikimedia, manga/anime (OtakuDesu, Kusonime, Komiku), JKT48 news, earthquake info (BMKG) |
-| **Games** | Leaderboards, interactive games with point tracking |
-| **Bot Settings** | Prefix config, auto-read, auto-bio, fake presence, PM blocker, auto-react, status forwarding |
-| **Owner Tools** | Plugin system (add/remove/list), broadcast, restart, join groups, multi-session |
+## ✨ What is TOOSII-XD ULTRA?
+
+</div>
+
+**TOOSII-XD ULTRA** is a blazing-fast, feature-rich WhatsApp Multi-Device Bot built on the gifted-baileys protocol. With **250+ commands** spanning AI, media, group management, games, and more — it's the only bot you'll ever need.
+
+> 🛡️ Built for reliability &nbsp;•&nbsp; ⚡ Instant responses &nbsp;•&nbsp; 🎨 Fully customizable &nbsp;•&nbsp; 🔌 Plugin-ready
 
 ---
 
-## Deployment
-
-### Prerequisites
-
-- **Node.js** v18.0.0 or higher
-- **npm** or **yarn**
-- A WhatsApp account to pair
-
-### Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/TOOSII102/TOOSII-XD-ULTRA.git
@@ -63,219 +48,286 @@ npm install
 node index.js
 ```
 
-On first launch, the bot will prompt you to:
-1. Enter your WhatsApp phone number (with country code, e.g., `254748340864`)
-2. A **pairing code** will be displayed in the terminal
-3. Open WhatsApp on your phone > **Linked Devices** > **Link a Device** > Enter the pairing code
+> 💡 First time? Get your session ID instantly at **[Session Generator →](https://toosii-xd-session-generator-woyo.onrender.com/pair)**
 
-### Heroku
+---
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+## ☁️ Deploy to Cloud
+
+<div align="center">
+
+| Platform | One-Click Deploy |
+|:---:|:---:|
+| **Heroku** | [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) |
+| **Railway** | [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app) |
+| **Render** | [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com) |
+
+</div>
+
+<details>
+<summary><b>📋 Heroku Setup</b></summary>
 
 ```bash
-heroku create your-app-name
+heroku create your-bot-name
 heroku buildpacks:set heroku/nodejs
 git push heroku main
 heroku ps:scale worker=1
 ```
+> Uses a `worker` dyno — the bot is a persistent process, not a web server.
+</details>
 
-> Uses a `worker` dyno (not `web`) since the bot is a persistent process.
-
-### Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app)
+<details>
+<summary><b>📋 Railway Setup</b></summary>
 
 ```bash
 railway init
 railway up
 ```
-
-### Bot Hosting Panels (Katabump, etc.)
-
-1. Upload all files or clone from GitHub
-2. Set start command: `node index.js`
-3. Ensure Node.js 18+ is available
-4. Start the bot and follow the pairing prompts in console
-
-### Session Management
-
-Sessions are stored in `sessions/<phone_number>/`. To transfer your bot to a new host:
-1. Copy the entire `sessions/` directory to the new server
-2. Start the bot — it will reconnect automatically without re-pairing
+Set the start command to `node index.js` in your Railway project settings.
+</details>
 
 ---
 
-## Command Reference
+## 🔑 Session Setup
 
-### General
+Three ways to connect your bot:
+
+| Method | How |
+|---|---|
+| **Pairing Code** | Run bot → select `1` → enter phone number → enter code in WhatsApp |
+| **Session ID** | Visit [Session Generator](https://toosii-xd-session-generator-woyo.onrender.com/pair) → paste `SESSION_ID` in `.env` |
+| **Existing Session** | Copy `sessions/<number>/` folder to new host — auto-reconnects |
+
+**`.env` quick setup:**
+```env
+SESSION_ID=TOOSII~eyJub2lzZUtleS...
+PORT=3000
+```
+
+---
+
+## ✨ Features
+
+<div align="center">
+
+| 🤖 AI & Chat | 📥 Downloaders | 🖼️ Stickers |
+|:---:|:---:|:---:|
+| 15+ AI models | YouTube Audio/Video | Image → Sticker |
+| Auto ChatBot mode | Instagram Reels | Video → Sticker |
+| Pollinations AI | TikTok Videos | Emoji Mix |
+| Gemini, GPT-4o | Facebook Videos | Telegram Packs |
+| DeepSeek, Mistral | MediaFire Files | BRAT Generator |
+
+| 👥 Group Tools | 🎮 Games | 🛠️ Tools |
+|:---:|:---:|:---:|
+| Add / Kick / Promote | Truth or Dare | Translate |
+| Warn System | 8-Ball | Remove BG |
+| Anti-Link / Anti-Tag | Coin Flip | Screenshot |
+| Anti-BadWord | Trivia | Shazam |
+| Accept/Reject Joins | Tic-Tac-Toe | Location |
+
+</div>
+
+---
+
+## 📋 Command Reference
+
+<details>
+<summary><b>📌 General</b></summary>
 
 | Command | Description |
 |---|---|
-| `.menu` | Display full command menu |
-| `.help` | Quick help guide |
-| `.ping` / `.info` | Bot status, uptime, and server info |
-| `.owner` | Show bot owner contact |
-| `.sc` / `.source` | Bot source code link |
+| `.menu` | Full command list |
+| `.help` | Quick start guide |
+| `.ping` | Bot speed & uptime |
+| `.botinfo` | Bot info card |
+| `.repo` | GitHub repository |
+| `.sc` / `.source` | Source code |
 
-### AI & Chat
+</details>
 
-| Command | Description |
-|---|---|
-| `.chatai <prompt>` | Chat with Pollinations AI |
-| `.quantum-ai <prompt>` | Quantum AI conversation |
-| `.chatbot on/off` | Toggle auto-reply chat mode |
-
-### Downloaders
+<details>
+<summary><b>🤖 AI & Chat</b></summary>
 
 | Command | Description |
 |---|---|
-| `.play <query>` | Search and download YouTube audio |
-| `.ig <url>` | Download Instagram media |
-| `.tt <url>` | Download TikTok video |
-| `.fb <url>` | Download Facebook video |
-| `.mediafire <url>` | Download from MediaFire |
+| `.ai <prompt>` | Pollinations AI |
+| `.chatai <prompt>` | General AI chat |
+| `.gemini-ai <prompt>` | Google Gemini |
+| `.gpt-4o <prompt>` | OpenAI GPT-4o |
+| `.deepseek <prompt>` | DeepSeek AI |
+| `.mistral <prompt>` | Mistral AI |
+| `.chatbot on/off` | Auto-reply mode |
 
-### Stickers
+</details>
 
-| Command | Description |
-|---|---|
-| `.sticker` / `.s` | Convert image/video to sticker |
-| `.emojimix <emoji1> <emoji2>` | Mix two emojis into a sticker |
-| `.qc <text>` | Create a quote card sticker |
-| `.telestick <url>` | Import Telegram sticker pack |
-
-### Group Management
+<details>
+<summary><b>📥 Downloaders</b></summary>
 
 | Command | Description |
 |---|---|
-| `.add <number>` | Add member to group |
-| `.kick <@user>` | Remove member from group |
-| `.promote <@user>` | Promote member to admin |
-| `.demote <@user>` | Demote admin to member |
-| `.del` | Delete a message (reply to it) |
-| `.warn <@user> [reason]` | Warn a user (3 warnings = kick) |
-| `.unwarn <@user>` | Remove warnings |
-| `.warnlist` | View all warnings |
-| `.mute` / `.unmute` | Mute/unmute group |
-| `.open` / `.close` | Open/close group |
-| `.setgname <name>` | Change group name |
-| `.setgdesc <text>` | Change group description |
-| `.setgpp` | Change group picture (reply to image) |
-| `.link` | Get group invite link |
-| `.resetlink` | Reset group invite link |
-| `.revoke` | Revoke group invite |
-| `.approve [all]` | Approve pending join requests |
-| `.reject [all]` | Reject pending join requests |
-| `.tagall [message]` | Tag all group members |
-| `.hidetag [message]` | Silently tag all members |
-| `.ban <@user>` / `.unban <@user>` | Ban/unban from bot usage |
+| `.play <query>` | YouTube audio |
+| `.ytv <query>` | YouTube video |
+| `.ig <url>` | Instagram media |
+| `.tt <url>` | TikTok video |
+| `.fb <url>` | Facebook video |
+| `.spotify <query>` | Spotify track info |
+| `.mediafire <url>` | MediaFire download |
 
-### Group Protection
+</details>
+
+<details>
+<summary><b>🖼️ Stickers</b></summary>
 
 | Command | Description |
 |---|---|
-| `.antilink on/off` | Auto-delete links (non-admin) |
-| `.antibadword on/off` | Auto-detect bad words |
-| `.antitag on/off` | Detect mass tagging |
+| `.sticker` / `.s` | Media → sticker |
+| `.take` / `.steal` | Re-pack a sticker |
+| `.emojimix 😀+😎` | Mix two emojis |
+| `.qc <text>` | Quote card |
+| `.telestick <url>` | Telegram sticker pack |
+| `.toimage` | Sticker → image |
+
+</details>
+
+<details>
+<summary><b>👥 Group Management</b></summary>
+
+| Command | Description |
+|---|---|
+| `.add <number>` | Add member |
+| `.kick @user` | Remove member |
+| `.promote @user` | Make admin |
+| `.demote @user` | Remove admin |
+| `.warn @user` | Issue warning |
+| `.mute` / `.unmute` | Mute group |
+| `.open` / `.close` | Toggle messaging |
+| `.tagall` | Tag everyone |
+| `.link` | Get invite link |
+| `.setgname <n>` | Rename group |
+| `.acceptjoin` | Approve join requests |
+
+</details>
+
+<details>
+<summary><b>🛡️ Group Protection</b></summary>
+
+| Command | Description |
+|---|---|
+| `.antilink on/off` | Block external links |
+| `.antibadword on/off` | Filter bad words |
+| `.antitag on/off` | Prevent mass tagging |
 | `.antisticker on/off` | Block stickers |
-| `.antidemote on/off` | Re-promote demoted admins |
+| `.antidemote on/off` | Auto re-promote admins |
+| `.antidelete on/off` | Detect deleted messages |
 
-### Owner Commands
+</details>
 
-| Command | Description |
-|---|---|
-| `.self` / `.public` | Switch bot mode |
-| `.join <link>` | Join a group via invite link |
-| `.setprefix <char>` | Change command prefix |
-| `.botname <name>` | Change bot display name |
-| `.setauthor <name>` | Set sticker author |
-| `.setpackname <name>` | Set sticker pack name |
-| `.anticall on/off` | Auto-reject calls |
-| `.autoread on/off` | Auto-read all messages |
-| `.autobio on/off` | Auto-update WhatsApp bio |
-| `.addplugin <url>` | Install external plugin |
-| `.rmplugin <name>` | Remove a plugin |
-| `.getplugin` | List installed plugins |
-| `.restart` | Restart the bot |
-| `.botsettings` | View all bot settings |
-
-### Fun & Media
+<details>
+<summary><b>👑 Owner Commands</b></summary>
 
 | Command | Description |
 |---|---|
-| `.waifu` / `.anime` | Random anime images |
-| `.hug` / `.pat` / `.kiss` | Anime reactions |
-| `.neon <text>` | Neon text effect |
-| `.fire <text>` | Fire text effect |
-| `.matrix <text>` | Matrix text effect |
-| `.tweet <text>` | Fake tweet image |
-| `.ytcomment <text>` | Fake YouTube comment |
+| `.self` / `.public` | Bot mode toggle |
+| `.setprefix <char>` | Change prefix |
+| `.botname <n>` | Rename bot |
+| `.botpic` | Change bot profile pic |
+| `.autobio on/off` | Auto status bio |
+| `.autoread on/off` | Auto-read messages |
+| `.anticall on/off` | Block calls |
+| `.broadcast <msg>` | Message all chats |
+| `.addplugin <url>` | Install plugin |
+| `.restart` | Restart bot |
+
+</details>
+
+<details>
+<summary><b>🎭 Text Effects</b></summary>
+
+`.neon` `.fire` `.matrix` `.ice` `.glitch` `.thunder` `.devil` `.hacker` `.sand` `.blackpink` `.metallic` `.light` `.arena` `.1917` and many more!
+
+</details>
 
 ---
 
-## Architecture
+## ⚙️ Configuration
+
+Edit `setting.js` to personalise your bot:
+
+```javascript
+global.owner       = ["254748340864"]     // Your phone number
+global.botname     = "TOOSII-XD ULTRA"   // Bot display name
+global.ownername   = "Toosii Tech"       // Your name
+global.botTimezone = "Africa/Nairobi"    // Your timezone
+global.packname    = "TOOSII-XD ULTRA"   // Sticker pack name
+global.author      = "© Toosii Tech"    // Sticker author
+```
+
+---
+
+## 🗂️ Project Structure
 
 ```
 TOOSII-XD-ULTRA/
-  index.js              # Entry point - WhatsApp socket connection
-  client.js             # Command handler - processes all messages
-  setting.js            # Global configuration
-  package.json          # Dependencies
-  Procfile              # Heroku worker config
-  sessions/             # Auth session data (auto-generated)
-  database/             # User tracking, games, warnings (JSON)
-  plugin/               # External plugin modules
-  library/
-    lib/                # Core utilities (myfunc, exif, store)
-    scrape/             # Web scrapers (FB, wiki, anime, etc.)
-    menulist/           # Menu text templates per category
+├── 📄 index.js          ← Bot entry point & WhatsApp socket
+├── 📄 client.js         ← Command handler (250+ commands)
+├── 📄 setting.js        ← Global configuration
+├── 📄 logger.js         ← Smart noise suppressor
+├── 📄 .env              ← Environment variables
+├── 📁 sessions/         ← Auth data (auto-generated)
+├── 📁 database/         ← Games, warnings, user data
+├── 📁 plugin/           ← External plugin modules
+└── 📁 library/
+    ├── 📁 lib/          ← Core utils (exif, myfunc, store)
+    ├── 📁 scrape/       ← Web scrapers
+    └── 📁 menulist/     ← Menu templates
 ```
 
-### Key Design Decisions
+---
 
-- **Pure Console App** - No web server required; runs directly via `node index.js`
-- **Multi-Device Protocol** - Uses gifted-baileys (Baileys fork) for WhatsApp Web multi-device
-- **LID-Aware Admin Detection** - Properly handles WhatsApp's Linked ID system for accurate role detection in groups
-- **Plugin Architecture** - Modular command system; add/remove commands without touching core code
-- **Session Persistence** - Multi-file auth state for reliable reconnection
+## 🛠️ Requirements
+
+- **Node.js** v18.0.0 or higher
+- **npm** v8+
+- **ffmpeg** installed on the system
+- A WhatsApp account
 
 ---
 
-## Configuration
+## 🤝 Support & Community
 
-Edit `setting.js` to customize:
+<div align="center">
 
-```javascript
-global.owner = ["254748340864"]     // Owner phone number(s)
-global.botname = "TOOSII-XD ULTRA"  // Bot display name
-global.ownername = "Toosii Tech"    // Owner name
-global.botPrefix = ""               // Custom prefix (empty = auto-detect)
-global.botTimezone = "Africa/Nairobi"
-```
+| Platform | Link |
+|:---:|:---:|
+| 📞 **WhatsApp** | [wa.me/254748340864](https://wa.me/254748340864) |
+| ✈️ **Telegram** | [t.me/toosiitech](https://t.me/toosiitech) |
+| 👥 **Community Group** | [Join here](https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g) |
+| 🔑 **Session Generator** | [Open Generator](https://toosii-xd-session-generator-woyo.onrender.com/pair) |
 
-### Feature Toggles (via commands or setting.js)
-
-| Setting | Default | Description |
-|---|---|---|
-| `fakePresence` | `off` | Show typing/recording/online |
-| `autoViewStatus` | `false` | Auto-view contacts' status |
-| `autoLikeStatus` | `false` | Auto-react to status updates |
-| `antiCall` | `false` | Auto-reject incoming calls |
-| `autoRead` | `false` | Auto-read all incoming messages |
-| `chatBot` | `false` | AI auto-reply mode |
-| `pmBlocker` | `false` | Block non-owner private messages |
-| `welcome` | `false` | Welcome/goodbye messages |
+</div>
 
 ---
 
-## Support
+## ⭐ Support the Project
 
-- **WhatsApp**: [wa.me/254748340864](https://wa.me/254748340864)
-- **Telegram**: [t.me/toosiitech](https://t.me/toosiitech)
-- **Community**: [Join WhatsApp Group](https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g)
+If TOOSII-XD ULTRA has been useful to you, please consider:
+
+- ⭐ **[Starring](https://github.com/TOOSII102/TOOSII-XD-ULTRA)** this repository
+- 🍴 **[Forking](https://github.com/TOOSII102/TOOSII-XD-ULTRA/fork)** it to deploy your own
+- 📢 **Sharing** it with your community
+
+> Every star motivates us to keep building and improving! 🙏
 
 ---
 
-<p align="center">
-  <b>TOOSII-XD ULTRA</b> &mdash; by <a href="https://wa.me/254748340864">Toosii Tech</a> &copy; 2024&ndash;2026
-</p>
+<div align="center">
+
+**Made with ❤️ by [Toosii Tech](https://wa.me/254748340864)**
+
+*© 2024 – 2026 TOOSII-XD ULTRA. All rights reserved.*
+
+[![Star](https://img.shields.io/github/stars/TOOSII102/TOOSII-XD-ULTRA?style=social)](https://github.com/TOOSII102/TOOSII-XD-ULTRA)
+[![Fork](https://img.shields.io/github/forks/TOOSII102/TOOSII-XD-ULTRA?style=social)](https://github.com/TOOSII102/TOOSII-XD-ULTRA/fork)
+
+</div>
