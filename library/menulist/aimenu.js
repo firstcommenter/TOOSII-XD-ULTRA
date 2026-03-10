@@ -22,7 +22,8 @@ const aiMenu = `
   ├ .muslimai        ├ .zerogpt
   ├ .writecream      ├ .yupraai
   ├ .logic-eai
-  └ .bible       › [verse/topic]
+  ├ .bible       › [verse/topic]
+  └ .quran       › [surah:ayah/topic]
 
 ╔══════════════════════════╗
 ║  🛠️  *AI TOOLS*
