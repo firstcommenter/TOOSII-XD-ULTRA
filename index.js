@@ -666,8 +666,11 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                                 text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ├ 👤 *User*    › +${mentioner}\n  ├ 🏘️  *Group*   › ${gName}\n  ├ ⚡ *Action*  › ${asmAction.toUpperCase()}\n  ├ 🤖 *Bot Admin* › ${botIsAdmin ? 'Yes ✅' : 'No ❌'}\n  └ 👥 *In Group* › ${isMember ? 'Yes' : 'No'}`
                             })
 
+                            console.log(`[ASM-ACT] mentionerJid=${mentionerJid} isMember=${isMember} botIsAdmin=${botIsAdmin} isMentionerOwner=${isMentionerOwner}`)
+                            console.log(`[ASM-ACT] participants sample:`, JSON.stringify(_realParticipants.slice(0,3).map(p=>p.id)))
+
                             if (isMentionerOwner) continue
-                            if (!isMember) continue
+                            // Skip isMember check — act regardless (LID makes matching unreliable)
 
                             if (!botIsAdmin) {
                                 await X.sendMessage(gJid, {
