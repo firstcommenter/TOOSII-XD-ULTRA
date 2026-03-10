@@ -21,7 +21,8 @@ const aiMenu = `
   ├ .gemmaai         ├ .velynai
   ├ .muslimai        ├ .zerogpt
   ├ .writecream      ├ .yupraai
-  └ .logic-eai
+  ├ .logic-eai
+  └ .bible       › [verse/topic]
 
 ╔══════════════════════════╗
 ║  🛠️  *AI TOOLS*
