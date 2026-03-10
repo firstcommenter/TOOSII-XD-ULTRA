@@ -2355,111 +2355,89 @@ const run = (cmd, cwd) => new Promise(resolve => {
     })
 })
 
-await reply(`🔃 *Checking for updates...*\n📦 _${repoUrl}_`)
+await reply(`╔══════════════════════════╗
+║  🔃 *CHECKING FOR UPDATES*
+╚══════════════════════════╝
+
+  └ 📦 ${repoUrl}`)
 
 try {
-    // ── Step 1: Ensure this is a git repo, auto-init if not ──────────
+    // ── Step 1: Ensure git repo ───────────────────────────────────────
     const gitCheck = await run('git rev-parse --is-inside-work-tree')
     if (!gitCheck.ok) {
-        await X.sendMessage(m.chat, { text: `⚙️ *First run — initializing git...*\n\n_Cloning latest files from GitHub..._` }, { quoted: m })
         await run('git init')
         await run(`git remote add origin ${repoUrl}`)
         const fetchInit = await run('git fetch origin')
-        if (!fetchInit.ok) {
-            return await X.sendMessage(m.chat, {
-                text: `❌ *Failed to reach GitHub.*\n\n\`\`\`${(fetchInit.stderr || 'Network error').slice(0, 400)}\`\`\`\n\n_Make sure the repo is public and has an internet connection._`
-            }, { quoted: m })
-        }
-        // Try main then master
+        if (!fetchInit.ok) return reply(`❌ *Cannot reach GitHub.*\n_Check internet & repo visibility._`)
         let initBranch = 'main'
         const tryMain = await run('git reset --hard origin/main')
         if (!tryMain.ok) {
             const tryMaster = await run('git reset --hard origin/master')
-            if (!tryMaster.ok) {
-                return await X.sendMessage(m.chat, { text: `❌ *Could not find main or master branch.*\n\`\`\`${tryMaster.stderr.slice(0, 300)}\`\`\`` }, { quoted: m })
-            }
+            if (!tryMaster.ok) return reply(`❌ Could not find main or master branch.`)
             initBranch = 'master'
         }
         await run('npm install --production')
-        await X.sendMessage(m.chat, {
-            text: `✅ *Bot initialized & updated!*\n\n📦 Repo: ${repoUrl}\n🌿 Branch: ${initBranch}\n\n🔄 _Restarting now..._`
-        }, { quoted: m })
+        await reply(`╔══════════════════════════╗\n║  ✅ *BOT INITIALIZED*\n╚══════════════════════════╝\n\n  ├ 🌿 *Branch* › ${initBranch}\n  └ 🔄 Restarting now...`)
         await sleep(3000)
         return process.exit(0)
     }
 
-    // ── Step 2: Point remote to correct repo ─────────────────────────
+    // ── Step 2: Point remote ──────────────────────────────────────────
     await run(`git remote set-url origin ${repoUrl} 2>/dev/null || git remote add origin ${repoUrl}`)
 
-    // ── Step 3: Fetch latest from remote (no merge yet) ───────────────
-    await X.sendMessage(m.chat, { text: `📡 *Fetching latest from GitHub...*` }, { quoted: m })
+    // ── Step 3: Fetch ─────────────────────────────────────────────────
     const fetchResult = await run('git fetch origin')
-    if (!fetchResult.ok) {
-        return await X.sendMessage(m.chat, {
-            text: `❌ *Fetch failed — cannot reach GitHub.*\n\n\`\`\`${fetchResult.stderr.slice(0, 400)}\`\`\`\n\n_Check internet connection and that the repo is public._`
-        }, { quoted: m })
-    }
+    if (!fetchResult.ok) return reply(`❌ *Fetch failed.*\n_Check internet connection._`)
 
     // ── Step 4: Detect branch ─────────────────────────────────────────
     let branchRes = await run('git rev-parse --abbrev-ref HEAD')
     let branch = branchRes.stdout && branchRes.stdout !== 'HEAD' ? branchRes.stdout : 'main'
-    // Confirm remote branch exists, fall back to master
     const remoteBranchCheck = await run(`git ls-remote --heads origin ${branch}`)
-    if (!remoteBranchCheck.stdout) {
-        branch = branch === 'main' ? 'master' : 'main'
-    }
+    if (!remoteBranchCheck.stdout) branch = branch === 'main' ? 'master' : 'main'
 
-    // ── Step 5: Compare local vs remote commit ─────────────────────────
+    // ── Step 5: Compare commits ───────────────────────────────────────
     const localCommit  = await run('git rev-parse HEAD')
     const remoteCommit = await run(`git rev-parse origin/${branch}`)
     const localHash  = localCommit.stdout.slice(0, 7)
-    const remoteHash = remoteCommit.stdout.slice(0, 7)
 
     if (localCommit.stdout && remoteCommit.stdout && localCommit.stdout === remoteCommit.stdout) {
-        // Get last commit info to show in the "up to date" message
         const lastLog = await run('git log -1 --format="%s | %cr" HEAD')
-        return await X.sendMessage(m.chat, {
-            text: `✅ *Already up to date!*\n\n🌿 Branch: \`${branch}\`\n🔖 Commit: \`${localHash}\`\n📝 Last: _${lastLog.stdout || 'N/A'}_\n\n_No new updates from GitHub._`
-        }, { quoted: m })
+        return reply(`╔══════════════════════════╗\n║  ✅ *ALREADY UP TO DATE*\n╚══════════════════════════╝\n\n  ├ 🌿 *Branch* › ${branch}\n  ├ 🔖 *Commit* › ${localHash}\n  └ 📝 ${lastLog.stdout || 'N/A'}`)
     }
 
-    // ── Step 6: Show what's incoming ──────────────────────────────────
+    // ── Step 6: Get changelog ─────────────────────────────────────────
     const changelog = await run(`git log HEAD..origin/${branch} --oneline --no-merges`)
     const changeLines = changelog.stdout ? changelog.stdout.split('\n').slice(0, 10).join('\n') : 'New changes available'
     const changeCount = changelog.stdout ? changelog.stdout.split('\n').filter(Boolean).length : '?'
 
-    await X.sendMessage(m.chat, {
-        text: `📋 *${changeCount} new commit(s) found!*\n\n\`\`\`${changeLines.slice(0, 500)}\`\`\`\n\n⬇️ _Applying update..._`
-    }, { quoted: m })
-
-    // ── Step 7: Stash local changes & pull ────────────────────────────
+    // ── Step 7: Pull ──────────────────────────────────────────────────
     await run('git stash')
     const pullResult = await run(`git pull origin ${branch} --force`)
     if (!pullResult.ok) {
-        // Hard reset fallback
         const resetResult = await run(`git reset --hard origin/${branch}`)
-        if (!resetResult.ok) {
-            return await X.sendMessage(m.chat, {
-                text: `❌ *Update failed!*\n\n\`\`\`${(pullResult.stderr || resetResult.stderr).slice(0, 500)}\`\`\``
-            }, { quoted: m })
-        }
+        if (!resetResult.ok) return reply(`❌ *Update failed.*\n\`\`\`${(pullResult.stderr || resetResult.stderr).slice(0, 300)}\`\`\``)
     }
 
-    // ── Step 8: Install new dependencies ──────────────────────────────
-    await X.sendMessage(m.chat, { text: `📦 *Installing dependencies...*` }, { quoted: m })
+    // ── Step 8: Install deps ──────────────────────────────────────────
     await run('npm install --production')
 
     // ── Step 9: Done ──────────────────────────────────────────────────
     const newCommit = await run('git rev-parse HEAD')
     const newHash = newCommit.stdout.slice(0, 7)
-    await X.sendMessage(m.chat, {
-        text: `✅ *Bot Updated Successfully!*\n\n🌿 Branch: \`${branch}\`\n🔖 \`${localHash}\` → \`${newHash}\`\n📋 *Changes:*\n\`\`\`${changeLines.slice(0, 500)}\`\`\`\n\n🔄 _Restarting now..._`
-    }, { quoted: m })
+    await reply(`╔══════════════════════════╗
+║  ✅ *BOT UPDATED*
+╚══════════════════════════╝
+
+  ├ 🌿 *Branch*  › ${branch}
+  ├ 🔖 *Commits* › \`${localHash}\` → \`${newHash}\`
+  ├ 📋 *Changes* › ${changeCount} commit(s)
+  │  \`\`\`${changeLines.slice(0, 300)}\`\`\`
+  └ 🔄 Restarting now...`)
     await sleep(3000)
     process.exit(0)
 
 } catch (e) {
-    await X.sendMessage(m.chat, { text: `❌ *Update error:*\n\`\`\`${e.message || e}\`\`\`` }, { quoted: m })
+    reply(`❌ *Update error:*\n\`\`\`${(e.message || e).slice(0, 300)}\`\`\``)
 }
 } break
 
