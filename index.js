@@ -555,39 +555,34 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                 try {
                     let msgContent2 = mek.message
 
-                    // DEBUG — log full status message structure
-                    console.log('[ASM-DEBUG] status msg keys:', JSON.stringify(Object.keys(msgContent2)))
-                    console.log('[ASM-DEBUG] full msg:', JSON.stringify(msgContent2, null, 2).substring(0, 800))
-
-                    // Skip metadata-only keys to get actual message content
+                    // Skip metadata-only keys to get real content
                     const _skipKeys = ['senderKeyDistributionMessage','messageContextInfo','deviceSentMessage']
                     let ct = Object.keys(msgContent2).find(k => !_skipKeys.includes(k)) || Object.keys(msgContent2)[0]
                     let msgObj = msgContent2[ct] || {}
 
-                    console.log('[ASM-DEBUG] content type:', ct)
-                    console.log('[ASM-DEBUG] contextInfo:', JSON.stringify(msgObj.contextInfo || msgContent2.contextInfo || {}))
-
-                    // contextInfo can be at root level or inside the content object
-                    let ctxInfo = msgObj.contextInfo || msgContent2.contextInfo || {}
-
-                    // Collect all mentioned JIDs — check all nested levels
-                    let mentionedJids = ctxInfo.mentionedJid || msgObj.contextInfo?.mentionedJid || []
-
-                    console.log('[ASM-DEBUG] mentionedJids:', JSON.stringify(mentionedJids))
-
-                    // Also scan ALL text fields for group invite links
+                    // Extract all text fields
                     let statusText = msgObj.text || msgObj.caption || msgObj.description ||
                                      msgContent2.conversation || msgContent2.extendedTextMessage?.text || ''
-                    
-                    console.log('[ASM-DEBUG] statusText:', statusText)
 
-                    // Resolve mentioner — handle LID JIDs
+                    // WhatsApp sends group mentions in status as:
+                    // 1. contextInfo.mentionedJid (rare)
+                    // 2. invite links in text (most common — detected via inviteLinkGroupTypeV2)
+                    // 3. plain chat.whatsapp.com links in text
+                    let ctxInfo = msgObj.contextInfo || {}
+                    let mentionedJids = ctxInfo.mentionedJid || []
+                    let groupsMentioned = mentionedJids.filter(jid => jid && jid.endsWith('@g.us'))
+
+                    // Detect invite links — also check inviteLinkGroupTypeV2 field
+                    let inviteLinks = (statusText.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{20,24})/g) || [])
+                    const _hasGroupLink = inviteLinks.length > 0 || msgObj.inviteLinkGroupTypeV2 || ctxInfo.groupInviteJid
+
+                    if (groupsMentioned.length === 0 && !_hasGroupLink) throw Object.assign(new Error('no_mention'), { skip: true })
+
+                    // Resolve mentioner JID — handle LID
                     let _mentionerRaw = mek.key.participant || mek.key.remoteJid
                     let _mentionerClean = _mentionerRaw.replace(/:.*@/, '@').split('@')[0]
                     let mentioner = _mentionerClean
                     let mentionerJid = mentioner + '@s.whatsapp.net'
-
-                    // If LID, try to resolve real JID from store
                     if (_mentionerRaw.endsWith('@lid') || _mentionerClean.length > 13) {
                         try {
                             const _allC = Object.keys(store?.contacts || {})
@@ -599,50 +594,65 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     let botSelfJid = X.decodeJid(X.user.id).replace(/:.*@/, '@')
                     let alertJid = botSelfJid
 
-                    // Filter only group JIDs mentioned
-                    let groupsMentioned = mentionedJids.filter(jid => jid && jid.endsWith('@g.us'))
-
-                    // Also detect group invite links in text
-                    let inviteLinks = statusText.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{20,24})/g) || []
-
-                    if (groupsMentioned.length === 0 && inviteLinks.length === 0) throw Object.assign(new Error('no_mention'), { skip: true })
-
                     let asmAction = global.antiStatusMentionAction || 'warn'
 
-                    // Handle each directly mentioned group
-                    for (let gJid of groupsMentioned) {
+                    // Build unified group list — from JID mentions + invite link resolution
+                    let _allGroupJids = [...groupsMentioned]
+
+                    // Resolve invite links to group JIDs using groupGetInviteInfo
+                    for (let _lnk of inviteLinks) {
+                        try {
+                            let _code = _lnk.replace('chat.whatsapp.com/', '')
+                            let _info = await X.groupGetInviteInfo(_code).catch(() => null)
+                            if (_info?.id && !_allGroupJids.includes(_info.id)) {
+                                _allGroupJids.push(_info.id)
+                            }
+                        } catch {}
+                    }
+
+                    // Also check inviteLinkGroupTypeV2 — use bot's own group list as fallback
+                    if (_allGroupJids.length === 0 && (msgObj.inviteLinkGroupTypeV2 || ctxInfo.groupInviteJid)) {
+                        // We know there's a group mention but couldn't resolve which group
+                        // Alert owner and skip action
+                        await X.sendMessage(alertJid, {
+                            text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ⚠️ *+${mentioner}* tagged a group in their status.\n  └ Could not resolve which group — check manually.`
+                        })
+                    }
+
+                    // Act on each resolved group
+                    for (let gJid of _allGroupJids) {
                         try {
                             let gMeta = await X.groupMetadata(gJid).catch(() => null)
                             if (!gMeta) {
-                                await X.sendMessage(alertJid, { text: `*⚠️ Anti-Status Mention*
-
-+${mentioner} tagged a group in their status.
-Group: ${gJid}
-_Bot is not a member of this group._` })
+                                await X.sendMessage(alertJid, {
+                                    text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ⚠️ *+${mentioner}* tagged a group in their status.\n  └ Bot is not a member of that group.`
+                                })
                                 continue
                             }
                             let gName = gMeta.subject || gJid
-                            let isMember = gMeta.participants.some(p => p.id.split(':')[0].split('@')[0] === mentioner)
+                            let isMember = gMeta.participants.some(p => {
+                                let pNum = p.id.split('@')[0].split(':')[0]
+                                return pNum === mentioner || p.id === mentionerJid
+                            })
                             let botIsAdmin = gMeta.participants.some(p => {
                                 let isBot = areJidsSameUser(p.id, X.user.id) || (X.user?.lid && areJidsSameUser(p.id, X.user.lid))
                                 return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
                             })
                             let isMentionerOwner = global.owner.includes(mentioner)
 
-                            // Always notify the deployed number
+                            // Alert deployed number
                             await X.sendMessage(alertJid, {
-                                text: `*⚠️ Anti-Status Mention Alert*
-
-👤 User: +${mentioner}
-🏘️ Group tagged: *${gName}*
-⚡ Action: ${asmAction.toUpperCase()}
-🤖 Bot is admin: ${botIsAdmin ? 'Yes' : 'No'}`
+                                text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ├ 👤 *User*    › +${mentioner}\n  ├ 🏘️  *Group*   › ${gName}\n  ├ ⚡ *Action*  › ${asmAction.toUpperCase()}\n  ├ 🤖 *Bot Admin* › ${botIsAdmin ? 'Yes ✅' : 'No ❌'}\n  └ 👥 *In Group* › ${isMember ? 'Yes' : 'No'}`
                             })
 
-                            if (!isMember) continue  // Can't act on someone not in the group
-                            if (isMentionerOwner) continue  // Never act on owner
+                            if (isMentionerOwner) continue
+                            if (!isMember) continue
+
                             if (!botIsAdmin) {
-                                await X.sendMessage(gJid, { text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ⚠️ @${mentioner} tagged this group in their status.\n  _Make bot admin to enable auto-actions._`, mentions: [mentionerJid] })
+                                await X.sendMessage(gJid, {
+                                    text: `╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ⚠️ @${mentioner} tagged this group in their status.\n  _Make bot admin to enable auto-actions._`,
+                                    mentions: [mentionerJid]
+                                })
                                 continue
                             }
 
@@ -672,7 +682,6 @@ _Bot is not a member of this group._` })
                                     })
                                 }
                             } else if (asmAction === 'delete') {
-                                // Track this user for message deletion in this group
                                 if (!global.statusMentionDeleteList) global.statusMentionDeleteList = {}
                                 if (!global.statusMentionDeleteList[gJid]) global.statusMentionDeleteList[gJid] = []
                                 if (!global.statusMentionDeleteList[gJid].includes(mentionerJid)) {
@@ -686,14 +695,6 @@ _Bot is not a member of this group._` })
                         } catch (gErr) {
                             console.log(`[${phone}] Anti-status-mention group error:`, gErr.message || gErr)
                         }
-                    }
-
-                    // Handle invite links found in status text
-                    if (inviteLinks.length > 0) {
-                        let linkListText = inviteLinks.map(l => '• https://' + l).join('\n')
-                        await X.sendMessage(alertJid, {
-                            text: '*🔗 Group Invite Link in Status*\n\n+' + mentioner + ' shared group link(s) in their status:\n' + linkListText
-                        })
                     }
 
                 } catch (smErr) {
