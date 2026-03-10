@@ -1432,14 +1432,30 @@ Tips:
         }
     }
 } break
-let namaown = `Toosii Tech`
-var contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
-"contactMessage": {
-"displayName": `${namaown}`,
-"vcard": `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:Toosii Tech\nitem1.TEL;waid=254748340864:+254748340864\nitem1.X-ABLabel:Ponsel\nX-WA-BIZ-DESCRIPTION:${ownername}\nX-WA-BIZ-NAME: ${namaown}\nEND:VCARD`,
+case 'owner':
+case 'creator': {
+    await X.sendMessage(m.chat, { react: { text: '👑', key: m.key } })
+    await reply(`╔══════════════════════════╗
+║  👑 *BOT CREATOR*
+╚══════════════════════════╝
+
+  ├ 🧑‍💻 *Name*     › ${global.ownername || 'Toosii Tech'}
+  ├ 📞 *WhatsApp* › +${(global.ownerNumber || '254748340864').replace(/[^0-9]/g,'')}
+  ├ ✈️  *Telegram* › @toosiitech
+  ├ 🤖 *Bot*      › ${global.botname} v${global.botver}
+  └ 🔑 *Session*  › ${global.sessionUrl}
+
+_👇 Tap the contact card below to chat with owner_`)
+    const namaown = global.ownername || 'Toosii Tech'
+    const ownerNum = (global.ownerNumber || '254748340864').replace(/[^0-9]/g, '')
+    const contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
+        contactMessage: {
+            displayName: namaown,
+            vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:${namaown}\nitem1.TEL;waid=${ownerNum}:+${ownerNum}\nitem1.X-ABLabel:WhatsApp\nX-WA-BIZ-NAME:${namaown}\nEND:VCARD`
+        }
+    }), { userJid: m.chat, quoted: m })
+    X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
 }
-}), { userJid: m.chat, quoted: m })
-X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
 break
 
 case 'sc': {
