@@ -473,33 +473,25 @@ for (const _batchMsg of chatUpdate.messages) {
                 } catch { try { await X.readMessages([_batchMsg.key]) } catch {} }
             }
 
-            // ── Auto Like — single reliable method, all statuses ────
+            // ── Auto Like ────────────────────────────────────────
             if (global.autoLikeStatus && global.autoLikeEmoji) {
                 try {
                     await new Promise(r => setTimeout(r, 500))
-                    const _reactKey = {
-                        remoteJid: 'status@broadcast',
-                        id: _batchMsg.key.id,
-                        participant: statusPosterJid,
-                        fromMe: false
-                    }
-                    // Primary: status@broadcast react with statusJidList
-                    try {
-                        await X.sendMessage('status@broadcast', {
-                            react: { text: global.autoLikeEmoji, key: _reactKey }
-                        }, { statusJidList: [statusPosterJid, botSelfJid] })
-                    } catch {
-                        // Fallback: DM react directly to poster
-                        await X.sendMessage(statusPosterJid, {
-                            react: { text: global.autoLikeEmoji, key: _reactKey }
-                        })
-                    }
+                    // Only use status@broadcast — never DM (DM sends empty visible messages)
+                    await X.sendMessage('status@broadcast', {
+                        react: { text: global.autoLikeEmoji, key: {
+                            remoteJid: 'status@broadcast',
+                            id: _batchMsg.key.id,
+                            participant: statusPosterJid,
+                            fromMe: false
+                        }}
+                    }, { statusJidList: [statusPosterJid, botSelfJid] })
                 } catch {}
             }
 
             // ── Auto Reply ───────────────────────────────────────────
             if (global.autoReplyStatus && global.autoReplyStatusMsg) {
-                try { await X.sendMessage(statusPosterJid, { text: global.autoReplyStatusMsg }) } catch {}
+                try { if (global.autoReplyStatusMsg && global.autoReplyStatusMsg.trim()) await X.sendMessage(statusPosterJid, { text: global.autoReplyStatusMsg }) } catch {}
             }
         } catch {}
     }
