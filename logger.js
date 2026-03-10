@@ -172,12 +172,41 @@ setInterval(() => {
 }, 60000)
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
+// Detect raw Buffer objects / Baileys internal store dumps
+function _isBaileysDump(arg) {
+    if (Buffer.isBuffer(arg)) return true
+    if (arg === null || typeof arg !== 'object') return false
+    const keys = Object.keys(arg)
+    // Store/keys session dump fields
+    if (keys.some(k => ['indexInfo','rootKey','baseKey','remoteIdentityKey','baseKeyType','previousCounter'].includes(k))) return true
+    // Creds dump fields
+    if (keys.some(k => ['noiseKey','pairingEphemeralKeyPair','signedIdentityKey','signedPreKey','advSecretKey','registrationId'].includes(k))) return true
+    // Object with Buffer values
+    for (const v of Object.values(arg)) {
+        if (Buffer.isBuffer(v)) return true
+        if (v && typeof v === 'object' && !Array.isArray(v) && Buffer.isBuffer(v.data)) return true
+    }
+    return false
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
 // Core filter function
 function _shouldSuppress(args) {
+    // Block raw Buffer / Baileys object dumps before stringifying
+    for (const a of args) {
+        if (_isBaileysDump(a)) return true
+    }
+
     const msg = args.map(a => {
         if (typeof a === 'string') return a
         try { return JSON.stringify(a) } catch { return String(a) }
     }).join(' ')
+
+    // Block <Buffer xx xx xx ...> string output
+    if (/<Buffer [0-9a-f]{2}/i.test(msg)) return true
+    // Block Baileys store field names printed as strings
+    if (/previousCounter|rootKey|baseKey|indexInfo|remoteIdentityKey|baseKeyType/i.test(msg)) return true
+    if (/noiseKey|pairingEphemeralKeyPair|signedIdentityKey|signedPreKey|advSecretKey/i.test(msg)) return true
 
     // Whitelist check — never suppress these
     for (const p of ALWAYS_SHOW_PATTERNS) {
