@@ -984,6 +984,22 @@ X.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false,
 
             for (let num of anu.participants) {
                 let numClean = num.split('@')[0].split(':')[0]
+
+                // ── Antibot auto-remove on join ───────────────────────────
+                if (anu.action === 'add' && global.antibotGroups && global.antibotGroups[anu.id] && global.knownBots && global.knownBots.includes(numClean)) {
+                    try {
+                        const _botMeta = await X.groupMetadata(anu.id)
+                        const _botIsAdmin = _botMeta.participants.some(p => {
+                            const isBot = p.id.split('@')[0].split(':')[0] === X.user.id.split('@')[0].split(':')[0]
+                            return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
+                        })
+                        if (_botIsAdmin) {
+                            await X.groupParticipantsUpdate(anu.id, [num], 'remove')
+                            await X.sendMessage(anu.id, { text: `╔══════════════════════════╗\n║  🤖 *ANTIBOT*\n╚══════════════════════════╝\n\n  🚫 *+${numClean}* was removed.\n  └ Reason: Known bot detected.` })
+                        }
+                    } catch {}
+                    continue
+                }
                 let ppuser = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png?q=60'
                 try { ppuser = await X.profilePictureUrl(num, 'image') } catch {}
                 let ppBuf = await getBuffer(ppuser).catch(() => null)
