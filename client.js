@@ -2057,14 +2057,14 @@ case 'setprefix': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let newPrefix = (args[0] || '').trim()
 if (!newPrefix) {
-    let currentPfx = global.botPrefix || 'Multi-prefix (auto-detect)'
-    reply(`*Current Prefix:* ${currentPfx}\n\n*Usage:*\n• ${prefix}setprefix [character] - Set a specific prefix\n• ${prefix}setprefix reset - Reset to multi-prefix mode\n\n*Examples:*\n• ${prefix}setprefix .\n• ${prefix}setprefix /\n• ${prefix}setprefix #\n• ${prefix}setprefix !\n• ${prefix}setprefix reset`)
-} else if (newPrefix.toLowerCase() === 'reset' || newPrefix.toLowerCase() === 'multi') {
-    global.botPrefix = ''
-    reply('*Prefix Reset*\nBot now accepts multiple prefixes: . / # ! $ + , etc.')
+    let currentPfx = global.botPrefix || '.'
+    reply(`*Current Prefix:* *${currentPfx}*\n\n*Usage:*\n• ${prefix}setprefix [character] — set a new prefix\n• ${prefix}setprefix reset — restore default (.)\n\n*Examples:*\n• ${prefix}setprefix .\n• ${prefix}setprefix /\n• ${prefix}setprefix #\n• ${prefix}setprefix !`)
+} else if (newPrefix.toLowerCase() === 'reset' || newPrefix.toLowerCase() === 'default') {
+    global.botPrefix = '.'
+    reply(`*Prefix Reset* ✅\nBot prefix restored to default: *.*`)
 } else {
     global.botPrefix = newPrefix.charAt(0)
-    reply(`*Prefix Changed*\nBot prefix is now: *${global.botPrefix}*\n\nAll commands must start with *${global.botPrefix}* (e.g. ${global.botPrefix}menu, ${global.botPrefix}help)`)
+    reply(`*Prefix Changed* ✅\nBot prefix is now: *${global.botPrefix}*\n\nExample: *${global.botPrefix}menu*, *${global.botPrefix}help*`)
 }
 }
 break
