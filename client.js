@@ -517,18 +517,7 @@ function getCaseNames() {
   }
 }
 
-if (prefix && command) {
-  const caseNames = getCaseNames();
-  let noPrefix = m.text.replace(prefix, '').trim();
-  let mean = didyoumean(noPrefix, caseNames);
-  let sim = similarity(noPrefix, mean);
-  let similarityPercentage = parseInt(sim * 100);
 
-  if (mean && noPrefix.toLowerCase() !== mean.toLowerCase()) {
-    const respony = (`Sorry, invalid command. Did you mean:\n\n➠  *${prefix + mean}*\n➠  *Similarity:* ${similarityPercentage}%`);
-    reply(respony);
-  }
-}
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 let totalfitur = () =>{
 var mytext = fs.readFileSync("./client.js").toString()
@@ -4130,6 +4119,7 @@ case 'debugrole': {
 }
 break;
 
+case 'p':
 case 'ping':
 case 'info':
 case 'storage':
@@ -4185,40 +4175,28 @@ async function getServerInfo() {
 
   const latensi = (Date.now() - start)
 
-  const responseText = `╭━━━〔 ⚡ *PONG!* 〕━━━╮
-│
-│  🤖 *${global.botname || 'TOOSII-XD ULTRA'}*
-│  📡 Latency: *${latensi}ms*
-│
-╰━━━━━━━━━━━━━━━━━╯
+  const responseText = `╔══════════════════════════╗
+║  ⚡ *PONG!*  📡 *${latensi}ms*
+╚══════════════════════════╝
+  🤖 *${global.botname || 'TOOSII-XD ULTRA'}*
 
-╭━━━〔 🕐 *UPTIME* 〕━━━╮
-│ 🟢 Bot: ${runtime(process.uptime())}
-│ 🖥️ Server: ${runtime(os.uptime())}
-╰━━━━━━━━━━━━━━━━━╯
+  ├ 🟢 *Bot uptime*    › ${runtime(process.uptime())}
+  ├ 🖥️  *Server uptime* › ${runtime(os.uptime())}
 
-╭━━━〔 💻 *SERVER* 〕━━━╮
-│ 🔧 OS: ${osType} (${platform})
-│ 📦 Release: ${release}
-│ 🏗️ Arch: ${arch}
-│ 🟩 Node.js: ${nodeVersion}
-╰━━━━━━━━━━━━━━━━━╯
+  ├ 🔧 *OS*      › ${osType} (${arch})
+  ├ 🟩 *Node.js* › ${nodeVersion}
+  ├ 💎 *CPU*     › ${cpuModel}
+  ├ ⚙️  *Cores*   › ${coreCount}  📊 *Load* › ${cpuUsage}
 
-╭━━━〔 🧠 *CPU* 〕━━━╮
-│ 💎 Model: ${cpuModel}
-│ ⚙️ Cores: ${coreCount}
-│ 📊 Usage: ${cpuUsage}
-│ 📈 Load: ${loadAverage.join(', ')}
-╰━━━━━━━━━━━━━━━━━╯
+  ├ 📦 *RAM Total* › ${formatp(totalMem)}
+  ├ 🔴 *RAM Used*  › ${formatp(usedMem)}
+  └ 🟢 *RAM Free*  › ${formatp(freeMem)}${storageText ? `
 
-╭━━━〔 💾 *MEMORY* 〕━━━╮
-│ 📦 Total: ${formatp(totalMem)}
-│ 🔴 Used: ${formatp(usedMem)}
-│ 🟢 Free: ${formatp(freeMem)}
-╰━━━━━━━━━━━━━━━━━╯${storageText ? `\n\n╭━━━〔 💿 *STORAGE* 〕━━━╮\n${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'│ 📁 ')}\n╰━━━━━━━━━━━━━━━━━╯` : ''}
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  💿 *Storage*
+  ${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'  ├ ')}` : ''}
 
-_⚡ Powered by ${global.ownername || 'Toosii Tech'}_
-`
+_⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
   return responseText.trim()
 }
 
