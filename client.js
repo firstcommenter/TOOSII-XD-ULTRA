@@ -21,6 +21,29 @@ const os = require('os')
 const fs = require('fs')
 const fg = require('api-dylux')
 const fetch = require('node-fetch');
+// Safe JSON fetch — never throws "not valid JSON", returns null on HTML/error responses
+const safeJson = async (url, opts = {}) => {
+    try {
+        const r = await fetch(url, { ...opts, headers: { 'User-Agent': 'TOOSII-XD-ULTRA/2.0', ...(opts.headers || {}) } })
+        const text = await r.text()
+        if (text.trimStart().startsWith('<')) return null  // HTML response (404 page etc)
+        return JSON.parse(text)
+    } catch { return null }
+}
+// Patch fetch Response to never throw on HTML — returns null instead
+const _origJson = require('node-fetch').Response.prototype.json
+require('node-fetch').Response.prototype.json = async function() {
+    const text = await this.text()
+    if (text.trimStart().startsWith('<')) {
+        console.warn('[API] HTML response received instead of JSON — API may be down')
+        return null
+    }
+    try { return JSON.parse(text) } catch(e) {
+        console.warn('[API] Invalid JSON response:', text.slice(0, 80))
+        return null
+    }
+}
+
 const util = require('util')
 const axios = require('axios')
 const { exec, execSync } = require("child_process")
