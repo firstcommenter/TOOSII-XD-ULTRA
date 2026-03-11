@@ -290,16 +290,22 @@ if (global.fakePresence && global.fakePresence !== 'off' && !m.key.fromMe) {
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Reply / Reply Message
-const reply = (teks) => { 
-X.sendMessage(from, { text: teks, contextInfo: { 
-"externalAdReply": { 
-"showAdAttribution": true, 
-"title": "TOOSII-XD ULTRA", 
-"containsAutoReply": true, 
-"mediaType": 1, 
-"thumbnail": fakethmb, 
-"mediaUrl": "https://t.me/toosiitech", 
-"sourceUrl": "https://t.me/toosiitech" }}}, { quoted: m }) }
+const reply = (teks) => {
+    if (fakethmb) {
+        X.sendMessage(from, { text: teks, contextInfo: {
+            "externalAdReply": {
+                "showAdAttribution": true,
+                "title": "TOOSII-XD ULTRA",
+                "containsAutoReply": true,
+                "mediaType": 1,
+                "thumbnail": fakethmb,
+                "mediaUrl": "https://t.me/toosiitech",
+                "sourceUrl": "https://t.me/toosiitech"
+            }}}, { quoted: m }).catch(() => X.sendMessage(from, { text: teks }, { quoted: m }))
+    } else {
+        X.sendMessage(from, { text: teks }, { quoted: m })
+    }
+}
 
 const reply2 = (teks) => {
 X.sendMessage(from, { text : teks }, { quoted : m })
@@ -311,7 +317,7 @@ ppuser = await X.profilePictureUrl(m.sender, 'image')
 } catch (err) {
 ppuser = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png?q=60'
 }
-ppnyauser = await getBuffer(ppuser)
+try { ppnyauser = await getBuffer(ppuser) } catch { ppnyauser = Buffer.alloc(0) }
 
 const reSize = async(buffer, ukur1, ukur2) => {
    return new Promise(async(resolve, reject) => {
@@ -321,7 +327,8 @@ const reSize = async(buffer, ukur1, ukur2) => {
       resolve(ab)
    })
 }
-    const fakethmb = await reSize(ppuser, 300, 300)
+    let fakethmb
+    try { fakethmb = await reSize(ppuser, 300, 300) } catch { fakethmb = ppnyauser || Buffer.alloc(0) }
     // function resize
     let jimp = require("jimp")
 const resize = async (image, width, height) => {
