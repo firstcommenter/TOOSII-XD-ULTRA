@@ -116,6 +116,58 @@ const SESSIONS_DIR = path.join(__dirname, 'sessions')
 if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
 
 const activeSessions = new Map()
+
+// ── Per-phone bot state persistence ──────────────────────────────────────────
+// Saves globals like autoViewStatus, autoLikeStatus etc per deployed number
+// so they survive restarts without needing manual .als on each time
+const _stateFile = (phone) => path.join(SESSIONS_DIR, phone, 'botstate.json')
+
+function _loadPhoneState(phone) {
+    try {
+        const _f = _stateFile(phone)
+        if (!fs.existsSync(_f)) return
+        const _saved = JSON.parse(fs.readFileSync(_f, 'utf8'))
+        // Restore globals from saved state
+        if (_saved.autoViewStatus !== undefined) global.autoViewStatus = _saved.autoViewStatus
+        if (_saved.autoLikeStatus !== undefined) global.autoLikeStatus = _saved.autoLikeStatus
+        if (_saved.autoLikeEmoji  !== undefined) global.autoLikeEmoji  = _saved.autoLikeEmoji
+        if (_saved.arManager      !== undefined) global.arManager      = _saved.arManager
+        if (_saved.antiDelete     !== undefined) global.antiDelete     = _saved.antiDelete
+        if (_saved.antiDeleteMode !== undefined) global.antiDeleteMode = _saved.antiDeleteMode
+        if (_saved.antiStatusMention   !== undefined) global.antiStatusMention   = _saved.antiStatusMention
+        if (_saved.antiStatusMentionAction !== undefined) global.antiStatusMentionAction = _saved.antiStatusMentionAction
+        if (_saved.autoReplyStatus !== undefined) global.autoReplyStatus = _saved.autoReplyStatus
+        if (_saved.autoReplyStatusMsg !== undefined) global.autoReplyStatusMsg = _saved.autoReplyStatusMsg
+        if (_saved.muslimPrayer   !== undefined) global.muslimPrayer   = _saved.muslimPrayer
+        if (_saved.christianDevotion !== undefined) global.christianDevotion = _saved.christianDevotion
+        console.log(`[${phone}] ✅ Bot state restored: autoView=${global.autoViewStatus} autoLike=${global.autoLikeStatus}`)
+    } catch(e) {
+        console.log(`[${phone}] Could not load bot state:`, e.message)
+    }
+}
+
+function _savePhoneState(phone) {
+    try {
+        const _f = _stateFile(phone)
+        const _dir = path.dirname(_f)
+        if (!fs.existsSync(_dir)) fs.mkdirSync(_dir, { recursive: true })
+        const _state = {
+            autoViewStatus: global.autoViewStatus,
+            autoLikeStatus: global.autoLikeStatus,
+            autoLikeEmoji:  global.autoLikeEmoji,
+            arManager:      global.arManager,
+            antiDelete:     global.antiDelete,
+            antiDeleteMode: global.antiDeleteMode,
+            antiStatusMention:       global.antiStatusMention,
+            antiStatusMentionAction: global.antiStatusMentionAction,
+            autoReplyStatus:    global.autoReplyStatus,
+            autoReplyStatusMsg: global.autoReplyStatusMsg,
+            muslimPrayer:       global.muslimPrayer,
+            christianDevotion:  global.christianDevotion,
+        }
+        fs.writeFileSync(_f, JSON.stringify(_state, null, 2))
+    } catch {}
+}
 const processedMsgs = new Set()
 const msgRetryCache = new Map()
 
@@ -979,6 +1031,8 @@ if (!X.user.lid && state?.creds?.me?.lid) {
 }
 const connUser = X.user?.id?.split(':')[0] || phone
 activeSessions.set(phone, { socket: X, status: 'connected', connectedUser: connUser })
+// Restore this number's saved bot state
+_loadPhoneState(phone)
 try {
 X.newsletterFollow('120363299254074394@newsletter')
 } catch (e) {}
