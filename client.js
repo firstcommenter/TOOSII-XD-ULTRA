@@ -1908,17 +1908,21 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let avsArg = (args[0] || '').toLowerCase()
 if (avsArg === 'on' || avsArg === 'enable') {
     global.autoViewStatus = true
-    reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.\n_Protocol: readMessages + sendReceipt (Meta 2024+)_')
+    try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
+    reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.')
 } else if (avsArg === 'off' || avsArg === 'disable') {
     global.autoViewStatus = false
+    try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
     reply('*👀 Auto View Status: ❌ OFF*\n\nBot will no longer auto-view statuses.')
 } else {
     if (global.autoViewStatus) {
         global.autoViewStatus = false
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
         reply('*👀 Auto View Status: ❌ OFF*\n\nBot will no longer auto-view statuses.')
     } else {
         global.autoViewStatus = true
-        reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.\n_Protocol: readMessages + sendReceipt (Meta 2024+)_')
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
+        reply('*👀 Auto View Status: ✅ ON*\n\nBot will automatically view all contact statuses.')
     }
 }
 }
@@ -1962,12 +1966,14 @@ case 'statusreact': {
         _ar.enabled = true
         global.autoLikeStatus = true
         global.autoViewStatus = _ar.viewMode === 'view+react'
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
         return reply(`✅ *Auto React ON*\n└ Mode: ${_ar.viewMode} · ${_ar.mode === 'fixed' ? _ar.fixedEmoji : 'random'}`)
     }
 
     if (_arAction === 'off' || _arAction === 'disable') {
         _ar.enabled = false
         global.autoLikeStatus = false
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(m.sender?.split('@')[0] || '') } catch {}
         return reply(`❌ *Auto React OFF*`)
     }
 
@@ -2426,6 +2432,7 @@ case 'antismention': {
         reply(_asmStatus())
     } else if (asmArg === 'on' || asmArg === 'enable') {
         global.antiStatusMention = true
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
         const _a = (global.antiStatusMentionAction || 'warn').toUpperCase()
         reply(`╔══════════════════════════╗\n║  🛡️  *ANTI STATUS MENTION*\n╚══════════════════════════╝\n\n  ✅ *Enabled*\n  └ Action: *${_a}*\n\n  _Anyone who tags a group in their status\n  will be ${_a === 'WARN' ? 'warned (3x = kick)' : _a === 'KICK' ? 'instantly kicked' : 'have messages deleted'}._`)
     } else if (asmArg === 'off' || asmArg === 'disable') {
@@ -2604,6 +2611,7 @@ case 'setantidelete': {
         _ad.mode = 'private'
         global.antiDelete = true
         global.antiDeleteMode = 'private'
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
         return reply(`╔══════════════════════════╗\n║  🗑️  *ANTI-DELETE*\n╚══════════════════════════╝\n\n  ✅ *Enabled* — Private Mode\n  └ Deleted messages sent to your DM only.`)
     }
 
@@ -2618,6 +2626,7 @@ case 'setantidelete': {
     if (_adArg === 'off' || _adArg === 'disable') {
         _ad.enabled = false
         global.antiDelete = false
+        try { if (typeof _savePhoneState === 'function') _savePhoneState(phone) } catch {}
         return reply(`╔══════════════════════════╗\n║  🗑️  *ANTI-DELETE*\n╚══════════════════════════╝\n\n  ❌ *Disabled* — messages will not be tracked.`)
     }
 
