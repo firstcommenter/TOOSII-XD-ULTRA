@@ -83,6 +83,20 @@ process.on('unhandledRejection', (err) => {
     }
 })
 
+// ── Suppress gifted-baileys internal newsletter noise ──────────────────────
+// The library logs "[API] Invalid JSON response" when contacts include @newsletter
+// JIDs — this is a known gifted-baileys bug, not an actual error
+const _origLog = console.log.bind(console)
+const _origErr = console.error.bind(console)
+const _isNewsletterNoise = (...args) => {
+    const msg = args.map(a => typeof a === 'string' ? a : JSON.stringify(a) || '').join(' ')
+    return msg.includes('@newsletter') ||
+           (msg.includes('[API]') && msg.includes('Invalid JSON')) ||
+           msg.includes('Closing open session in favor of incoming prekey bundle')
+}
+console.log = (...args) => { if (!_isNewsletterNoise(...args)) _origLog(...args) }
+console.error = (...args) => { if (!_isNewsletterNoise(...args)) _origErr(...args) }
+
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Anti-Tampering Protection
 const _ov = '254748340864'
