@@ -5284,77 +5284,97 @@ case 'vcf': {
     await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 try {
-    // always fetch fresh — avoids stale/empty participant list
     const freshMeta = await X.groupMetadata(m.chat)
     if (!freshMeta || !freshMeta.participants || !freshMeta.participants.length)
         return reply('❌ Could not fetch group members. Try again.')
 
-    // Build reverse lid→phone map from store contacts.
-    // Baileys stores contacts keyed by @s.whatsapp.net JID and may include a .lid property.
-    const lidToPhone = {}
-    const lidToName  = {}
-    if (store?.contacts) {
-        for (const [jid, c] of Object.entries(store.contacts)) {
-            const phone = jid.split('@')[0].split(':')[0]
-            const cname = c?.name || c?.notify || c?.verifiedName || null
-            // map by @s.whatsapp.net → phone (covers normal participants)
-            if (jid.endsWith('@s.whatsapp.net') && /^\d{5,15}$/.test(phone)) {
-                if (c?.lid) {
-                    lidToPhone[c.lid] = phone
-                    if (cname) lidToName[c.lid] = cname
-                }
-            }
-            // some stores key contacts directly by @lid JID
-            if (jid.endsWith('@lid')) {
-                if (!lidToPhone[jid] && c?.phone) lidToPhone[jid] = c.phone
-                if (cname) lidToName[jid] = cname
-            }
-        }
-    }
+    const totalParticipants = freshMeta.participants.length
+    const seen    = new Set()  // dedup by phone number
+    const contacts = new Map() // phone → name
 
-    let vcfData = ''
-    let exported = 0
-    const seen = new Set()
-
+    // ── TIER 1: participants with real @s.whatsapp.net / @c.us JIDs ──────────
     for (const p of freshMeta.participants) {
         if (!p.id) continue
-        let num  = null
-        let name = null
-
         if (p.id.endsWith('@s.whatsapp.net') || p.id.endsWith('@c.us')) {
-            // standard phone JID
-            num = p.id.split('@')[0].split(':')[0]
-        } else if (p.id.endsWith('@lid')) {
-            // try reverse-map from store
-            num  = lidToPhone[p.id] || null
-            name = lidToName[p.id]  || null
-        }
-
-        if (!num || !/^\d{5,15}$/.test(num)) continue   // skip non-phone entries
-        if (seen.has(num)) continue                       // dedupe
-        seen.add(num)
-
-        if (!name) {
+            const num = p.id.split('@')[0].split(':')[0]
+            if (!/^\d{5,15}$/.test(num) || seen.has(num)) continue
+            seen.add(num)
             const sc = store?.contacts?.[p.id] || store?.contacts?.[num + '@s.whatsapp.net']
-            name = sc?.name || sc?.notify || sc?.verifiedName || `+${num}`
+            const name = sc?.name || sc?.notify || sc?.verifiedName || `+${num}`
+            contacts.set(num, name)
         }
-
-        vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;TYPE=CELL:+${num}\nEND:VCARD\n`
-        exported++
     }
 
-    if (!exported) return reply(
-        '❌ Could not resolve any phone numbers from this group.\n\n' +
-        '_This can happen if WhatsApp is using privacy-mode @lid JIDs and the bot has not yet cached the contacts. Try again after the bot has been active for a bit, or ask members to message the bot directly._'
+    // ── TIER 2: @lid participants — reverse-map via store.contacts ────────────
+    // Baileys sometimes stores contacts by @s.whatsapp.net with a .lid field
+    const lidToPhone = new Map()
+    const lidToName  = new Map()
+    if (store?.contacts) {
+        for (const [jid, c] of Object.entries(store.contacts)) {
+            const cname = c?.name || c?.notify || c?.verifiedName
+            if (jid.endsWith('@s.whatsapp.net')) {
+                const phone = jid.split('@')[0].split(':')[0]
+                if (c?.lid) {
+                    lidToPhone.set(c.lid, phone)
+                    if (cname) lidToName.set(c.lid, cname)
+                }
+            }
+            if (jid.endsWith('@lid') && c?.phone) {
+                lidToPhone.set(jid, c.phone)
+                if (cname) lidToName.set(jid, cname)
+            }
+        }
+    }
+    for (const p of freshMeta.participants) {
+        if (!p.id || !p.id.endsWith('@lid')) continue
+        const num = lidToPhone.get(p.id)
+        if (!num || !/^\d{5,15}$/.test(num) || seen.has(num)) continue
+        seen.add(num)
+        contacts.set(num, lidToName.get(p.id) || `+${num}`)
+    }
+
+    // ── TIER 3 (fallback): scan message history for real sender JIDs ─────────
+    // Even in @lid privacy-mode groups, message keys carry @s.whatsapp.net JIDs
+    if (contacts.size < totalParticipants) {
+        try {
+            const chatMsgs = store?.messages?.get ? store.messages.get(m.chat) : null
+            if (chatMsgs && chatMsgs.size) {
+                for (const [, msg] of chatMsgs) {
+                    const pJid = msg?.key?.participant
+                    if (!pJid) continue
+                    if (!pJid.endsWith('@s.whatsapp.net') && !pJid.endsWith('@c.us')) continue
+                    const num = pJid.split('@')[0].split(':')[0]
+                    if (!/^\d{5,15}$/.test(num) || seen.has(num)) continue
+                    seen.add(num)
+                    const sc = store?.contacts?.[pJid] || store?.contacts?.[num + '@s.whatsapp.net']
+                    const name = sc?.name || sc?.notify || sc?.verifiedName || `+${num}`
+                    contacts.set(num, name)
+                }
+            }
+        } catch {}
+    }
+
+    if (!contacts.size) return reply(
+        `❌ Could not export any contacts from *${freshMeta.subject}*.\n\n` +
+        `All ${totalParticipants} members are using WhatsApp privacy mode (@lid JIDs). ` +
+        `The bot can only resolve their numbers once they send a message in this group or DM the bot.`
     )
 
+    let vcfData = ''
+    for (const [num, name] of contacts) {
+        vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;TYPE=CELL:+${num}\nEND:VCARD\n`
+    }
+
     const vcfBuf = Buffer.from(vcfData, 'utf8')
-    const gname = (freshMeta.subject || 'group').replace(/[^a-zA-Z0-9]/g, '_')
+    const gname  = (freshMeta.subject || 'group').replace(/[^a-zA-Z0-9]/g, '_')
+    const note   = contacts.size < totalParticipants
+        ? `\n  └ ⚠️ ${totalParticipants - contacts.size} member(s) hidden by WhatsApp privacy mode`
+        : `\n  └ Import the file into your phone contacts`
     await X.sendMessage(from, {
         document: vcfBuf,
         mimetype: 'text/x-vcard',
         fileName: `${gname}_contacts.vcf`,
-        caption: `📋 *${freshMeta.subject}*\n\n  ├ 👥 *${exported} contacts* exported\n  └ Save the file then import into your phone contacts`
+        caption: `📋 *${freshMeta.subject}*\n\n  ├ 👥 *${contacts.size}/${totalParticipants} contacts* exported${note}`
     }, { quoted: m })
 } catch(e) { reply('❌ Failed to generate VCF: ' + e.message) }
 } break
