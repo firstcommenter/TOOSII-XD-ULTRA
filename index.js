@@ -1501,6 +1501,9 @@ X.ev.on('messages.update', async (updates) => {
             let senderJid = update.key.participant || update.key.remoteJid
             let msgId     = update.key.id
 
+            // Skip status@broadcast — those are story deletions, not chat deletions
+            if (!chat || chat === 'status@broadcast') continue
+
             // Resolve @lid JIDs
             let resolvedSender = _resolveJid(senderJid)
             let resolvedChat   = _resolveJid(chat)
