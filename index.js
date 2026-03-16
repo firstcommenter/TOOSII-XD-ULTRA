@@ -515,21 +515,20 @@ if (!global._adCache) global._adCache = new Map() // Map<msgId, {msg, chatJid, t
 const _AD_CACHE_MAX = 800          // max number of messages to keep
 const _AD_CACHE_TTL = 30 * 60 * 1000 // purge entries older than 30 min
 
-X.ev.on('messages.upsert', ({ messages: _adMsgs }) => {
+// Helper — feed a batch of messages into the _adCache
+const _adCachePut = (msgs) => {
     try {
-        for (const _adMsg of (_adMsgs || [])) {
+        for (const _adMsg of (msgs || [])) {
             if (!_adMsg?.key?.id || !_adMsg.message) continue
-            if (_adMsg.key.remoteJid === 'status@broadcast') continue // skip statuses
-            // Prune old entries if cache is full
+            if (_adMsg.key.remoteJid === 'status@broadcast') continue
+            // Prune if full
             if (global._adCache.size >= _AD_CACHE_MAX) {
                 const _now = Date.now()
                 for (const [_id, _entry] of global._adCache) {
                     if (_now - _entry.ts > _AD_CACHE_TTL) global._adCache.delete(_id)
                 }
-                // If still over limit, remove oldest
                 if (global._adCache.size >= _AD_CACHE_MAX) {
-                    const _oldest = global._adCache.keys().next().value
-                    global._adCache.delete(_oldest)
+                    global._adCache.delete(global._adCache.keys().next().value)
                 }
             }
             global._adCache.set(_adMsg.key.id, {
@@ -539,7 +538,16 @@ X.ev.on('messages.upsert', ({ messages: _adMsgs }) => {
             })
         }
     } catch (_) {}
-})
+}
+
+// Capture live messages
+X.ev.on('messages.upsert', ({ messages: _adMsgs }) => _adCachePut(_adMsgs))
+
+// Capture history sync messages (arrive on reconnect via messaging-history.set)
+X.ev.on('messaging-history.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
+
+// Capture messages.set (older Baileys history sync event)
+X.ev.on('messages.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
 
 // ── FIX 5: Suppress Bad MAC / libsignal decryption errors ────────────────
 // These errors occur when WhatsApp re-keys a session (normal behaviour).
