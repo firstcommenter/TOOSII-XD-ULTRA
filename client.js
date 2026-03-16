@@ -850,8 +850,11 @@ if (m.key.fromMe && global.ownerFontMode && global.ownerFontMode !== 'off' && bu
             }
             // Only act if conversion actually changed something
             if (_converted !== budy) {
-                // Edit in-place — shows "Edited" label, no deletion notice
-                await X.sendMessage(m.chat, { text: _converted, edit: m.key })
+                // Delete original for everyone, then send styled version fresh
+                // (using edit: m.key shows "Edited" label — this avoids that)
+                try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
+                await new Promise(r => setTimeout(r, 200))
+                await X.sendMessage(m.chat, { text: _converted })
             }
         }
     } catch (_fe) {
