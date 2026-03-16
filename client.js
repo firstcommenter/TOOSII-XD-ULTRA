@@ -2016,8 +2016,12 @@ case 'statusreact': {
         _ar.enabled = true
         global.autoLikeStatus = true
         global.autoViewStatus = _ar.viewMode === 'view+react'
+        // sync emoji so index.js auto-like handler actually fires
+        global.autoLikeEmoji = _ar.mode === 'random'
+            ? (_ar.reactions[Math.floor(Math.random() * _ar.reactions.length)] || '❤️')
+            : (_ar.fixedEmoji || '❤️')
         try { if (typeof _savePhoneState === 'function') _savePhoneState(X.user?.id?.split(':')[0]?.split('@')[0] || '') } catch {}
-        return reply(`✅ *Auto React ON*\n└ Mode: ${_ar.viewMode} · ${_ar.mode === 'fixed' ? _ar.fixedEmoji : 'random'}`)
+        return reply(`✅ *Auto React ON*\n└ Mode: ${_ar.viewMode} · ${_ar.mode === 'fixed' ? _ar.fixedEmoji : '🎲 random'}`)
     }
 
     if (_arAction === 'off' || _arAction === 'disable') {
