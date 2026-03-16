@@ -299,20 +299,7 @@ if (global.fakePresence && global.fakePresence !== 'off' && !m.key.fromMe) {
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Reply / Reply Message
 const reply = (teks) => {
-    if (fakethmb) {
-        X.sendMessage(from, { text: teks, contextInfo: {
-            "externalAdReply": {
-                "showAdAttribution": true,
-                "title": "TOOSII-XD ULTRA",
-                "containsAutoReply": true,
-                "mediaType": 1,
-                "thumbnail": fakethmb,
-                "mediaUrl": "https://t.me/toosiitech",
-                "sourceUrl": "https://t.me/toosiitech"
-            }}}, { quoted: m }).catch(() => X.sendMessage(from, { text: teks }, { quoted: m }))
-    } else {
-        X.sendMessage(from, { text: teks }, { quoted: m })
-    }
+    X.sendMessage(from, { text: teks }, { quoted: m })
 }
 
 const reply2 = (teks) => {
