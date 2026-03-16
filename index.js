@@ -607,29 +607,36 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
 
             if (global.autoLikeStatus) {
                 try {
-                    // pick emoji — use arManager if available for random/fixed/dedup
                     const _ar = global.arManager
                     let _emoji = global.autoLikeEmoji || '❤️'
                     if (_ar && _ar.enabled) {
-                        // deduplicate by status message id
-                        if (_ar.reactedIds && _ar.reactedIds.includes(mek.key.id)) {
-                            console.log(`[${phone}] Auto-like: already reacted to ${mek.key.id}, skipping`)
-                        } else {
-                            if (_ar.mode === 'random' && _ar.reactions && _ar.reactions.length) {
-                                _emoji = _ar.reactions[Math.floor(Math.random() * _ar.reactions.length)]
-                            } else {
-                                _emoji = _ar.fixedEmoji || _emoji
-                            }
-                            if (!_ar.reactedIds) _ar.reactedIds = []
-                            _ar.reactedIds.push(mek.key.id)
-                            if (_ar.reactedIds.length > 2000) _ar.reactedIds.shift()
-                            _ar.totalReacted = (_ar.totalReacted || 0) + 1
-                            // keep global emoji in sync so fixed mode works after restart
-                            global.autoLikeEmoji = _emoji
+                        // deduplicate — stop here, do NOT proceed to send
+                        if (!_ar.reactedIds) _ar.reactedIds = []
+                        if (_ar.reactedIds.includes(mek.key.id)) {
+                            console.log(`[${phone}] Auto-like: duplicate ${mek.key.id}, skipping`)
+                            throw Object.assign(new Error('duplicate'), { skip: true })
                         }
+                        // rate-limit — honour arManager.rateLimitDelay between reactions
+                        const _now = Date.now()
+                        const _delay = (_ar.rateLimitDelay || 2000) - (_now - (_ar.lastReactionTime || 0))
+                        if (_delay > 0) await new Promise(r => setTimeout(r, _delay))
+                        // pick emoji
+                        if (_ar.mode === 'random' && _ar.reactions && _ar.reactions.length) {
+                            _emoji = _ar.reactions[Math.floor(Math.random() * _ar.reactions.length)]
+                        } else {
+                            _emoji = _ar.fixedEmoji || _emoji
+                        }
+                        // commit stats
+                        _ar.reactedIds.push(mek.key.id)
+                        if (_ar.reactedIds.length > 2000) _ar.reactedIds.shift()
+                        _ar.totalReacted = (_ar.totalReacted || 0) + 1
+                        _ar.lastReactionTime = Date.now()
+                        global.autoLikeEmoji = _emoji
+                    } else {
+                        // simple path — small delay to avoid spam
+                        await new Promise(r => setTimeout(r, 800))
                     }
                     if (!_emoji) throw new Error('no emoji configured')
-                    await new Promise(r => setTimeout(r, 800))
                     const _reactKey = {
                         remoteJid: 'status@broadcast',
                         id: mek.key.id,
@@ -655,7 +662,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                         }
                     }
                 } catch (likeErr) {
-                    if (likeErr.message !== 'no emoji configured')
+                    if (!likeErr.skip && likeErr.message !== 'no emoji configured')
                         console.log(`[${phone}] Auto-like error:`, likeErr.message || likeErr)
                 }
             }
