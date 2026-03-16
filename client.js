@@ -1591,15 +1591,16 @@ case 'creator': {
 _👇 Tap a contact card below to reach the owner_`)
     const namaown = global.ownername || 'Toosii Tech'
     const ownerNumbers = ['254748340864', '254746677793', '254788781373']
-    for (const num of ownerNumbers) {
-        const contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
-            contactMessage: {
+    const contacts = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
+        contactsArrayMessage: {
+            displayName: namaown,
+            contacts: ownerNumbers.map(num => ({
                 displayName: namaown,
                 vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:${namaown}\nitem1.TEL;waid=${num}:+${num}\nitem1.X-ABLabel:WhatsApp\nX-WA-BIZ-NAME:${namaown}\nEND:VCARD`
-            }
-        }), { userJid: m.chat, quoted: m })
-        await X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
-    }
+            }))
+        }
+    }), { userJid: m.chat, quoted: m })
+    await X.relayMessage(m.chat, contacts.message, { messageId: contacts.key.id })
 }
 break
 
