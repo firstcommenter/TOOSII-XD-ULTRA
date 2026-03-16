@@ -1578,24 +1578,28 @@ case 'creator': {
 ╚══════════════════════════╝
 
   ├ 🧑‍💻 *Name*     › ${global.ownername || 'Toosii Tech'}
-  ├ 📞 *WhatsApp* › +${(global.ownerNumber || '254748340864').replace(/[^0-9]/g,'')}
   ├ ✈️  *Telegram* › @toosiitech
   ├ 🤖 *Bot*      › ${global.botname} v${global.botver}
   └ 🔑 *Session*  › ${global.sessionUrl}
 
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-_⚡ Powered by Toosii Tech — wa.me/254748340864_
+  📞 *Contact Numbers:*
+  ├ +254748340864
+  ├ +254746677793
+  └ +254788781373
 
-_👇 Tap the contact card below to chat with owner_`)
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+_👇 Tap a contact card below to reach the owner_`)
     const namaown = global.ownername || 'Toosii Tech'
-    const ownerNum = (global.ownerNumber || '254748340864').replace(/[^0-9]/g, '')
-    const contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
-        contactMessage: {
-            displayName: namaown,
-            vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:${namaown}\nitem1.TEL;waid=${ownerNum}:+${ownerNum}\nitem1.X-ABLabel:WhatsApp\nX-WA-BIZ-NAME:${namaown}\nEND:VCARD`
-        }
-    }), { userJid: m.chat, quoted: m })
-    X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
+    const ownerNumbers = ['254748340864', '254746677793', '254788781373']
+    for (const num of ownerNumbers) {
+        const contact = generateWAMessageFromContent(m.chat, proto.Message.fromObject({
+            contactMessage: {
+                displayName: namaown,
+                vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;;;;\nFN:${namaown}\nitem1.TEL;waid=${num}:+${num}\nitem1.X-ABLabel:WhatsApp\nX-WA-BIZ-NAME:${namaown}\nEND:VCARD`
+            }
+        }), { userJid: m.chat, quoted: m })
+        await X.relayMessage(m.chat, contact.message, { messageId: contact.key.id })
+    }
 }
 break
 
