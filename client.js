@@ -5288,21 +5288,66 @@ try {
     const freshMeta = await X.groupMetadata(m.chat)
     if (!freshMeta || !freshMeta.participants || !freshMeta.participants.length)
         return reply('❌ Could not fetch group members. Try again.')
-    // multi-device Baileys uses @lid JIDs — filter them out, keep real phone JIDs
-    const realMembers = freshMeta.participants.filter(p => p.id && !p.id.endsWith('@lid'))
-    if (!realMembers.length) return reply('❌ No exportable members found in this group.')
+
+    // Build reverse lid→phone map from store contacts.
+    // Baileys stores contacts keyed by @s.whatsapp.net JID and may include a .lid property.
+    const lidToPhone = {}
+    const lidToName  = {}
+    if (store?.contacts) {
+        for (const [jid, c] of Object.entries(store.contacts)) {
+            const phone = jid.split('@')[0].split(':')[0]
+            const cname = c?.name || c?.notify || c?.verifiedName || null
+            // map by @s.whatsapp.net → phone (covers normal participants)
+            if (jid.endsWith('@s.whatsapp.net') && /^\d{5,15}$/.test(phone)) {
+                if (c?.lid) {
+                    lidToPhone[c.lid] = phone
+                    if (cname) lidToName[c.lid] = cname
+                }
+            }
+            // some stores key contacts directly by @lid JID
+            if (jid.endsWith('@lid')) {
+                if (!lidToPhone[jid] && c?.phone) lidToPhone[jid] = c.phone
+                if (cname) lidToName[jid] = cname
+            }
+        }
+    }
+
     let vcfData = ''
     let exported = 0
-    for (const p of realMembers) {
-        const raw = p.id.split('@')[0].split(':')[0]   // strip device suffix e.g. 2547xxx:4
-        if (!raw || isNaN(raw)) continue
-        // name: try store first, then participant's stored name, fallback to number
-        const storeContact = store?.contacts?.[p.id] || store?.contacts?.[raw + '@s.whatsapp.net']
-        const name = storeContact?.name || storeContact?.notify || storeContact?.verifiedName || `+${raw}`
-        vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;TYPE=CELL:+${raw}\nEND:VCARD\n`
+    const seen = new Set()
+
+    for (const p of freshMeta.participants) {
+        if (!p.id) continue
+        let num  = null
+        let name = null
+
+        if (p.id.endsWith('@s.whatsapp.net') || p.id.endsWith('@c.us')) {
+            // standard phone JID
+            num = p.id.split('@')[0].split(':')[0]
+        } else if (p.id.endsWith('@lid')) {
+            // try reverse-map from store
+            num  = lidToPhone[p.id] || null
+            name = lidToName[p.id]  || null
+        }
+
+        if (!num || !/^\d{5,15}$/.test(num)) continue   // skip non-phone entries
+        if (seen.has(num)) continue                       // dedupe
+        seen.add(num)
+
+        if (!name) {
+            const sc = store?.contacts?.[p.id] || store?.contacts?.[num + '@s.whatsapp.net']
+            name = sc?.name || sc?.notify || sc?.verifiedName || `+${num}`
+        }
+
+        vcfData += `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;TYPE=CELL:+${num}\nEND:VCARD\n`
         exported++
     }
-    if (!exported) return reply('❌ Could not extract valid numbers from this group.')
+
+    if (!exported) return reply(
+        '❌ Could not resolve any phone numbers from this group.\n\n' +
+        '_This can happen if WhatsApp is using privacy-mode @lid JIDs and the bot has not yet cached the contacts. Try again after the bot has been active for a bit, or ask members to message the bot directly._'
+    )
+
     const vcfBuf = Buffer.from(vcfData, 'utf8')
     const gname = (freshMeta.subject || 'group').replace(/[^a-zA-Z0-9]/g, '_')
     await X.sendMessage(from, {
