@@ -8139,24 +8139,19 @@ case 'footballscore': {
         if (!d.success || !d.result) throw new Error('No data')
         let matches = d.result.matches || d.result
         if (!Array.isArray(matches) || matches.length === 0) return reply('⚽ No live matches at the moment.')
-        // Group by league — send ALL matches, split into multiple messages if needed
-        let header = `╔══════════════════════════╗\n║  ⚽ *LIVE FOOTBALL SCORES* (${matches.length} matches)\n╚══════════════════════════╝\n`
-        let chunks = [header]
+        let msg = `╔══════════════════════════╗\n║  ⚽ *LIVE FOOTBALL SCORES* (${matches.length} matches)\n╚══════════════════════════╝\n`
         let currentLeague = ''
         for (let _lm of matches) {
             if (_lm.league !== currentLeague) {
                 currentLeague = _lm.league
-                chunks[chunks.length - 1] += `\n🏆 *${currentLeague}*\n`
+                msg += `\n🏆 *${currentLeague}*\n`
             }
             let score = (_lm.homeScore !== undefined && _lm.awayScore !== undefined) ? `${_lm.homeScore} - ${_lm.awayScore}` : `vs`
-            let line = `  ⚽ ${_lm.homeTeam} *${score}* ${_lm.awayTeam}`
-            if (_lm.status && _lm.status !== 'Unknown') line += ` _( ${_lm.status})_`
-            line += '\n'
-            // Split message if approaching WhatsApp's limit
-            if ((chunks[chunks.length - 1] + line).length > 58000) chunks.push(line)
-            else chunks[chunks.length - 1] += line
+            msg += `  ⚽ ${_lm.homeTeam} *${score}* ${_lm.awayTeam}`
+            if (_lm.status && _lm.status !== 'Unknown') msg += ` _( ${_lm.status})_`
+            msg += '\n'
         }
-        for (let chunk of chunks) await reply(chunk)
+        await reply(msg)
     } catch(e) { reply('❌ Could not fetch live scores. Try again later.') }
 } break
 
