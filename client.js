@@ -6462,75 +6462,118 @@ try {
 
 case 'removebg': {
     await X.sendMessage(m.chat, { react: { text: '✂️', key: m.key } })
-// Remove image background — uses remove.bg API if key set, otherwise free fallback via photoroom
 if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
     return reply(`🖼️ *Reply to an image* with *${prefix}removebg* to remove its background`)
 }
 try {
-    await reply('✂️ _Removing background..._')
+    await reply('✂️ _Removing background, please wait..._')
     const _rBuf = await m.quoted.download()
-    if (!_rBuf || _rBuf.length < 100) throw new Error('Image download failed')
+    if (!_rBuf || _rBuf.length < 100) throw new Error('Could not download the image')
     let _result = null
-    // Primary: GiftedTech removebgv2 (upload to CatBox first, then process)
-    try {
-        let _tmpRbg = `/tmp/rbg_${Date.now()}.jpg`
-        fs.writeFileSync(_tmpRbg, _rBuf)
-        let _imgUrl = await CatBox(_tmpRbg)
-        try { fs.unlinkSync(_tmpRbg) } catch {}
-        if (_imgUrl) {
-            let _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/removebgv2?apikey=gifted&url=${encodeURIComponent(_imgUrl)}`, { signal: AbortSignal.timeout(40000) })
-            if (_gtRes.ok && _gtRes.headers.get('content-type')?.includes('image')) {
-                _result = Buffer.from(await _gtRes.arrayBuffer())
+
+    // ── Helper: download image from URL into Buffer ──────────────────
+    const _dlImg = async (url) => {
+        const _r = await fetch(url, { signal: AbortSignal.timeout(20000) })
+        if (!_r.ok) throw new Error(`HTTP ${_r.status}`)
+        return Buffer.from(await _r.arrayBuffer())
+    }
+
+    // ── Method 1: GiftedTech removebgv2 (returns JSON with result URL) ──
+    if (!_result) {
+        try {
+            const _tmpG = `/tmp/rbg_${Date.now()}.jpg`
+            require('fs').writeFileSync(_tmpG, _rBuf)
+            const _catUrl = await CatBox(_tmpG)
+            try { require('fs').unlinkSync(_tmpG) } catch {}
+            if (_catUrl) {
+                const _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/removebgv2?apikey=gifted&url=${encodeURIComponent(_catUrl)}`, { signal: AbortSignal.timeout(45000) })
+                const _ctype = _gtRes.headers.get('content-type') || ''
+                if (_ctype.includes('image')) {
+                    // Direct image response
+                    _result = Buffer.from(await _gtRes.arrayBuffer())
+                } else {
+                    // JSON response — extract result URL and download it
+                    const _gtJson = await _gtRes.json()
+                    const _imgUrl = _gtJson?.result?.image_url || _gtJson?.result?.url || _gtJson?.result
+                    if (_imgUrl && typeof _imgUrl === 'string' && _imgUrl.startsWith('http')) {
+                        _result = await _dlImg(_imgUrl)
+                    }
+                }
             }
-        }
-    } catch {}
-    // Fallback: remove.bg (if API key configured)
-    const _rbKey = process.env.REMOVEBG_KEY || global.removebgKey || ''
-    if (_rbKey) {
-        try {
-            const _fd = new FormData()
-            _fd.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
-            _fd.append('size', 'auto')
-            const _rbRes = await axios.post('https://api.remove.bg/v1.0/removebg', _fd, {
-                headers: { ..._fd.getHeaders(), 'X-Api-Key': _rbKey },
-                responseType: 'arraybuffer', timeout: 30000
-            })
-            if (_rbRes.status === 200) _result = Buffer.from(_rbRes.data)
         } catch {}
     }
-    // Fallback: photoroom free API (no key needed)
+
+    // ── Method 2: Python rembg (local AI, no API limits) ─────────────
     if (!_result) {
         try {
-            const _fd2 = new FormData()
-            _fd2.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
-            const _prRes = await axios.post('https://sdk.photoroom.com/v1/segment', _fd2, {
-                headers: { ..._fd2.getHeaders() },
-                responseType: 'arraybuffer', timeout: 30000
+            const _os = require('os'), _path = require('path'), _cp = require('child_process')
+            const _inFile  = _path.join(_os.tmpdir(), `rbg_in_${Date.now()}.jpg`)
+            const _outFile = _path.join(_os.tmpdir(), `rbg_out_${Date.now()}.png`)
+            require('fs').writeFileSync(_inFile, _rBuf)
+            // Install rembg if needed (quiet, user install)
+            const _pyScript = `
+import sys, subprocess
+try:
+    from rembg import remove
+except ImportError:
+    subprocess.run([sys.executable,'-m','pip','install','rembg','onnxruntime','--quiet','--user'], check=True)
+    from rembg import remove
+with open('${_inFile.replace(/\\/g,'/')}','rb') as f:
+    data = f.read()
+out = remove(data)
+with open('${_outFile.replace(/\\/g,'/')}','wb') as f:
+    f.write(out)
+print('ok')
+`
+            await new Promise((res, rej) => {
+                const _p = _cp.spawn('python3', ['-c', _pyScript], { timeout: 120000 })
+                let _out = ''
+                _p.stdout.on('data', d => _out += d)
+                _p.on('close', code => code === 0 && _out.includes('ok') ? res() : rej(new Error('rembg failed')))
+                _p.on('error', rej)
             })
-            if (_prRes.status === 200) _result = Buffer.from(_prRes.data)
+            if (require('fs').existsSync(_outFile)) {
+                _result = require('fs').readFileSync(_outFile)
+            }
+            try { require('fs').unlinkSync(_inFile); require('fs').unlinkSync(_outFile) } catch {}
         } catch {}
     }
-    // Fallback 2: remove.bg unofficial endpoint
+
+    // ── Method 3: remove.bg (if API key configured) ──────────────────
     if (!_result) {
-        try {
-            const _tmp2 = `/tmp/rmbg_${Date.now()}.jpg`
-            require('fs').writeFileSync(_tmp2, _rBuf)
-            const _uploadedUrl = await CatBox(_tmp2)
-            require('fs').unlinkSync(_tmp2)
-            if (_uploadedUrl?.startsWith('http')) {
-                const _fd3 = new FormData()
-                _fd3.append('image_url', _uploadedUrl)
-                _fd3.append('size', 'auto')
-                const _rbRes2 = await axios.post('https://api.remove.bg/v1.0/removebg', _fd3, {
-                    headers: { ..._fd3.getHeaders(), 'X-Api-Key': 'DEMO' },
+        const _rbKey = process.env.REMOVEBG_KEY || global.removebgKey || ''
+        if (_rbKey) {
+            try {
+                const _fd = new FormData()
+                _fd.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
+                _fd.append('size', 'auto')
+                const _rbRes = await axios.post('https://api.remove.bg/v1.0/removebg', _fd, {
+                    headers: { ..._fd.getHeaders(), 'X-Api-Key': _rbKey },
                     responseType: 'arraybuffer', timeout: 30000
                 })
-                if (_rbRes2.status === 200) _result = Buffer.from(_rbRes2.data)
-            }
-        } catch {}
+                if (_rbRes.status === 200) _result = Buffer.from(_rbRes.data)
+            } catch {}
+        }
     }
-    if (!_result) throw new Error('All background removal services failed. Set REMOVEBG_KEY in env for best results.')
-    await X.sendMessage(m.chat, { image: _result, caption: '✅ *Background removed!*' }, { quoted: m })
+
+    // ── Method 4: Clipdrop (if key configured) ───────────────────────
+    if (!_result) {
+        const _cdKey = process.env.CLIPDROP_KEY || global.clipdropKey || ''
+        if (_cdKey) {
+            try {
+                const _fd4 = new FormData()
+                _fd4.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
+                const _cdRes = await axios.post('https://clipdrop-api.co/remove-background/v1', _fd4, {
+                    headers: { ..._fd4.getHeaders(), 'x-api-key': _cdKey },
+                    responseType: 'arraybuffer', timeout: 30000
+                })
+                if (_cdRes.status === 200) _result = Buffer.from(_cdRes.data)
+            } catch {}
+        }
+    }
+
+    if (!_result) throw new Error('Background removal failed. The service may be busy — please try again in a moment.')
+    await X.sendMessage(m.chat, { image: _result, caption: '✅ *Background removed successfully!*\n_✂️ Powered by Toosii Tech_' }, { quoted: m })
 } catch(e) { reply(`❌ *removebg failed:* ${e.message}`) }
 } break
 
