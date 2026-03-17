@@ -971,7 +971,7 @@ const downloaderMenu = require('./library/menulist/downloadermenu');
 const footballMenu = require('./library/menulist/footballmenu');
 const textmakerMenu = `
 ╔══════════════════════════╗
-║  ✨  *TEXT EFFECTS*
+║  ✨  *TEXT EFFECTS (Local)*
 ╚══════════════════════════╝
   ├ .metallic  ├ .ice
   ├ .snow      ├ .neon
@@ -983,6 +983,24 @@ const textmakerMenu = `
   ├ .1917      ├ .light
   ├ .impressive ├ .leaves
   └ all accept › [text]
+
+╔══════════════════════════╗
+║  🔤  *TEXTPRO EFFECTS*
+╚══════════════════════════╝
+  ├ .textpro [style] [text] or [text]
+  ├ .neontext   ├ .lavatext
+  ├ .toxictext  ├ .steeltext
+  ├ .jokertext  ├ .captaintext
+  ├ .balloontext ├ .sparkletext
+  ├ .wickertext ├ .leavestext
+  ├ .glosstext  ├ .denimtext
+  ├ .rocktext   ├ .glasstext
+  ├ .rainbowtext ├ .caketext
+  ├ .firetext   ├ .halloweentext
+  ├ .xmascard   ├ .robottext
+  └ Styles: neon,lava,toxic,joker,steel,
+    captain,balloon,sparkle,wicker,leaves,
+    gloss,denim,rock,glass,rainbow,cake
 
 ╔══════════════════════════╗
 ║  🔤  *FONT CONVERTER*
@@ -6678,18 +6696,33 @@ reply(`╔═══════════════════════�
 
 case 'shayari': {
     await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
+try {
+    let _gs = await fetch('https://api.giftedtech.co.ke/api/fun/shayari?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _gsd = await _gs.json()
+    if (_gsd.success && _gsd.result) return reply(`╔══════════════════════════╗\n║  📜 *SHAYARI*\n╚══════════════════════════╝\n\n  ${_gsd.result}`)
+} catch {}
 let shayaris = ['Dil mein tere liye jagah hai,\nPar tu door hai, yeh kya wajah hai.', 'Teri yaad mein hum pagal hue,\nDuniya se hum bekhabar hue.', 'Mohabbat ka koi mol nahi,\nDil hai yeh koi phool nahi.', 'Zindagi mein teri kami hai,\nHar khushi adhuri si hai.', 'Tere bina zindagi se koi shikwa nahi,\nTere bina zindagi hai toh kya.']
 reply(`╔══════════════════════════╗\n║  📜 *SHAYARI*\n╚══════════════════════════╝\n\n  ${shayaris[Math.floor(Math.random() * shayaris.length)]}`)
 } break
 
 case 'goodnight': {
     await X.sendMessage(m.chat, { react: { text: '🌙', key: m.key } })
+try {
+    let _ggn = await fetch('https://api.giftedtech.co.ke/api/fun/goodnight?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _ggnd = await _ggn.json()
+    if (_ggnd.success && _ggnd.result) return reply(`╔══════════════════════════╗\n║  🌙 *GOOD NIGHT*\n╚══════════════════════════╝\n\n  ${_ggnd.result}`)
+} catch {}
 let gn = ['Sweet dreams! May tomorrow bring you joy. 🌙', 'Good night! Sleep tight and don\'t let the bugs bite! 💤', 'Wishing you a peaceful night full of beautiful dreams. ✨', 'Close your eyes and let the stars guide your dreams. 🌟', 'Good night! Tomorrow is a new opportunity. Rest well! 😴']
 reply(`╔══════════════════════════╗\n║  🌙 *GOOD NIGHT*\n╚══════════════════════════╝\n\n  ${gn[Math.floor(Math.random() * gn.length)]}`)
 } break
 
 case 'roseday': {
     await X.sendMessage(m.chat, { react: { text: '🌹', key: m.key } })
+try {
+    let _gr = await fetch('https://api.giftedtech.co.ke/api/fun/roseday?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _grd = await _gr.json()
+    if (_grd.success && _grd.result) return reply(`╔══════════════════════════╗\n║  🌹 *ROSE DAY*\n╚══════════════════════════╝\n\n  ${_grd.result}`)
+} catch {}
 reply('🌹 *Happy Rose Day!* 🌹\nRoses are red, violets are blue, sending this beautiful rose just for you! May your day be as beautiful as a garden full of roses.')
 } break
 
@@ -6739,10 +6772,18 @@ X.sendMessage(from, { text: `╔════════════════
 case 'joke': {
     await X.sendMessage(m.chat, { react: { text: '😂', key: m.key } })
 try {
-let res = await fetch('https://v2.jokeapi.dev/joke/Any?safe-mode')
-let data = await res.json()
-if (data.type === 'single') reply(`╔══════════════════════════╗\n║  😂 *JOKE*\n╚══════════════════════════╝\n\n  ${data.joke}`)
-else reply(`╔══════════════════════════╗\n║  😂 *JOKE*\n╚══════════════════════════╝\n\n  ${data.setup}\n\n  ${data.delivery}`)
+    let jokeText = null
+    try {
+        let _gj = await fetch('https://api.giftedtech.co.ke/api/fun/jokes?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+        let _gjd = await _gj.json()
+        if (_gjd.success && _gjd.result) jokeText = _gjd.result
+    } catch {}
+    if (!jokeText) {
+        let res = await fetch('https://v2.jokeapi.dev/joke/Any?safe-mode', { signal: AbortSignal.timeout(10000) })
+        let data = await res.json()
+        jokeText = data.type === 'single' ? data.joke : `${data.setup}\n\n  ${data.delivery}`
+    }
+    reply(`╔══════════════════════════╗\n║  😂 *JOKE*\n╚══════════════════════════╝\n\n  ${jokeText}`)
 } catch { reply('Could not fetch a joke right now.') }
 } break
 
@@ -6923,18 +6964,36 @@ reply(`╔═══════════════════════�
 case 'neko': {
     await X.sendMessage(m.chat, { react: { text: '🐱', key: m.key } })
 try {
-let res = await fetch('https://nekos.life/api/v2/img/neko')
-let data = await res.json()
-await X.sendMessage(m.chat, { image: { url: data.url }, caption: '*Neko!* 🐱' }, { quoted: m })
+    let nekoUrl = null
+    try {
+        let _gn = await fetch('https://api.giftedtech.co.ke/api/anime/neko?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+        let _gnd = await _gn.json()
+        if (_gnd.success && _gnd.result) nekoUrl = _gnd.result
+    } catch {}
+    if (!nekoUrl) {
+        let res = await fetch('https://nekos.life/api/v2/img/neko', { signal: AbortSignal.timeout(10000) })
+        let data = await res.json()
+        nekoUrl = data.url
+    }
+    await X.sendMessage(m.chat, { image: { url: nekoUrl }, caption: '*Neko!* 🐱' }, { quoted: m })
 } catch { reply('Failed to fetch neko image.') }
 } break
 
 case 'waifu': {
     await X.sendMessage(m.chat, { react: { text: '💕', key: m.key } })
 try {
-let res = await fetch('https://api.waifu.pics/sfw/waifu')
-let data = await res.json()
-await X.sendMessage(m.chat, { image: { url: data.url }, caption: '*Waifu!* 💕' }, { quoted: m })
+    let waifuUrl = null
+    try {
+        let _gw = await fetch('https://api.giftedtech.co.ke/api/anime/waifu?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+        let _gwd = await _gw.json()
+        if (_gwd.success && _gwd.result) waifuUrl = _gwd.result
+    } catch {}
+    if (!waifuUrl) {
+        let res = await fetch('https://api.waifu.pics/sfw/waifu', { signal: AbortSignal.timeout(10000) })
+        let data = await res.json()
+        waifuUrl = data.url
+    }
+    await X.sendMessage(m.chat, { image: { url: waifuUrl }, caption: '*Waifu!* 💕' }, { quoted: m })
 } catch { reply('Failed to fetch waifu image.') }
 } break
 
@@ -8407,6 +8466,376 @@ case 'robotwrite': {
         await X.sendMessage(m.chat, { image: { url: d.result.image_url }, caption: `🤖 *Robot Text — R2D2 Style*\n✏️ _${text}_` }, { quoted: m })
     } catch(e) { reply('❌ Could not generate robot text. Try a shorter text.') }
 } break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🤖  AI COMMANDS — GiftedTech AI Endpoints
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'gpt4o':
+case 'gpt4': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+    let _q4o = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
+    if (!_q4o) return reply(`🤖 *GPT-4o AI*\n\nUsage: *${prefix}gpt4o [question]*\nExample: ${prefix}gpt4o What is quantum physics?`)
+    try {
+        await reply('🤖 _Thinking with GPT-4o..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/ai/gpt4o?apikey=gifted&q=${encodeURIComponent(_q4o)}`, { signal: AbortSignal.timeout(40000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('No response')
+        reply(`╔══════════════════════════╗\n║  🤖 *GPT-4o AI*\n╚══════════════════════════╝\n\n  ❓ *${_q4o}*\n\n${_d.result}`)
+    } catch(e) { reply('❌ GPT-4o request failed. Please try again.') }
+} break
+
+case 'gemini':
+case 'ai': {
+    await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
+    let _qgm = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
+    if (!_qgm) return reply(`✨ *Gemini AI*\n\nUsage: *${prefix}gemini [question]*\nExample: ${prefix}gemini Explain black holes simply`)
+    try {
+        await reply('✨ _Gemini is thinking..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/ai/gemini?apikey=gifted&q=${encodeURIComponent(_qgm)}`, { signal: AbortSignal.timeout(40000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('No response')
+        reply(`╔══════════════════════════╗\n║  ✨ *GEMINI AI*\n╚══════════════════════════╝\n\n  ❓ *${_qgm}*\n\n${_d.result}`)
+    } catch(e) { reply('❌ Gemini request failed. Please try again.') }
+} break
+
+case 'magicstudio':
+case 'magicimg':
+case 'magic': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
+    let _qms = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
+    if (!_qms) return reply(`🎨 *Magic Studio AI Image*\n\nUsage: *${prefix}magicstudio [description]*\nExample: ${prefix}magicstudio a futuristic city at night with neon lights`)
+    try {
+        await reply('🎨 _Creating your AI image with Magic Studio..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/ai/magicstudio?apikey=gifted&prompt=${encodeURIComponent(_qms)}`, { signal: AbortSignal.timeout(60000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Generation failed')
+        let _imgUrl = typeof _d.result === 'string' ? _d.result : (_d.result.image_url || _d.result.url || _d.result)
+        await X.sendMessage(m.chat, { image: { url: _imgUrl }, caption: `🎨 *Magic Studio AI*\n🖼️ _${_qms}_` }, { quoted: m })
+    } catch(e) { reply('❌ Magic Studio failed. Try a different description.') }
+} break
+
+case 'fluximg':
+case 'flux':
+case 'aiimage': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
+    let _qfi = text || (m.quoted && (m.quoted.text || m.quoted.caption || m.quoted.body || '').trim()) || ''
+    if (!_qfi) return reply(`🖼️ *Flux AI Image Generator*\n\nUsage: *${prefix}fluximg [description]*\nExample: ${prefix}fluximg beautiful sunset over mountains`)
+    try {
+        await reply('🖼️ _Generating image with Flux AI..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/ai/fluximg?apikey=gifted&prompt=${encodeURIComponent(_qfi)}`, { signal: AbortSignal.timeout(60000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Generation failed')
+        let _imgUrl2 = typeof _d.result === 'string' ? _d.result : (_d.result.image_url || _d.result.url || _d.result)
+        await X.sendMessage(m.chat, { image: { url: _imgUrl2 }, caption: `🖼️ *Flux AI Image*\n✏️ _${_qfi}_` }, { quoted: m })
+    } catch(e) { reply('❌ Flux image generation failed. Try again.') }
+} break
+
+case 'transcript':
+case 'transcribe': {
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
+    let _yturl = text || ''
+    if (!_yturl || !(_yturl.includes('youtube') || _yturl.includes('youtu.be'))) return reply(`📝 *YouTube Transcript*\n\nUsage: *${prefix}transcript [youtube-url]*\nExample: ${prefix}transcript https://youtu.be/dQw4w9WgXcQ`)
+    try {
+        await reply('📝 _Extracting transcript..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/ai/transcript?apikey=gifted&url=${encodeURIComponent(_yturl)}`, { signal: AbortSignal.timeout(60000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('No transcript')
+        let _tr = typeof _d.result === 'string' ? _d.result : JSON.stringify(_d.result)
+        if (_tr.length > 3500) _tr = _tr.slice(0, 3497) + '...'
+        reply(`╔══════════════════════════╗\n║  📝 *TRANSCRIPT*\n╚══════════════════════════╝\n\n${_tr}`)
+    } catch(e) { reply('❌ Could not get transcript. The video may not have captions.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔍  SEARCH COMMANDS — GiftedTech Search Endpoints
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'define':
+case 'meaning': {
+    await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
+    if (!text) return reply(`📖 *Word Definition*\n\nUsage: *${prefix}define [word]*\nExample: ${prefix}define serendipity`)
+    try {
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/search/define?apikey=gifted&term=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Not found')
+        let _res = _d.result
+        let _out = `╔══════════════════════════╗\n║  📖 *DEFINE: ${text.toUpperCase()}*\n╚══════════════════════════╝\n\n`
+        if (Array.isArray(_res)) {
+            _res.slice(0, 3).forEach((r, i) => { _out += `  *${i+1}.* ${r.definition || r}\n\n` })
+        } else { _out += `  ${typeof _res === 'string' ? _res : JSON.stringify(_res)}` }
+        reply(_out)
+    } catch(e) { reply(`❌ Could not find definition for *${text}*.`) }
+} break
+
+case 'dictionary':
+case 'dict': {
+    await X.sendMessage(m.chat, { react: { text: '📚', key: m.key } })
+    if (!text) return reply(`📚 *Dictionary Lookup*\n\nUsage: *${prefix}dictionary [word]*\nExample: ${prefix}dictionary ephemeral`)
+    try {
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/search/dictionary?apikey=gifted&word=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Not found')
+        let _res = _d.result
+        let _out = `╔══════════════════════════╗\n║  📚 *DICTIONARY: ${text.toUpperCase()}*\n╚══════════════════════════╝\n\n`
+        if (typeof _res === 'object' && !Array.isArray(_res)) {
+            if (_res.word) _out += `  📝 *Word:* ${_res.word}\n`
+            if (_res.phonetic) _out += `  🔊 *Phonetic:* ${_res.phonetic}\n`
+            if (_res.origin) _out += `  🌍 *Origin:* ${_res.origin}\n`
+            if (_res.meanings) _res.meanings.slice(0,2).forEach(m => {
+                _out += `\n  ➤ *${m.partOfSpeech}*\n`
+                if (m.definitions) m.definitions.slice(0,2).forEach(d => { _out += `    • ${d.definition}\n` })
+            })
+        } else if (Array.isArray(_res)) {
+            _res.slice(0, 3).forEach((r, i) => { _out += `  *${i+1}.* ${r.definition || r}\n\n` })
+        } else { _out += `  ${typeof _res === 'string' ? _res : JSON.stringify(_res)}` }
+        reply(_out)
+    } catch(e) { reply(`❌ Could not find *${text}* in dictionary.`) }
+} break
+
+case 'google':
+case 'gsearch':
+case 'web': {
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+    if (!text) return reply(`🔍 *Google Search*\n\nUsage: *${prefix}google [query]*\nExample: ${prefix}google best programming languages 2025`)
+    try {
+        await reply('🔍 _Searching Google..._')
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/search/google?apikey=gifted&query=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('No results')
+        let _results = Array.isArray(_d.result) ? _d.result : [_d.result]
+        let _out = `╔══════════════════════════╗\n║  🔍 *GOOGLE SEARCH*\n╚══════════════════════════╝\n\n  🔎 *${text}*\n\n`
+        _results.slice(0, 5).forEach((r, i) => {
+            _out += `  *${i+1}.* ${r.title || r.name || 'Result'}\n`
+            if (r.snippet || r.description) _out += `  _${(r.snippet || r.description).slice(0, 120)}..._\n`
+            if (r.link || r.url) _out += `  🔗 ${r.link || r.url}\n`
+            _out += '\n'
+        })
+        reply(_out)
+    } catch(e) { reply(`❌ Google search failed for *${text}*.`) }
+} break
+
+case 'playstore':
+case 'appfind':
+case 'app': {
+    await X.sendMessage(m.chat, { react: { text: '📱', key: m.key } })
+    if (!text) return reply(`📱 *Play Store Search*\n\nUsage: *${prefix}playstore [app name]*\nExample: ${prefix}playstore WhatsApp`)
+    try {
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/search/playstore?apikey=gifted&query=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Not found')
+        let _app = Array.isArray(_d.result) ? _d.result[0] : _d.result
+        let _out = `╔══════════════════════════╗\n║  📱 *PLAY STORE*\n╚══════════════════════════╝\n\n`
+        _out += `  📛 *App:* ${_app.title || _app.name || text}\n`
+        if (_app.developer || _app.author) _out += `  👨‍💻 *Developer:* ${_app.developer || _app.author}\n`
+        if (_app.score || _app.rating) _out += `  ⭐ *Rating:* ${_app.score || _app.rating}\n`
+        if (_app.installs || _app.downloads) _out += `  📥 *Installs:* ${_app.installs || _app.downloads}\n`
+        if (_app.summary || _app.description) _out += `  📝 *Summary:* ${((_app.summary || _app.description) + '').slice(0,150)}\n`
+        if (_app.url || _app.link) _out += `  🔗 *Link:* ${_app.url || _app.link}\n`
+        reply(_out)
+    } catch(e) { reply(`❌ App not found for *${text}*.`) }
+} break
+
+case 'soundcloud':
+case 'sc': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
+    if (!text) return reply(`🎵 *SoundCloud Search*\n\nUsage: *${prefix}soundcloud [song/artist]*\nExample: ${prefix}soundcloud Kendrick Lamar`)
+    try {
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/search/soundcloud?apikey=gifted&query=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result) throw new Error('Not found')
+        let _sc = Array.isArray(_d.result) ? _d.result[0] : _d.result
+        let _out = `╔══════════════════════════╗\n║  🎵 *SOUNDCLOUD*\n╚══════════════════════════╝\n\n`
+        _out += `  🎵 *Title:* ${_sc.title || text}\n`
+        if (_sc.artist || _sc.author || _sc.user) _out += `  🎤 *Artist:* ${_sc.artist || _sc.author || (_sc.user && _sc.user.username) || 'Unknown'}\n`
+        if (_sc.playbackCount || _sc.plays) _out += `  ▶️ *Plays:* ${_sc.playbackCount || _sc.plays}\n`
+        if (_sc.likesCount || _sc.likes) _out += `  ❤️ *Likes:* ${_sc.likesCount || _sc.likes}\n`
+        if (_sc.duration) _out += `  ⏱️ *Duration:* ${Math.floor(_sc.duration/60000)}:${String(Math.floor((_sc.duration%60000)/1000)).padStart(2,'0')}\n`
+        if (_sc.permalink_url || _sc.url || _sc.link) _out += `  🔗 *Link:* ${_sc.permalink_url || _sc.url || _sc.link}\n`
+        reply(_out)
+    } catch(e) { reply(`❌ SoundCloud search failed for *${text}*.`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💬  FUN COMMANDS — GiftedTech Fun Endpoints (New Ones)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'advice': {
+    await X.sendMessage(m.chat, { react: { text: '💡', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/fun/advice?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error()
+    reply(`╔══════════════════════════╗\n║  💡 *ADVICE*\n╚══════════════════════════╝\n\n  ${_d.result}`)
+} catch { reply(`╔══════════════════════════╗\n║  💡 *ADVICE*\n╚══════════════════════════╝\n\n  ${['Believe in yourself and your dreams.','The best time to start is now.','Stay focused and never give up.','Every day is a new opportunity to improve.','Be kind to others and to yourself.'][Math.floor(Math.random()*5)]}`) }
+} break
+
+case 'lovemsg':
+case 'lovemsgs':
+case 'lovemessage': {
+    await X.sendMessage(m.chat, { react: { text: '❤️', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/fun/love?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error()
+    reply(`╔══════════════════════════╗\n║  ❤️ *LOVE MESSAGE*\n╚══════════════════════════╝\n\n  ${_d.result}`)
+} catch { reply(`╔══════════════════════════╗\n║  ❤️ *LOVE MESSAGE*\n╚══════════════════════════╝\n\n  ${['You are my sunshine on a cloudy day. ❤️','Every moment with you is a treasure. 💕','You make the world a more beautiful place. 🌹','My heart smiles every time I think of you. 😊','You are the best thing that ever happened to me. 💖'][Math.floor(Math.random()*5)]}`) }
+} break
+
+case 'gratitude':
+case 'thankful': {
+    await X.sendMessage(m.chat, { react: { text: '🙏', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/fun/gratitude?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error()
+    reply(`╔══════════════════════════╗\n║  🙏 *GRATITUDE*\n╚══════════════════════════╝\n\n  ${_d.result}`)
+} catch { reply(`╔══════════════════════════╗\n║  🙏 *GRATITUDE*\n╚══════════════════════════╝\n\n  ${['Gratitude turns what we have into enough. 🙏','Be thankful for the little things — they add up. ✨','Every day is a gift. Start with gratitude. 🌟','A grateful heart attracts more good things. 💛','Count your blessings, not your problems. 🌺'][Math.floor(Math.random()*5)]}`) }
+} break
+
+case 'thankyou':
+case 'ty': {
+    await X.sendMessage(m.chat, { react: { text: '🤝', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/fun/thankyou?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error()
+    reply(`╔══════════════════════════╗\n║  🤝 *THANK YOU*\n╚══════════════════════════╝\n\n  ${_d.result}`)
+} catch { reply(`╔══════════════════════════╗\n║  🤝 *THANK YOU*\n╚══════════════════════════╝\n\n  ${['Thank you for being so amazing! 🤝','Your kindness means the world to me. 💛','I appreciate everything you do. 🙏','Thank you for always being there. ❤️','Your help made all the difference. ✨'][Math.floor(Math.random()*5)]}`) }
+} break
+
+case 'friendship':
+case 'friendquote':
+case 'bestfriend': {
+    await X.sendMessage(m.chat, { react: { text: '🤗', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/fun/friendship?apikey=gifted', { signal: AbortSignal.timeout(10000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error()
+    reply(`╔══════════════════════════╗\n║  🤗 *FRIENDSHIP*\n╚══════════════════════════╝\n\n  ${_d.result}`)
+} catch { reply(`╔══════════════════════════╗\n║  🤗 *FRIENDSHIP*\n╚══════════════════════════╝\n\n  ${['A real friend is one who walks in when the rest of the world walks out. 🤗','Friendship is the golden thread that ties the heart of all the world. 💛','A good friend is like a four-leaf clover — hard to find and lucky to have. 🍀','True friendship is never serene. 😊','Friends are the family we choose for ourselves. ❤️'][Math.floor(Math.random()*5)]}`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎌  ANIME COMMANDS — GiftedTech Anime Endpoints (New Ones)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'animequote':
+case 'aniquote': {
+    await X.sendMessage(m.chat, { react: { text: '🎌', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/anime/quotes?apikey=gifted', { signal: AbortSignal.timeout(15000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error('No quote')
+    let _q = _d.result
+    let _out = `╔══════════════════════════╗\n║  🎌 *ANIME QUOTE*\n╚══════════════════════════╝\n\n`
+    if (typeof _q === 'object') {
+        _out += `  "${_q.quote || _q.text || JSON.stringify(_q)}"\n`
+        if (_q.character) _out += `\n  — *${_q.character}*`
+        if (_q.anime) _out += ` _(${_q.anime})_`
+    } else { _out += `  "${_q}"` }
+    reply(_out)
+} catch(e) { reply('❌ Could not fetch an anime quote right now.') }
+} break
+
+case 'animerandom':
+case 'randomanime': {
+    await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
+try {
+    let _r = await fetch('https://api.giftedtech.co.ke/api/anime/random?apikey=gifted', { signal: AbortSignal.timeout(15000) })
+    let _d = await _r.json()
+    if (!_d.success || !_d.result) throw new Error('No data')
+    let _a = _d.result
+    let _out = `╔══════════════════════════╗\n║  📺 *RANDOM ANIME*\n╚══════════════════════════╝\n\n`
+    if (typeof _a === 'object') {
+        if (_a.title) _out += `  📛 *Title:* ${_a.title}\n`
+        if (_a.synopsis || _a.description) _out += `  📝 *Synopsis:*\n  ${(_a.synopsis || _a.description).slice(0,300)}...\n`
+        if (_a.rating) _out += `  ⭐ *Rating:* ${_a.rating}\n`
+        if (_a.episodes) _out += `  📺 *Episodes:* ${_a.episodes}\n`
+        if (_a.genre || _a.genres) _out += `  🎭 *Genre:* ${Array.isArray(_a.genres) ? _a.genres.join(', ') : _a.genre}\n`
+    } else { _out += `  ${JSON.stringify(_a)}` }
+    reply(_out)
+} catch(e) { reply('❌ Could not fetch anime info right now.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔤  TEXTPRO — GiftedTech TextPro Effects (Comprehensive)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'textpro':
+case 'tpro': {
+    await X.sendMessage(m.chat, { react: { text: '🔤', key: m.key } })
+    const _tproStyles = {
+        neon: 'neonText', lava: 'lavaText', toxic: 'toxicText', joker: 'jokerLogo',
+        halloween: 'halloweenFire', fire: 'halloweenFire', captain: 'captainAmerica',
+        america: 'captainAmerica', steel: 'steelText', balloon: 'redFoilBalloon',
+        sparkle: 'fireworkSparkle', firework: 'fireworkSparkle', wicker: 'wickerText',
+        leaves: 'naturalLeaves', nature: 'naturalLeaves', gloss: 'ultraGloss',
+        denim: 'denimText', rock: 'rockText', yellowglass: 'yellowGlass',
+        purpleglass: 'purpleGlass', orangeglass: 'orangeGlass', greenglass: 'greenGlass',
+        cyanglass: 'cyanGlass', blueglass: 'blueGlass', redglass: 'redGlass',
+        shinyglass: 'purpleShinyGlass', rainbow: 'rainbowEqualizer',
+        cake: 'chocolateCake', chocolate: 'chocolateCake', xmas: 'xmasCard3d',
+        christmas: 'xmasCard3d', robot: 'robotR2d2', r2d2: 'robotR2d2'
+    }
+    const _tproNames = Object.keys(_tproStyles)
+    const _firstArg = (args[0] || '').toLowerCase()
+    let _tproSlug, _tproText
+    if (_tproNames.includes(_firstArg)) {
+        _tproSlug = _tproStyles[_firstArg]
+        _tproText = args.slice(1).join(' ').trim()
+    } else {
+        _tproSlug = Object.values(_tproStyles)[Math.floor(Math.random() * Object.values(_tproStyles).length)]
+        _tproText = text
+    }
+    if (!_tproText) return reply(`╔══════════════════════════╗\n║  🔤 *TEXTPRO EFFECTS*\n╚══════════════════════════╝\n\n  Usage: *${prefix}textpro [style] [text]*\n  Or: *${prefix}textpro [text]* (random style)\n\n  📋 *Available Styles:*\n  neon, lava, toxic, joker, halloween,\n  captain, steel, balloon, sparkle, wicker,\n  leaves, gloss, denim, rock, yellowglass,\n  purpleglass, orangeglass, greenglass,\n  cyanglass, blueglass, redglass, shinyglass,\n  rainbow, cake, xmas, robot\n\n  Example: ${prefix}textpro neon TOOSII XD`)
+    try {
+        await reply(`🔤 _Generating text effect..._`)
+        let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/${_tproSlug}?apikey=gifted&text=${encodeURIComponent(_tproText)}`, { signal: AbortSignal.timeout(30000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.result?.image_url) throw new Error('Generation failed')
+        await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🔤 *TextPro: ${_tproSlug}*\n✏️ _${_tproText}_` }, { quoted: m })
+    } catch(e) { reply('❌ TextPro generation failed. Try a different style or shorter text.') }
+} break
+
+case 'neontext': { await X.sendMessage(m.chat, { react: { text: '💡', key: m.key } }); if (!text) return reply(`Usage: ${prefix}neontext [your text]`); try { await reply('💡 _Generating neon text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/neonText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `💡 *Neon Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate neon text.') } } break
+
+case 'lavatext': { await X.sendMessage(m.chat, { react: { text: '🌋', key: m.key } }); if (!text) return reply(`Usage: ${prefix}lavatext [your text]`); try { await reply('🌋 _Generating lava text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/lavaText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🌋 *Lava Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate lava text.') } } break
+
+case 'toxictext': { await X.sendMessage(m.chat, { react: { text: '☢️', key: m.key } }); if (!text) return reply(`Usage: ${prefix}toxictext [your text]`); try { await reply('☢️ _Generating toxic text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/toxicText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `☢️ *Toxic Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate toxic text.') } } break
+
+case 'jokertext':
+case 'jokerlogo': { await X.sendMessage(m.chat, { react: { text: '🃏', key: m.key } }); if (!text) return reply(`Usage: ${prefix}jokertext [your text]`); try { await reply('🃏 _Generating Joker logo text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/jokerLogo?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🃏 *Joker Logo Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate Joker text.') } } break
+
+case 'steeltext': { await X.sendMessage(m.chat, { react: { text: '⚙️', key: m.key } }); if (!text) return reply(`Usage: ${prefix}steeltext [your text]`); try { await reply('⚙️ _Generating steel text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/steelText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `⚙️ *Steel Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate steel text.') } } break
+
+case 'captaintext':
+case 'captainamerica': { await X.sendMessage(m.chat, { react: { text: '🛡️', key: m.key } }); if (!text) return reply(`Usage: ${prefix}captaintext [your text]`); try { await reply('🛡️ _Generating Captain America text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/captainAmerica?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🛡️ *Captain America Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate Captain America text.') } } break
+
+case 'balloontext':
+case 'foilballoon': { await X.sendMessage(m.chat, { react: { text: '🎈', key: m.key } }); if (!text) return reply(`Usage: ${prefix}balloontext [your text]`); try { await reply('🎈 _Generating balloon text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/redFoilBalloon?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🎈 *Foil Balloon Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate balloon text.') } } break
+
+case 'sparkletext':
+case 'fireworktext': { await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } }); if (!text) return reply(`Usage: ${prefix}sparkletext [your text]`); try { await reply('✨ _Generating sparkle text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/fireworkSparkle?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `✨ *Firework Sparkle Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate sparkle text.') } } break
+
+case 'wickertext': { await X.sendMessage(m.chat, { react: { text: '🌿', key: m.key } }); if (!text) return reply(`Usage: ${prefix}wickertext [your text]`); try { await reply('🌿 _Generating wicker text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/wickerText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🌿 *Wicker Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate wicker text.') } } break
+
+case 'leavestext':
+case 'natureleavestext': { await X.sendMessage(m.chat, { react: { text: '🍃', key: m.key } }); if (!text) return reply(`Usage: ${prefix}leavestext [your text]`); try { await reply('🍃 _Generating natural leaves text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/naturalLeaves?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🍃 *Natural Leaves Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate leaves text.') } } break
+
+case 'glosstext':
+case 'ultragloss': { await X.sendMessage(m.chat, { react: { text: '💎', key: m.key } }); if (!text) return reply(`Usage: ${prefix}glosstext [your text]`); try { await reply('💎 _Generating ultra gloss text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/ultraGloss?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `💎 *Ultra Gloss Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate gloss text.') } } break
+
+case 'denimtext': { await X.sendMessage(m.chat, { react: { text: '👖', key: m.key } }); if (!text) return reply(`Usage: ${prefix}denimtext [your text]`); try { await reply('👖 _Generating denim text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/denimText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `👖 *Denim Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate denim text.') } } break
+
+case 'rocktext': { await X.sendMessage(m.chat, { react: { text: '🪨', key: m.key } }); if (!text) return reply(`Usage: ${prefix}rocktext [your text]`); try { await reply('🪨 _Generating rock text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/rockText?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🪨 *Rock Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate rock text.') } } break
+
+case 'glasstext':
+case 'yellowglass': { await X.sendMessage(m.chat, { react: { text: '🟡', key: m.key } }); if (!text) return reply(`Usage: ${prefix}glasstext [your text]`); try { await reply('🟡 _Generating glass text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/yellowGlass?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🟡 *Yellow Glass Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate glass text.') } } break
+
+case 'rainbowtext':
+case 'rainboweq': { await X.sendMessage(m.chat, { react: { text: '🌈', key: m.key } }); if (!text) return reply(`Usage: ${prefix}rainbowtext [your text]`); try { await reply('🌈 _Generating rainbow text effect..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/rainbowEqualizer?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🌈 *Rainbow Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate rainbow text.') } } break
+
+case 'caketext':
+case 'chocolatetext': { await X.sendMessage(m.chat, { react: { text: '🎂', key: m.key } }); if (!text) return reply(`Usage: ${prefix}caketext [your text]`); try { await reply('🎂 _Generating chocolate cake text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/chocolateCake?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🎂 *Chocolate Cake Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate cake text.') } } break
+
+case 'halloweentext':
+case 'firetext': { await X.sendMessage(m.chat, { react: { text: '🎃', key: m.key } }); if (!text) return reply(`Usage: ${prefix}firetext [your text]`); try { await reply('🎃 _Generating Halloween fire text..._'); let _r = await fetch(`https://api.giftedtech.co.ke/api/textpro/halloweenFire?apikey=gifted&text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) }); let _d = await _r.json(); if (!_d.success || !_d.result?.image_url) throw new Error(); await X.sendMessage(m.chat, { image: { url: _d.result.image_url }, caption: `🎃 *Halloween Fire Text*\n✏️ _${text}_` }, { quoted: m }) } catch { reply('❌ Failed to generate fire text.') } } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 default:
