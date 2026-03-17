@@ -1248,31 +1248,52 @@ case 'ytplay': {
         // audioPath = local file path   (no readFileSync — baileys reads via file:// URL)
         let audioUrl = null, audioPath = null
 
-        // Method 1: loader.to — get the download URL, don't buffer it
-        try {
-            let initRes = await fetch(`https://loader.to/ajax/download.php?format=mp3-128&url=${encodeURIComponent(firstVideo.url)}`)
-            let initData = await initRes.json()
-            if (initData.success && initData.id) {
-                let dlId = initData.id, attempts = 0
-                while (attempts < 20) {
+        // Helper: poll loader.to with a given format, return download URL or null
+        const _loaderTo = async (fmt) => {
+            try {
+                let initRes = await fetch(`https://loader.to/ajax/download.php?format=${fmt}&url=${encodeURIComponent(firstVideo.url)}`)
+                let initData = await initRes.json()
+                if (!initData.success || !initData.id) return null
+                let dlId = initData.id
+                for (let i = 0; i < 20; i++) {
                     await new Promise(r => setTimeout(r, 3000))
-                    let progRes = await fetch(`https://loader.to/ajax/progress.php?id=${dlId}`)
-                    let progData = await progRes.json()
-                    if (progData.success === 1 && progData.progress >= 1000 && progData.download_url) {
-                        audioUrl = progData.download_url  // use URL directly — zero RAM cost
-                        break
-                    }
+                    let progData = await (await fetch(`https://loader.to/ajax/progress.php?id=${dlId}`)).json()
+                    if (progData.success === 1 && progData.progress >= 1000 && progData.download_url) return progData.download_url
                     if (progData.progress < 0) break
-                    attempts++
                 }
-            }
+            } catch {}
+            return null
+        }
+
+        // Method 1: loader.to — try 128kbps, fall back to default mp3
+        try {
+            audioUrl = await _loaderTo('mp3-128') || await _loaderTo('mp3')
+            if (audioUrl) console.log('[play] loader.to: success')
         } catch (e1) { console.log('[play] loader.to:', e1.message) }
 
-        // Method 2: ytdl-core — write stream to tmp file instead of RAM buffer
+        // Method 2: cobalt.tools — reliable API, returns stream URL directly
+        if (!audioUrl && !audioPath) {
+            try {
+                let cobaltRes = await fetch('https://api.cobalt.tools/', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: firstVideo.url, downloadMode: 'audio', audioFormat: 'mp3', audioBitrate: '128' }),
+                    signal: AbortSignal.timeout(30000)
+                })
+                let cobaltData = await cobaltRes.json()
+                if ((cobaltData.status === 'tunnel' || cobaltData.status === 'redirect') && cobaltData.url) {
+                    audioUrl = cobaltData.url
+                    console.log('[play] cobalt.tools: success')
+                }
+            } catch (e2) { console.log('[play] cobalt.tools:', e2.message) }
+        }
+
+        // Method 3: ytdl-core — stream direct to tmp file (avoids bot check better with agent)
         if (!audioUrl && !audioPath) {
             try {
                 const ytdl = require('@distube/ytdl-core')
-                let info = await ytdl.getInfo(firstVideo.url)
+                const agent = ytdl.createAgent()
+                let info = await ytdl.getInfo(firstVideo.url, { agent })
                 let audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo)
                 audioFormats.sort((a, b) => (a.audioBitrate || 0) - (b.audioBitrate || 0))
                 let format = audioFormats.find(f => (f.audioBitrate || 0) >= 96) || audioFormats[audioFormats.length - 1]
@@ -1284,7 +1305,7 @@ case 'ytplay': {
                     _tmpFile = tmpBase + '.mp3'
                     await new Promise((resolve, reject) => {
                         let writeStream = fs.createWriteStream(_tmpFile)
-                        let ytStream = ytdl(firstVideo.url, { format })
+                        let ytStream = ytdl(firstVideo.url, { format, agent })
                         ytStream.pipe(writeStream)
                         writeStream.on('finish', resolve)
                         writeStream.on('error', reject)
@@ -1293,21 +1314,28 @@ case 'ytplay': {
                     })
                     if (fs.existsSync(_tmpFile) && fs.statSync(_tmpFile).size > 10000) {
                         audioPath = _tmpFile
+                        console.log('[play] ytdl-core: success')
                     }
                 }
-            } catch (e2) { console.log('[play] ytdl-core:', e2.message) }
+            } catch (e3) { console.log('[play] ytdl-core:', e3.message) }
         }
 
-        // Method 3: yt-dlp — saves to file, use path (no readFileSync)
+        // Method 4: yt-dlp — only if installed on the system
         if (!audioUrl && !audioPath) {
             try {
                 let tmpDir = path.join(__dirname, 'tmp')
                 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
                 let tmpBase = path.join(tmpDir, `play_${Date.now()}`)
                 _tmpFile = tmpBase + '.mp3'
+                // Check which binary is available
+                let ytdlpBin = null
+                for (let bin of ['yt-dlp', 'youtube-dl', 'yt-dlp_linux']) {
+                    try { require('child_process').execSync(`which ${bin} 2>/dev/null`); ytdlpBin = bin; break } catch {}
+                }
+                if (!ytdlpBin) throw new Error('no yt-dlp binary found')
                 await new Promise((resolve, reject) => {
                     exec(
-                        `yt-dlp -x --audio-format mp3 --audio-quality 5 --no-playlist -o "${tmpBase}.%(ext)s" "${firstVideo.url}"`,
+                        `${ytdlpBin} -x --audio-format mp3 --audio-quality 5 --no-playlist -o "${tmpBase}.%(ext)s" "${firstVideo.url}"`,
                         { timeout: 300000 },
                         (err) => err ? reject(err) : resolve()
                     )
@@ -1319,8 +1347,9 @@ case 'ytplay': {
                 }
                 if (fs.existsSync(_tmpFile) && fs.statSync(_tmpFile).size > 10000) {
                     audioPath = _tmpFile
+                    console.log('[play] yt-dlp: success')
                 }
-            } catch (e3) { console.log('[play] yt-dlp:', e3.message) }
+            } catch (e4) { console.log('[play] yt-dlp:', e4.message) }
         }
 
         if (audioUrl || audioPath) {
