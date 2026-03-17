@@ -146,6 +146,14 @@ setInterval(_integrityCheck, 300000)
 const SESSIONS_DIR = path.join(__dirname, 'sessions')
 if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true })
 
+// Ensure runtime directories exist
+;[
+    path.join(__dirname, 'tmp'),
+    path.join(__dirname, 'database'),
+    path.join(__dirname, 'media'),
+    path.join(__dirname, 'plugin'),
+].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }) })
+
 const activeSessions = new Map()
 const processedMsgs = new Set()
 const msgRetryCache = new Map()
@@ -1865,8 +1873,11 @@ const stream = await downloadContentFromMessage(quoted, messageType)
 let buffer = Buffer.from([])
 for await(const chunk of stream) { buffer = Buffer.concat([buffer, chunk]) }
 let type = await FileType.fromBuffer(buffer)
-let trueFileName = attachExtension ? ('./tmp/' + filename + '.' + type.ext) : './tmp/' + filename
-await fs.writeFileSync(trueFileName, buffer)
+const _tmpDir = path.join(__dirname, 'tmp')
+if (!fs.existsSync(_tmpDir)) fs.mkdirSync(_tmpDir, { recursive: true })
+const _fname = filename || ('media_' + Date.now())
+let trueFileName = path.join(_tmpDir, attachExtension ? (_fname + '.' + (type?.ext || 'bin')) : _fname)
+fs.writeFileSync(trueFileName, buffer)
 return trueFileName
 }
 
