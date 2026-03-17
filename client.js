@@ -1024,20 +1024,28 @@ const textmakerMenu = `
 
   👋 Hey *${pushname}*! ${waktuucapan}
 
-  ├ 🤖 *Bot*      › ${botname}
-  ├ 👑 *Owner*    › ${ownername}
-  ├ 🔢 *Version*  › v${botver}
-  ├ ⚙️  *Mode*     › ${typebot}
-  ├ 📋 *Commands* › ${totalfitur()}
-  ├ 📞 *Contact*  › wa.me/254748340864
-  ├ ✈️  *Telegram* › t.me/toosiitech
-  └ 🔑 *Session*  › ${global.sessionUrl}
+  ├◈ 🤖 *Bot*      › ${botname}
+  ├◈ 👑 *Owner*    › ${ownername}
+  ├◈ 🔢 *Version*  › v${botver}
+  ├◈ ⚙️  *Mode*     › ${typebot}
+  ├◈ 📋 *Commands* › ${totalfitur()}
+  ├◈ 📞 *Contact*  › wa.me/254748340864
+  ├◈ ✈️  *Telegram* › t.me/toosiitech
+  └◈ 🔑 *Session*  › ${global.sessionUrl}
 
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-  _Type_ *.menu [category]* _to filter_
-  ai · tools · owner · group · downloader
-  search · sticker · games · other · textmaker
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  _Browse by category:_
+
+  ├◈  \`.menu ai\`         › AI Chat & Tools
+  ├◈  \`.menu tools\`      › Utilities
+  ├◈  \`.menu owner\`      › Bot Settings
+  ├◈  \`.menu group\`      › Group Mgmt
+  ├◈  \`.menu downloader\` › Downloads
+  ├◈  \`.menu search\`     › Search
+  ├◈  \`.menu sticker\`    › Stickers
+  ├◈  \`.menu games\`      › Games
+  ├◈  \`.menu other\`      › Other
+  └◈  \`.menu textmaker\`  › Text Effects
 
   ⬇️  *COMMAND LIST*`.trim();
 
@@ -7926,10 +7934,10 @@ const repoInfo =
   🏷️  *${data.full_name}*
   📝  _${(data.description || 'No description').slice(0,60)}_
 
-  ├ ⭐ *Stars*    › ${data.stargazers_count}
-  ├ 🍴 *Forks*    › ${data.forks_count}
-  ├ 💻 *Language* › ${data.language || 'N/A'}
-  └ 🔄 *Updated*  › ${new Date(data.updated_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
+  ├◈ ⭐ *Stars*    › ${data.stargazers_count}
+  ├◈ 🍴 *Forks*    › ${data.forks_count}
+  ├◈ 💻 *Language* › ${data.language || 'N/A'}
+  └◈ 🔄 *Updated*  › ${new Date(data.updated_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
 
   🔗 ${data.html_url}
 
