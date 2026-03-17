@@ -7,7 +7,8 @@ const toolsMenu = `
   ├ .alive   ├ .myip
   ├ .ipwhois    › [ip]
   ├ .fetch      › [url]
-  ├ .ssweb      › [url]
+  ├ .ss         › [url]
+  ├ .screenshot › [url]
   ├ .translate  › [lang|text]
   ├ .trt        › [lang|text]
   ├ .locate     › [place]
@@ -17,6 +18,25 @@ const toolsMenu = `
   ├ .totalfitur ├ .pair
   ├ .prefix
   └ .save       › reply msg
+
+╔══════════════════════════╗
+║  🛠️  *TOOLS*
+╚══════════════════════════╝
+  ├ .weather    › [city]
+  ├ .tinyurl    › [url]
+  ├ .shorturl   › [url]
+  ├ .removebg   › reply image
+  ├ .readqr     › reply image
+  ├ .xmascard   › [text]
+  └ .robottext  › [text]
+
+╔══════════════════════════╗
+║  🎨  *AI CREATION*
+╚══════════════════════════╝
+  ├ .deepimg    › [prompt]
+  ├ .aiart      › [prompt]
+  ├ .imagine    › [prompt]
+  └ .songgenerator › [prompt]
 
 ╔══════════════════════════╗
 ║  👻  *PRESENCE*
