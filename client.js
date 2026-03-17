@@ -141,48 +141,57 @@ async function _runChatBoAI(userMsg, isAutoMode = false) {
     throw new Error('All AI services unavailable')
 }
 
-// ── General-purpose AI helper — same fallback chain as _runChatBoAI ──────────
-// Used by all named AI commands (.feloai, .claudeai, .deepseek, etc.)
+// ── General-purpose AI helper — used by all named AI commands ────────────────
+// (.feloai, .claudeai, .deepseek, .grok, .mistral, .copilot, etc.)
 async function _runAI(systemPrompt, userMsg, maxTokens = 1500) {
-    // 1. Anthropic Claude (if API key configured)
+    const _q = encodeURIComponent(`${systemPrompt}\n\nUser: ${userMsg}\n\nAssistant:`)
+
+    // 1. GiftedTech GPT-4o (confirmed working, no key needed)
     try {
-        const _r = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: maxTokens,
-                system: systemPrompt,
-                messages: [{ role: 'user', content: userMsg }]
-            }),
-            signal: AbortSignal.timeout(18000)
-        })
+        const _r = await fetch(`https://api.giftedtech.co.ke/api/ai/gpt4o?apikey=gifted&q=${encodeURIComponent(userMsg)}&system=${encodeURIComponent(systemPrompt)}`, { signal: AbortSignal.timeout(20000) })
         const _d = await _r.json()
-        const _t = _d?.content?.[0]?.text?.trim()
-        if (_t?.length > 2) return _t
+        if (_d?.success && _d?.result && String(_d.result).trim().length > 2) return String(_d.result).trim()
     } catch {}
 
-    // 2. Pollinations OpenAI-compatible POST (free, no key)
+    // 2. GiftedTech Gemini (confirmed working, no key needed)
     try {
-        const { data: _d2 } = await require('axios').post('https://text.pollinations.ai/openai', {
+        const _r2 = await fetch(`https://api.giftedtech.co.ke/api/ai/gemini?apikey=gifted&q=${encodeURIComponent(userMsg)}`, { signal: AbortSignal.timeout(20000) })
+        const _d2 = await _r2.json()
+        if (_d2?.success && _d2?.result && String(_d2.result).trim().length > 2) return String(_d2.result).trim()
+    } catch {}
+
+    // 3. Pollinations OpenAI-compatible POST (free, no key)
+    try {
+        const { data: _d3 } = await require('axios').post('https://text.pollinations.ai/openai', {
             model: 'openai',
             messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }],
             max_tokens: maxTokens,
             stream: false
-        }, { headers: { 'Content-Type': 'application/json' }, timeout: 25000 })
-        const _t2 = _d2?.choices?.[0]?.message?.content?.trim()
-        if (_t2?.length > 2) return _t2
+        }, { headers: { 'Content-Type': 'application/json' }, timeout: 22000 })
+        const _t3 = _d3?.choices?.[0]?.message?.content?.trim()
+        if (_t3?.length > 2) return _t3
     } catch {}
 
-    // 3. Pollinations GET fallback
+    // 4. Pollinations GET fallback
     try {
-        const _p = encodeURIComponent(`${systemPrompt}\n\nUser: ${userMsg}\n\nAssistant:`)
-        const { data: _d3 } = await require('axios').get(`https://text.pollinations.ai/${_p}`, { timeout: 15000, responseType: 'text' })
-        if (_d3 && typeof _d3 === 'string' && _d3.trim().length > 2) return _d3.trim()
+        const { data: _d4 } = await require('axios').get(`https://text.pollinations.ai/${_q}`, { timeout: 15000, responseType: 'text' })
+        if (_d4 && typeof _d4 === 'string' && _d4.trim().length > 2) return _d4.trim()
+    } catch {}
+
+    // 5. Anthropic Claude (if API key configured)
+    try {
+        const _antKey = process.env.ANTHROPIC_API_KEY || ''
+        if (_antKey) {
+            const _r5 = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': _antKey, 'anthropic-version': '2023-06-01' },
+                body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+                signal: AbortSignal.timeout(18000)
+            })
+            const _d5 = await _r5.json()
+            const _t5 = _d5?.content?.[0]?.text?.trim()
+            if (_t5?.length > 2) return _t5
+        }
     } catch {}
 
     throw new Error('All AI services unavailable')
