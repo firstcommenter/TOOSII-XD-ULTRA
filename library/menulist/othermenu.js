@@ -13,6 +13,7 @@ const otherMenu = `
 ╚══════════════════════════╝
   ├ .compliment  › @user
   ├ .insult      › @user
+  ├ .pickupline  ├ .rizz
   ├ .flirt    ├ .shayari
   ├ .goodnight ├ .roseday
   ├ .character ├ .joke
