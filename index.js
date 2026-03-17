@@ -154,6 +154,29 @@ if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true }
     path.join(__dirname, 'plugin'),
 ].forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }) })
 
+// Auto-clean tmp directory — delete files older than 30 minutes every 15 minutes
+const _tmpCleanDir = path.join(__dirname, 'tmp')
+function _cleanTmpDir() {
+    try {
+        const _now = Date.now()
+        const _files = fs.readdirSync(_tmpCleanDir)
+        let _deleted = 0
+        for (const _f of _files) {
+            try {
+                const _fp = path.join(_tmpCleanDir, _f)
+                const _stat = fs.statSync(_fp)
+                if (_now - _stat.mtimeMs > 30 * 60 * 1000) { // older than 30 min
+                    fs.unlinkSync(_fp)
+                    _deleted++
+                }
+            } catch {}
+        }
+        if (_deleted > 0) console.log(`[TMP CLEANUP] Deleted ${_deleted} stale file(s) from tmp/`)
+    } catch {}
+}
+_cleanTmpDir()
+setInterval(_cleanTmpDir, 15 * 60 * 1000) // every 15 minutes
+
 const activeSessions = new Map()
 const processedMsgs = new Set()
 const msgRetryCache = new Map()
