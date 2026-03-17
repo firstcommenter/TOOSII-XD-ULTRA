@@ -1275,13 +1275,57 @@ case 'ytplay': {
                 } catch (e) { console.log(`[play] innertube(${clientName}):`, e.message) }
                 return null
             }
-            let it = await _innerTube('IOS', '19.29.1', { deviceModel: 'iPhone16,2' })
+            // ANDROID_TESTSUITE bypasses most auth/music restrictions
+            let it = await _innerTube('ANDROID_TESTSUITE', '1.9', { androidSdkVersion: 30 })
+                   || await _innerTube('IOS', '19.29.1', { deviceModel: 'iPhone16,2' })
                    || await _innerTube('TVHTML5', '7.20220325')
-                   || await _innerTube('WEB', '2.20231121.01.00')
             if (it) { audioUrl = it.url; console.log('[play] innertube: success bitrate=', it.bitrate) }
         }
 
-        // Method 2: loader.to — 128kbps mp3
+        // Method 2: Piped API — open-source YouTube proxy, bypasses region/auth blocks
+        if (!audioUrl && !audioPath) {
+            const _piped = async (instance) => {
+                try {
+                    let videoId = _getVideoId(firstVideo.url)
+                    if (!videoId) return null
+                    let res = await fetch(`${instance}/streams/${videoId}`, { signal: AbortSignal.timeout(15000) })
+                    let data = await res.json()
+                    let streams = (data.audioStreams || []).filter(s => s.url)
+                    streams.sort((a, b) => Math.abs((a.bitrate || 0) - 128000) - Math.abs((b.bitrate || 0) - 128000))
+                    if (streams[0]?.url) return streams[0].url
+                    console.log('[play] piped(' + instance + '):', data.message || 'no audioStreams')
+                } catch (e) { console.log('[play] piped(' + instance + '):', e.message) }
+                return null
+            }
+            audioUrl = await _piped('https://pipedapi.kavin.rocks')
+                    || await _piped('https://api.piped.projectsegfau.lt')
+                    || await _piped('https://pipedapi.reallyaweso.me')
+            if (audioUrl) console.log('[play] piped: success')
+        }
+
+        // Method 3: Invidious API — another open-source YouTube proxy
+        if (!audioUrl && !audioPath) {
+            const _invidious = async (instance) => {
+                try {
+                    let videoId = _getVideoId(firstVideo.url)
+                    if (!videoId) return null
+                    let res = await fetch(`${instance}/api/v1/videos/${videoId}?fields=adaptiveFormats,formatStreams`, { signal: AbortSignal.timeout(15000) })
+                    let data = await res.json()
+                    let fmts = [...(data.adaptiveFormats || []), ...(data.formatStreams || [])]
+                    let audioFmts = fmts.filter(f => f.type?.startsWith('audio/') && f.url)
+                    audioFmts.sort((a, b) => Math.abs((a.bitrate || 0) - 128000) - Math.abs((b.bitrate || 0) - 128000))
+                    if (audioFmts[0]?.url) return audioFmts[0].url
+                    console.log('[play] invidious(' + instance + '):', data.error || 'no audio formats')
+                } catch (e) { console.log('[play] invidious(' + instance + '):', e.message) }
+                return null
+            }
+            audioUrl = await _invidious('https://vid.puffyan.us')
+                    || await _invidious('https://invidious.nerdvpn.de')
+                    || await _invidious('https://yt.artemislena.eu')
+            if (audioUrl) console.log('[play] invidious: success')
+        }
+
+        // Method 4: loader.to — 128kbps mp3 (kept in case service recovers)
         if (!audioUrl && !audioPath) {
             try {
                 let initRes = await fetch(`https://loader.to/ajax/download.php?format=mp3-128&url=${encodeURIComponent(firstVideo.url)}`, { signal: AbortSignal.timeout(10000) })
@@ -1300,68 +1344,7 @@ case 'ytplay': {
                         if (progData.progress < 0) { console.log('[play] loader.to: progress failed'); break }
                     }
                 }
-            } catch (e2) { console.log('[play] loader.to:', e2.message) }
-        }
-
-        // Method 3: y2mate — no auth needed, 128kbps mp3
-        if (!audioUrl && !audioPath) {
-            try {
-                let videoId = _getVideoId(firstVideo.url)
-                if (!videoId) throw new Error('no video id')
-                let analyzeRes = await fetch('https://www.y2mate.com/mates/analyzeV2/ajax', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `k_query=${encodeURIComponent(firstVideo.url)}&k_page=youtube&hl=en&q_auto=0`,
-                    signal: AbortSignal.timeout(30000)
-                })
-                let analyzeData = await analyzeRes.json()
-                let vid = analyzeData.vid
-                let mp3Links = analyzeData.links?.mp3
-                console.log('[play] y2mate analyze: vid=', vid, 'keys=', mp3Links ? Object.keys(mp3Links) : 'none')
-                if (vid && mp3Links) {
-                    let quality = mp3Links['128k'] || mp3Links['mp3128'] || Object.values(mp3Links)[0]
-                    if (quality?.k) {
-                        let convertRes = await fetch('https://www.y2mate.com/mates/convertV2/index', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `vid=${vid}&k=${quality.k}`,
-                            signal: AbortSignal.timeout(30000)
-                        })
-                        let convertData = await convertRes.json()
-                        console.log('[play] y2mate convert status:', convertData.status)
-                        if (convertData.dlink) { audioUrl = convertData.dlink; console.log('[play] y2mate: success') }
-                    }
-                }
-            } catch (e3) { console.log('[play] y2mate:', e3.message) }
-        }
-
-        // Method 4: yt5s — alternative converter, no auth
-        if (!audioUrl && !audioPath) {
-            try {
-                let analyzeRes = await fetch('https://yt5s.io/api/ajaxSearch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `q=${encodeURIComponent(firstVideo.url)}&vt=mp3`,
-                    signal: AbortSignal.timeout(20000)
-                })
-                let analyzeData = await analyzeRes.json()
-                console.log('[play] yt5s analyze:', JSON.stringify(analyzeData).slice(0, 150))
-                let links = analyzeData.links?.mp3
-                if (links) {
-                    let q128 = links['128k'] || Object.values(links)[0]
-                    if (q128?.f && analyzeData.vid) {
-                        let convRes = await fetch('https://yt5s.io/api/ajaxConvert', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `vid=${analyzeData.vid}&f=${q128.f}`,
-                            signal: AbortSignal.timeout(30000)
-                        })
-                        let convData = await convRes.json()
-                        console.log('[play] yt5s convert:', JSON.stringify(convData).slice(0, 100))
-                        if (convData.dlink) { audioUrl = convData.dlink; console.log('[play] yt5s: success') }
-                    }
-                }
-            } catch (e4) { console.log('[play] yt5s:', e4.message) }
+            } catch (e4) { console.log('[play] loader.to:', e4.message) }
         }
 
         // Method 5: ytdl-core with agent
