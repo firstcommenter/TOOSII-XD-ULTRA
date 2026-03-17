@@ -555,6 +555,11 @@ const _adCachePut = (msgs) => {
             if (!_adMsg?.key?.id) continue
             if (_adMsg.key.remoteJid === 'status@broadcast') continue
 
+            // Diagnostic: log every message that flows through (id + content presence)
+            const _hasContent = !!_adMsg.message
+            const _jid = _adMsg.key.remoteJid || '?'
+            console.log(`[AD-PUT] id=${_adMsg.key.id} fromMe=${_adMsg.key.fromMe} jid=${_jid} hasContent=${_hasContent} cacheSize=${global._adCache.size}`)
+
             const _existingEntry = global._adCache.get(_adMsg.key.id)
             // If already cached WITH content — skip (don't overwrite good data with null)
             if (_existingEntry?.msg?.message) continue
@@ -1551,6 +1556,17 @@ X.ev.on('messages.update', async (updates) => {
             const isRevoke = stubType === 1 ||
                 (proto?.WebMessageInfo?.StubType?.REVOKE && stubType === proto.WebMessageInfo.StubType.REVOKE)
             if (!isRevoke) continue
+
+            // Full diagnostic dump of the raw REVOKE update
+            console.log('[AD-REVOKE] raw:', JSON.stringify({
+                keyId: update.key?.id,
+                remoteJid: update.key?.remoteJid,
+                fromMe: update.key?.fromMe,
+                participant: update.key?.participant,
+                stubType: update.update?.messageStubType,
+                stubParams: update.update?.messageStubParameters,
+                hasMsg: !!update.update?.message
+            }))
 
             let chat      = update.key.remoteJid
             let senderJid = update.key.participant || update.key.remoteJid
