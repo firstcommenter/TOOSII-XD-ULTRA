@@ -8202,9 +8202,10 @@ case 'sportnews': {
         let articles = d.result.items || d.result
         if (!Array.isArray(articles) || articles.length === 0) return reply('📰 No football news available right now.')
         let msg = `╔══════════════════════════╗\n║  📰 *FOOTBALL NEWS*\n╚══════════════════════════╝\n`
-        for (let a of articles.slice(0, 8)) {
+        for (let a of articles) {
             msg += `\n📌 *${a.title}*\n`
-            if (a.summary) msg += `  _${a.summary.substring(0, 120)}..._\n`
+            if (a.summary) msg += `  _${a.summary}_\n`
+            if (a.link || a.url) msg += `  🔗 ${a.link || a.url}\n`
         }
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch football news. Try again later.') }
