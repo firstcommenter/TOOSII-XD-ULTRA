@@ -1478,6 +1478,16 @@ Examples:
     let _lyrResult = null
     let _lyrSource = ''
 
+    // ── Source 0: GiftedTech lyrics API ──────────────────────────────
+    try {
+        let _gt = await fetch(`https://api.giftedtech.co.ke/api/search/lyrics?apikey=gifted&query=${encodeURIComponent(_lyrQuery)}`, { signal: AbortSignal.timeout(15000) })
+        let _gtd = await _gt.json()
+        if (_gtd.success && _gtd.result?.lyrics) {
+            _lyrResult = { lyrics: _gtd.result.lyrics, title: _gtd.result.title || _lyrSong, artist: _gtd.result.artist || _lyrArtist, image: _gtd.result.image }
+            _lyrSource = 'GiftedTech'
+        }
+    } catch {}
+
     // ── Source 1: lyrics.ovh (free, no key) ─────────────────────────
     if (!_lyrResult && _lyrArtist) {
         try {
@@ -6076,7 +6086,31 @@ fs.writeFileSync(tmpFile, mediaBuf)
 let audioUrl = await CatBox(tmpFile)
 fs.unlinkSync(tmpFile)
 if (!audioUrl || !audioUrl.startsWith('http')) throw new Error('Failed to upload audio for recognition')
-// Send to AudD music recognition API (free, no key required)
+// Method 1: GiftedTech Shazam API
+let shazamResult = null
+try {
+    let _gtSh = await fetch(`https://api.giftedtech.co.ke/api/search/shazam?apikey=gifted&url=${encodeURIComponent(audioUrl)}`, { signal: AbortSignal.timeout(30000) })
+    let _gtShD = await _gtSh.json()
+    if (_gtShD.success && _gtShD.result) shazamResult = _gtShD.result
+} catch {}
+if (shazamResult) {
+    let s = shazamResult
+    let caption = `╔══════════════════════════╗\n║  🎵 *SHAZAM RESULT*\n╚══════════════════════════╝\n\n`
+    caption += `  🎼 *Title:* ${s.title || 'Unknown'}\n`
+    caption += `  🎤 *Artist:* ${s.artist || 'Unknown'}\n`
+    if (s.album) caption += `  💿 *Album:* ${s.album}\n`
+    if (s.genre) caption += `  🎸 *Genre:* ${s.genre}\n`
+    if (s.year) caption += `  📅 *Year:* ${s.year}\n`
+    if (s.spotify) caption += `\n  🟢 *Spotify:* ${s.spotify}\n`
+    if (s.apple_music) caption += `  🍎 *Apple Music:* ${s.apple_music}\n`
+    if (s.coverart) {
+        await X.sendMessage(m.chat, { image: { url: s.coverart }, caption }, { quoted: m })
+    } else {
+        await reply(caption)
+    }
+    break
+}
+// Method 2: AudD music recognition API (free, no key required)
 let auddForm = new FormData()
 auddForm.append('url', audioUrl)
 auddForm.append('return', 'apple_music,spotify')
@@ -6184,12 +6218,22 @@ reply(txt.slice(0, 4000))
 } break
 
 case 'ssweb':
-case 'ss': {
+case 'ss':
+case 'ssphone':
+case 'screenshot': {
     await X.sendMessage(m.chat, { react: { text: '📸', key: m.key } })
-if (!text) return reply(`Example: ${prefix}ssweb https://google.com`)
+if (!text) return reply(`Example: ${prefix}ss https://google.com`)
 try {
-let ssUrl = `https://image.thum.io/get/width/1280/crop/720/noanimate/${text}`
-await X.sendMessage(m.chat, { image: { url: ssUrl }, caption: `*Screenshot:* ${text}` }, { quoted: m })
+    let ssUrl = null
+    // Method 1: GiftedTech ssphone (mobile phone frame)
+    try {
+        let r = await fetch(`https://api.giftedtech.co.ke/api/tools/ssphone?apikey=gifted&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) })
+        let d = await r.json()
+        if (d.success && d.result) ssUrl = d.result
+    } catch {}
+    // Method 2: thum.io fallback
+    if (!ssUrl) ssUrl = `https://image.thum.io/get/width/1280/crop/720/noanimate/${text}`
+    await X.sendMessage(m.chat, { image: { url: ssUrl }, caption: `📸 *Screenshot*\n🔗 ${text}` }, { quoted: m })
 } catch(e) { reply('Error: ' + e.message) }
 } break
 
@@ -6405,7 +6449,20 @@ try {
     const _rBuf = await m.quoted.download()
     if (!_rBuf || _rBuf.length < 100) throw new Error('Image download failed')
     let _result = null
-    // Primary: remove.bg (if API key configured)
+    // Primary: GiftedTech removebgv2 (upload to CatBox first, then process)
+    try {
+        let _tmpRbg = `/tmp/rbg_${Date.now()}.jpg`
+        fs.writeFileSync(_tmpRbg, _rBuf)
+        let _imgUrl = await CatBox(_tmpRbg)
+        try { fs.unlinkSync(_tmpRbg) } catch {}
+        if (_imgUrl) {
+            let _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/removebgv2?apikey=gifted&url=${encodeURIComponent(_imgUrl)}`, { signal: AbortSignal.timeout(40000) })
+            if (_gtRes.ok && _gtRes.headers.get('content-type')?.includes('image')) {
+                _result = Buffer.from(await _gtRes.arrayBuffer())
+            }
+        }
+    } catch {}
+    // Fallback: remove.bg (if API key configured)
     const _rbKey = process.env.REMOVEBG_KEY || global.removebgKey || ''
     if (_rbKey) {
         try {
@@ -7841,6 +7898,391 @@ repo = repo.replace(/\.git$/, '')
 let zipUrl = `https://api.github.com/repos/${user}/${repo}/zipball`
 await X.sendMessage(m.chat, { document: { url: zipUrl }, mimetype: 'application/zip', fileName: `${repo}.zip` }, { quoted: m })
 } catch(e) { reply('Error: ' + e.message) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🌤️  WEATHER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'weather':
+case 'clima': {
+    await X.sendMessage(m.chat, { react: { text: '🌤️', key: m.key } })
+    if (!text) return reply(`🌤️ Usage: *${prefix}weather [city]*\nExample: ${prefix}weather Nairobi`)
+    try {
+        let r = await fetch(`https://api.giftedtech.co.ke/api/search/weather?apikey=gifted&location=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No weather data')
+        let w = d.result
+        let msg = `╔══════════════════════════╗\n║  🌤️ *WEATHER* — ${(w.location || text).toUpperCase()}\n╚══════════════════════════╝\n\n`
+        msg += `  📍 *Location:* ${w.location || text}\n`
+        if (w.weather) {
+            msg += `  🌡️ *Condition:* ${w.weather.description || w.weather.main}\n`
+        }
+        if (w.main) {
+            msg += `  🌡️ *Temperature:* ${w.main.temp}°C (feels like ${w.main.feels_like}°C)\n`
+            msg += `  🔼 *Max:* ${w.main.temp_max}°C  🔽 *Min:* ${w.main.temp_min}°C\n`
+            msg += `  💧 *Humidity:* ${w.main.humidity}%\n`
+            msg += `  🔵 *Pressure:* ${w.main.pressure} hPa\n`
+        }
+        if (w.wind) msg += `  💨 *Wind:* ${w.wind.speed} m/s\n`
+        if (w.visibility) msg += `  👁️ *Visibility:* ${Math.round(w.visibility/1000)} km\n`
+        if (w.clouds) msg += `  ☁️ *Cloud Cover:* ${w.clouds.all}%\n`
+        await reply(msg)
+    } catch(e) { reply(`❌ Could not fetch weather for *${text}*. Try a different city name.`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔗  URL SHORTENER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'tinyurl':
+case 'shorturl':
+case 'shorten': {
+    await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
+    if (!text || !text.startsWith('http')) return reply(`🔗 Usage: *${prefix}tinyurl [url]*\nExample: ${prefix}tinyurl https://google.com`)
+    try {
+        let r = await fetch(`https://api.giftedtech.co.ke/api/tools/tinyurl?apikey=gifted&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('Failed')
+        await reply(`🔗 *URL Shortener*\n\n📎 *Original:* ${text}\n✅ *Short URL:* ${d.result}`)
+    } catch(e) { reply('❌ Failed to shorten URL. Make sure it starts with https://') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💘  PICKUP LINE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'pickupline':
+case 'flirt':
+case 'rizz': {
+    await X.sendMessage(m.chat, { react: { text: '💘', key: m.key } })
+    try {
+        let r = await fetch(`https://api.giftedtech.co.ke/api/fun/pickupline?apikey=gifted`, { signal: AbortSignal.timeout(15000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No line')
+        await reply(`💘 *Pickup Line*\n\n_"${d.result}"_`)
+    } catch(e) { reply('❌ Could not fetch a pickup line right now. Try again!') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📷  READ QR CODE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'readqr':
+case 'scanqr':
+case 'qrread': {
+    await X.sendMessage(m.chat, { react: { text: '📷', key: m.key } })
+    if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
+        return reply(`📷 *Read QR Code*\n\nReply to an image containing a QR code with *${prefix}readqr*`)
+    }
+    try {
+        await reply('📷 _Scanning QR code..._')
+        let _buf = await m.quoted.download()
+        if (!_buf || _buf.length < 100) throw new Error('Image download failed')
+        let _tmp = `/tmp/qr_${Date.now()}.png`
+        fs.writeFileSync(_tmp, _buf)
+        let _url = await CatBox(_tmp)
+        try { fs.unlinkSync(_tmp) } catch {}
+        if (!_url) throw new Error('Upload failed')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/tools/readqr?apikey=gifted&url=${encodeURIComponent(_url)}`, { signal: AbortSignal.timeout(25000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('Could not read QR')
+        let qrData = d.result?.qrcode_data || d.result
+        await reply(`📷 *QR Code Content*\n\n${qrData}`)
+    } catch(e) { reply(`❌ Could not read the QR code. Make sure the image is clear and contains a valid QR code.`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎨  AI IMAGE GENERATOR (DeepImg)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'deepimg':
+case 'imagine':
+case 'genimage':
+case 'aiart': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
+    if (!text) return reply(`🎨 *AI Image Generator*\n\nUsage: *${prefix}deepimg [describe your image]*\n\nExamples:\n• ${prefix}deepimg A beautiful sunset over the ocean\n• ${prefix}deepimg A futuristic city at night`)
+    try {
+        await reply('🎨 _Generating your image with AI, please wait..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/ai/deepimg?apikey=gifted&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('Image generation failed')
+        await X.sendMessage(m.chat, { image: { url: d.result }, caption: `🎨 *AI Generated Image*\n📝 _${text}_` }, { quoted: m })
+    } catch(e) { reply(`❌ Image generation failed. Try a different prompt.`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎵  AI SONG GENERATOR
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'songgenerator':
+case 'makesong':
+case 'aisong': {
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
+    if (!text) return reply(`🎵 *AI Song Generator*\n\nUsage: *${prefix}songgenerator [describe your song]*\n\nExamples:\n• ${prefix}songgenerator A love song about the stars\n• ${prefix}songgenerator Upbeat Afrobeats about success`)
+    try {
+        await reply('🎵 _Composing your song with AI, please wait (this may take a while)..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/tools/songgenerator?apikey=gifted&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(120000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('Song generation failed')
+        let res = d.result
+        let audioUrl = typeof res === 'string' ? res : (res.audio_url || res.url || res.download_url)
+        if (audioUrl) {
+            await X.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: 'audio/mpeg', fileName: 'ai_song.mp3', caption: `🎵 *AI Generated Song*\n📝 _${text}_` }, { quoted: m })
+        } else {
+            await reply(`🎵 *AI Song Generated!*\n\n${JSON.stringify(res, null, 2)}`)
+        }
+    } catch(e) { reply(`❌ Song generation failed. Try a simpler prompt.`) }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚽  FOOTBALL LIVE SCORE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'livescore':
+case 'livescores':
+case 'footballscore': {
+    await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+    try {
+        await reply('⚽ _Fetching live football scores..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/livescore?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let matches = d.result.matches || d.result
+        if (!Array.isArray(matches) || matches.length === 0) return reply('⚽ No live matches at the moment.')
+        // Group by league, show max 20 matches
+        let shown = matches.slice(0, 20)
+        let msg = `╔══════════════════════════╗\n║  ⚽ *LIVE FOOTBALL SCORES*\n╚══════════════════════════╝\n`
+        let currentLeague = ''
+        for (let _lm of shown) {
+            if (_lm.league !== currentLeague) {
+                currentLeague = _lm.league
+                msg += `\n🏆 *${currentLeague}*\n`
+            }
+            let score = (_lm.homeScore !== undefined && _lm.awayScore !== undefined) ? `${_lm.homeScore} - ${_lm.awayScore}` : `vs`
+            msg += `  ⚽ ${_lm.homeTeam} *${score}* ${_lm.awayTeam}`
+            if (_lm.status && _lm.status !== 'Unknown') msg += ` _( ${_lm.status})_`
+            msg += '\n'
+        }
+        if (matches.length > 20) msg += `\n_...and ${matches.length - 20} more matches today_`
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch live scores. Try again later.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔮  FOOTBALL PREDICTIONS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'predictions':
+case 'footballpredictions':
+case 'betpredictions':
+case 'tips': {
+    await X.sendMessage(m.chat, { react: { text: '🔮', key: m.key } })
+    try {
+        await reply('🔮 _Fetching today\'s football predictions..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/predictions?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let preds = Array.isArray(d.result) ? d.result : (d.result.items || [])
+        if (preds.length === 0) return reply('🔮 No predictions available at the moment.')
+        let shown = preds.slice(0, 10)
+        let msg = `╔══════════════════════════╗\n║  🔮 *FOOTBALL PREDICTIONS*\n╚══════════════════════════╝\n`
+        for (let p of shown) {
+            msg += `\n🏆 *${p.league || 'Unknown League'}*\n`
+            msg += `  ⚽ ${p.match}\n`
+            if (p.time) msg += `  ⏰ ${p.time}\n`
+            if (p.predictions?.fulltime) {
+                let ft = p.predictions.fulltime
+                msg += `  📊 Home: ${ft.home?.toFixed(0)}% | Draw: ${ft.draw?.toFixed(0)}% | Away: ${ft.away?.toFixed(0)}%\n`
+            }
+            if (p.predictions?.over_2_5) {
+                msg += `  🥅 Over 2.5: ${p.predictions.over_2_5.yes?.toFixed(0)}%\n`
+            }
+            if (p.predictions?.bothTeamToScore) {
+                msg += `  🎯 BTTS: ${p.predictions.bothTeamToScore.yes?.toFixed(0)}%\n`
+            }
+        }
+        if (preds.length > 10) msg += `\n_...and ${preds.length - 10} more predictions_`
+        msg += `\n\n⚠️ _Predictions are for entertainment only. Bet responsibly._`
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch predictions. Try again later.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📰  FOOTBALL NEWS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'footnews':
+case 'footballnews':
+case 'sportnews': {
+    await X.sendMessage(m.chat, { react: { text: '📰', key: m.key } })
+    try {
+        await reply('📰 _Fetching latest football news..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/news?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let articles = d.result.items || d.result
+        if (!Array.isArray(articles) || articles.length === 0) return reply('📰 No football news available right now.')
+        let msg = `╔══════════════════════════╗\n║  📰 *FOOTBALL NEWS*\n╚══════════════════════════╝\n`
+        for (let a of articles.slice(0, 8)) {
+            msg += `\n📌 *${a.title}*\n`
+            if (a.summary) msg += `  _${a.summary.substring(0, 120)}..._\n`
+        }
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch football news. Try again later.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🏆  EPL STANDINGS, SCORERS, UPCOMING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'epl':
+case 'eplstandings':
+case 'premierleague': {
+    await X.sendMessage(m.chat, { react: { text: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', key: m.key } })
+    try {
+        await reply('🏆 _Fetching EPL standings..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let teams = d.result.standings || d.result
+        if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        let msg = `╔══════════════════════════╗\n║  🏆 *EPL STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
+        msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+        msg += `${'─'.repeat(50)}\n`
+        for (let t of teams.slice(0, 20)) {
+            let pos = String(t.position).padEnd(3)
+            let team = (t.team || '').substring(0, 20).padEnd(22)
+            let p = String(t.played || 0).padEnd(3)
+            let w = String(t.won || 0).padEnd(3)
+            let dr = String(t.draw || 0).padEnd(3)
+            let l = String(t.lost || 0).padEnd(3)
+            let gd = String(t.goalDifference || 0).padEnd(5)
+            let pts = String(t.points || 0)
+            msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+        }
+        await reply('```\n' + msg + '```')
+    } catch(e) { reply('❌ Could not fetch EPL standings. Try again later.') }
+} break
+
+case 'eplscorers':
+case 'epltopscorers': {
+    await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+    try {
+        await reply('⚽ _Fetching EPL top scorers..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let scorers = d.result.scorers || d.result
+        if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        let msg = `╔══════════════════════════╗\n║  ⚽ *EPL TOP SCORERS*\n╚══════════════════════════╝\n\n`
+        for (let s of scorers.slice(0, 15)) {
+            let rank = s.rank || s.position || ''
+            msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
+            msg += `   🥅 Goals: *${s.goals}*`
+            if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+            if (s.played) msg += `  📅 Played: ${s.played}`
+            msg += '\n'
+        }
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch EPL top scorers. Try again later.') }
+} break
+
+case 'eplmatches':
+case 'eplfixtures':
+case 'eplupcoming': {
+    await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
+    try {
+        await reply('📅 _Fetching upcoming EPL matches..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let matches = d.result.matches || d.result
+        if (!Array.isArray(matches) || matches.length === 0) throw new Error('No matches')
+        let msg = `╔══════════════════════════╗\n║  📅 *EPL UPCOMING FIXTURES*\n╚══════════════════════════╝\n`
+        for (let _fm of matches.slice(0, 12)) {
+            msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
+            msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
+            if (_fm.venue || _fm.stadium) msg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
+        }
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch EPL fixtures. Try again later.') }
+} break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🇪🇸  LA LIGA STANDINGS, SCORERS, MATCHES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'laliga':
+case 'laligastandings': {
+    await X.sendMessage(m.chat, { react: { text: '🇪🇸', key: m.key } })
+    try {
+        await reply('🏆 _Fetching La Liga standings..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/laliga/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let teams = d.result.standings || d.result
+        if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        let msg = `╔══════════════════════════╗\n║  🏆 *LA LIGA STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
+        msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+        msg += `${'─'.repeat(50)}\n`
+        for (let t of teams.slice(0, 20)) {
+            let pos = String(t.position).padEnd(3)
+            let team = (t.team || '').substring(0, 20).padEnd(22)
+            let p = String(t.played || 0).padEnd(3)
+            let w = String(t.won || 0).padEnd(3)
+            let dr = String(t.draw || 0).padEnd(3)
+            let l = String(t.lost || 0).padEnd(3)
+            let gd = String(t.goalDifference || 0).padEnd(5)
+            let pts = String(t.points || 0)
+            msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+        }
+        await reply('```\n' + msg + '```')
+    } catch(e) { reply('❌ Could not fetch La Liga standings. Try again later.') }
+} break
+
+case 'laligascorers':
+case 'laligatopscorers': {
+    await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+    try {
+        await reply('⚽ _Fetching La Liga top scorers..._')
+        let r = await fetch(`https://api.giftedtech.co.ke/api/football/laliga/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+        let d = await r.json()
+        if (!d.success || !d.result) throw new Error('No data')
+        let scorers = d.result.scorers || d.result
+        if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        let msg = `╔══════════════════════════╗\n║  ⚽ *LA LIGA TOP SCORERS*\n╚══════════════════════════╝\n\n`
+        for (let s of scorers.slice(0, 15)) {
+            let rank = s.rank || s.position || ''
+            msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
+            msg += `   🥅 Goals: *${s.goals}*`
+            if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+            if (s.played) msg += `  📅 Played: ${s.played}`
+            msg += '\n'
+        }
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch La Liga top scorers. Try again later.') }
+} break
+
+case 'laligamatches':
+case 'laligafixtures':
+case 'laligaupcoming': {
+    await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
+    try {
+        await reply('📅 _Fetching La Liga matches..._')
+        // Try upcoming first, then matches
+        let url1 = `https://api.giftedtech.co.ke/api/football/laliga/upcoming?apikey=gifted`
+        let url2 = `https://api.giftedtech.co.ke/api/football/laliga/matches?apikey=gifted`
+        let matches = null
+        for (let url of [url1, url2]) {
+            try {
+                let r = await fetch(url, { signal: AbortSignal.timeout(20000) })
+                let d = await r.json()
+                if (d.success && d.result) {
+                    matches = d.result.matches || d.result
+                    if (Array.isArray(matches) && matches.length > 0) break
+                }
+            } catch {}
+        }
+        if (!matches || !matches.length) throw new Error('No matches')
+        let msg = `╔══════════════════════════╗\n║  📅 *LA LIGA FIXTURES*\n╚══════════════════════════╝\n`
+        for (let _fm of matches.slice(0, 12)) {
+            msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
+            msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
+            if (_fm.venue || _fm.stadium) msg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
+            if (_fm.status && _fm.status !== 'Unknown') msg += `  ℹ️ Status: ${_fm.status}\n`
+        }
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch La Liga fixtures. Try again later.') }
 } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
