@@ -8373,6 +8373,126 @@ case 'laligaupcoming': {
     } catch(e) { reply('❌ Could not fetch La Liga fixtures. Try again later.') }
 } break
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🏆  UCL STANDINGS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  case 'ucl':
+  case 'uclstandings':
+  case 'championsleague': {
+      await X.sendMessage(m.chat, { react: { text: '🏆', key: m.key } })
+      try {
+          await reply('🏆 _Fetching UCL standings..._')
+          let r = await fetch(`https://api.giftedtech.co.ke/api/football/ucl/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          let d = await r.json()
+          if (!d.success || !d.result) throw new Error('No data')
+          let teams = d.result.standings || d.result
+          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+          let msg = `╔══════════════════════════╗\n║  🏆 *UCL STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
+          msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+          msg += `${'─'.repeat(50)}\n`
+          for (let t of teams) {
+              let pos = String(t.position).padEnd(3)
+              let team = (t.team || '').substring(0, 20).padEnd(22)
+              let p = String(t.played || 0).padEnd(3)
+              let w = String(t.won || 0).padEnd(3)
+              let dr = String(t.draw || 0).padEnd(3)
+              let l = String(t.lost || 0).padEnd(3)
+              let gd = String(t.goalDifference || 0).padEnd(5)
+              let pts = String(t.points || 0)
+              msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+          }
+          await reply('```\n' + msg + '```')
+      } catch(e) { reply('❌ Could not fetch UCL standings. Try again later.') }
+  } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🇩🇪  BUNDESLIGA STANDINGS & SCORERS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  case 'bundesliga':
+  case 'bundesligastandings': {
+      await X.sendMessage(m.chat, { react: { text: '🇩🇪', key: m.key } })
+      try {
+          await reply('🏆 _Fetching Bundesliga standings..._')
+          let r = await fetch(`https://api.giftedtech.co.ke/api/football/bundesliga/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          let d = await r.json()
+          if (!d.success || !d.result) throw new Error('No data')
+          let teams = d.result.standings || d.result
+          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+          let msg = `╔══════════════════════════╗\n║  🏆 *BUNDESLIGA STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
+          msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+          msg += `${'─'.repeat(50)}\n`
+          for (let t of teams) {
+              let pos = String(t.position).padEnd(3)
+              let team = (t.team || '').substring(0, 20).padEnd(22)
+              let p = String(t.played || 0).padEnd(3)
+              let w = String(t.won || 0).padEnd(3)
+              let dr = String(t.draw || 0).padEnd(3)
+              let l = String(t.lost || 0).padEnd(3)
+              let gd = String(t.goalDifference || 0).padEnd(5)
+              let pts = String(t.points || 0)
+              msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+          }
+          await reply('```\n' + msg + '```')
+      } catch(e) { reply('❌ Could not fetch Bundesliga standings. Try again later.') }
+  } break
+
+  case 'bundesligascorers':
+  case 'bundesligatopscorers': {
+      await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+      try {
+          await reply('⚽ _Fetching Bundesliga top scorers..._')
+          let r = await fetch(`https://api.giftedtech.co.ke/api/football/bundesliga/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          let d = await r.json()
+          if (!d.success || !d.result) throw new Error('No data')
+          let scorers = d.result.topScorers || d.result.scorers || d.result
+          if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+          let msg = `╔══════════════════════════╗\n║  ⚽ *BUNDESLIGA TOP SCORERS*\n╚══════════════════════════╝\n\n`
+          for (let s of scorers) {
+              let rank = s.rank || s.position || ''
+              msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
+              msg += `   🥅 Goals: *${s.goals}*`
+              if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+              if (s.penalties && s.penalties !== 'N/A') msg += `  🎯 Pens: ${s.penalties}`
+              if (s.played) msg += `  📅 Played: ${s.played}`
+              msg += '\n'
+          }
+          await reply(msg)
+      } catch(e) { reply('❌ Could not fetch Bundesliga top scorers. Try again later.') }
+  } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🇮🇹  SERIE A STANDINGS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  case 'seriea':
+  case 'serieastandings':
+  case 'serieastandings': {
+      await X.sendMessage(m.chat, { react: { text: '🇮🇹', key: m.key } })
+      try {
+          await reply('🏆 _Fetching Serie A standings..._')
+          let r = await fetch(`https://api.giftedtech.co.ke/api/football/seriea/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          let d = await r.json()
+          if (!d.success || !d.result) throw new Error('No data')
+          let teams = d.result.standings || d.result
+          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+          let msg = `╔══════════════════════════╗\n║  🏆 *SERIE A STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
+          msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+          msg += `${'─'.repeat(50)}\n`
+          for (let t of teams) {
+              let pos = String(t.position).padEnd(3)
+              let team = (t.team || '').substring(0, 20).padEnd(22)
+              let p = String(t.played || 0).padEnd(3)
+              let w = String(t.won || 0).padEnd(3)
+              let dr = String(t.draw || 0).padEnd(3)
+              let l = String(t.lost || 0).padEnd(3)
+              let gd = String(t.goalDifference || 0).padEnd(5)
+              let pts = String(t.points || 0)
+              msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+          }
+          await reply('```\n' + msg + '```')
+      } catch(e) { reply('❌ Could not fetch Serie A standings. Try again later.') }
+  } break
+  
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🏅  SPORTS — LIVE, ALL, CATEGORIES, STREAM
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
