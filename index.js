@@ -126,31 +126,21 @@ process.on('unhandledRejection', (err) => {
 })
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
-// Anti-Tampering Protection
-const _ov = '254748340864'
-const _bn = 'TOOSII-XD ULTRA'
-const _ba = 'Toosii Tech'
-function _integrityCheck() {
-    const ownerValid = global.owner && global.owner.includes(_ov)
-    const nameValid = global.botname && global.botname.includes('TOOSII')
-    const authorValid = global.ownername === _ba
-    if (!ownerValid || !nameValid || !authorValid) {
-        console.log('\n╔══════════════════════════════════════════╗')
-        console.log('║  ⚠️  INTEGRITY CHECK FAILED               ║')
-        console.log('║  Unauthorized modification detected.      ║')
-        console.log('║  This bot is property of Toosii Tech.     ║')
-        console.log('║  Restore original settings to continue.   ║')
-        console.log('║  Contact: wa.me/254748340864               ║')
-        console.log('╚══════════════════════════════════════════╝\n')
-        process.exit(1)
+// Startup owner sanity check — warn if no owner configured, never exit
+const _bn = global.botname || 'TOOSII-XD ULTRA'
+;(function _startupCheck() {
+    if (!global.owner || global.owner.length === 0) {
+        console.log('[ BOT ] ⚠️  No OWNER_NUMBER configured. Set OWNER_NUMBER in .env or setting.js')
+    } else {
+        console.log(`[ BOT ] ✅ Owner(s): ${global.owner.join(', ')}`)
     }
-    global.owner = [...new Set([_ov, ...global.owner])]
-    global._protectedOwner = _ov
-    global._protectedBrand = _bn
-    global._protectedAuthor = _ba
-}
-_integrityCheck()
-setInterval(_integrityCheck, 300000)
+})()
+
+// Initialize auto-status globals from setting.js / env vars (defaults: on)
+global.autoViewStatus  = global.autoViewStatus  ?? (process.env.AUTO_VIEW_STATUS  !== 'no')
+global.autoLikeStatus  = global.autoLikeStatus  ?? (process.env.AUTO_LIKE_STATUS  !== 'no')
+global.autoReplyStatus = global.autoReplyStatus ?? (process.env.AUTO_REPLY_STATUS === 'yes')
+global.autoLikeEmoji   = global.autoLikeEmoji   || (process.env.AUTO_LIKE_EMOJI   || '❤️')
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Session & State
@@ -611,7 +601,7 @@ store.messages.set = function(jid, chatMap) {
 // Anti-Delete Message Cache — DISK PERSISTENT
 // Survives bot restarts / 401 reconnections.
 // Stored at session/adcache.json — loaded on startup, saved every 30s.
-const _AD_CACHE_FILE = path.join(__dirname, 'session', 'adcache.json')
+const _AD_CACHE_FILE = path.join(__dirname, 'sessions', 'adcache.json')
 const _AD_CACHE_MAX  = 1000                // max entries in memory
 const _AD_CACHE_TTL  = 6 * 60 * 60 * 1000 // 6 hours — survive short outages
 
@@ -754,7 +744,7 @@ try {
 
               // Wipe ONLY session files belonging to this specific sender.
               // Session files contain the sender's number or JID in their filename.
-              const _sessionDir = path.join(__dirname, 'session')
+              const _sessionDir = path.join(SESSIONS_DIR, phone)
               if (fs.existsSync(_sessionDir) && _sNum) {
                   let _wiped = 0
                   fs.readdirSync(_sessionDir).forEach(i => {
@@ -786,109 +776,117 @@ try {
 if (mek.key && mek.key.remoteJid === 'status@broadcast') {
     if (!mek.key.fromMe) {
         try {
-            let _rawPosterJid = mek.key.participant || mek.key.remoteJid
-            // strip device suffix e.g. 254700:4@s.whatsapp.net → 254700@s.whatsapp.net
-            let statusPosterJid = _rawPosterJid.includes(':') ? _rawPosterJid.replace(/:.*@/, '@') : _rawPosterJid
+            // ── Step 1: resolve participant to a phone @s.whatsapp.net JID ──────────
+            // gifted-baileys / xmd-baileys may expose the real phone JID directly on
+            // these fields when the participant's primary address is a @lid.
+            // Priority: direct pn fields → store.contacts LID map → strip device suffix
+            const _rawParticipant = mek.key.participant || mek.participant || mek.key.remoteJid
 
-            // newer WhatsApp delivers status participant as @lid — resolve to real @s.whatsapp.net if possible
-            if (statusPosterJid.endsWith('@lid') && store?.contacts) {
-                const _resolved = Object.keys(store.contacts).find(j => {
-                    if (!j.endsWith('@s.whatsapp.net')) return false
-                    const c = store.contacts[j]
-                    return c?.lid === statusPosterJid || c?.lid === _rawPosterJid
-                })
-                if (_resolved) statusPosterJid = _resolved
-                // if still @lid — keep it, newer Baileys may still deliver the reaction
-            }
+            let statusPosterJid = [
+                mek.key.participantPn,
+                mek.key.participantAlt,
+                mek.key.senderPn,
+                mek.participantPn,
+                mek.senderPn,
+            ].find(j => j && j.endsWith('@s.whatsapp.net'))
 
-            // bot JID — may also be @lid on newer clients; collect both forms for statusJidList
-            let botSelfJid = (X.decodeJid ? X.decodeJid(X.user.id) : X.user.id).replace(/:.*@/, '@')
-            let botLidJid  = X.user?.lid ? (X.decodeJid ? X.decodeJid(X.user.lid) : X.user.lid).replace(/:.*@/, '@') : null
-            let _statusJidList = [statusPosterJid, botSelfJid, ...(botLidJid ? [botLidJid] : [])].filter(Boolean)
-
-            if (global.autoViewStatus) {
-                try {
-                    await X.readMessages([{
-                        remoteJid: 'status@broadcast',
-                        id: mek.key.id,
-                        participant: statusPosterJid
-                    }])
-                    console.log(`[${phone}] ✅ Auto-viewed status from ${statusPosterJid}`)
-                } catch (viewErr) {
-                    try { await X.readMessages([mek.key]) } catch {}
-                    console.log(`[${phone}] Auto-view fallback:`, viewErr.message || viewErr)
+            if (!statusPosterJid) {
+                // strip device suffix and check if it's already a phone JID
+                const _stripped = _rawParticipant.replace(/:.*@/, '@')
+                if (_stripped.endsWith('@s.whatsapp.net')) {
+                    statusPosterJid = _stripped
+                } else if (_stripped.endsWith('@lid') && store?.contacts) {
+                    // LID → scan store.contacts for the matching phone JID
+                    const _entries = typeof store.contacts.entries === 'function'
+                        ? [...store.contacts.entries()]
+                        : Object.entries(store.contacts)
+                    const _found = _entries.find(([j, ct]) =>
+                        j.endsWith('@s.whatsapp.net') &&
+                        (ct?.lid === _stripped || ct?.lid === _rawParticipant || ct?.id === _stripped)
+                    )
+                    if (_found) statusPosterJid = _found[0]
                 }
             }
 
+            // Last resort: keep the raw participant (may be @lid — WhatsApp will still
+            // accept readMessages with it on some clients)
+            if (!statusPosterJid) statusPosterJid = _rawParticipant.replace(/:.*@/, '@')
+
+            // Bot's own JID (phone + lid forms for statusJidList)
+            const botSelfJid = (X.decodeJid ? X.decodeJid(X.user.id) : X.user.id).replace(/:.*@/, '@')
+            const botLidJid  = X.user?.lid ? (X.decodeJid ? X.decodeJid(X.user.lid) : X.user.lid).replace(/:.*@/, '@') : null
+
+            // ── Auto-view: mark the status as seen ───────────────────────────────
+            if (global.autoViewStatus) {
+                // Try with resolved phone JID first, fall back to raw key
+                const _viewKey1 = { remoteJid: 'status@broadcast', id: mek.key.id, participant: statusPosterJid }
+                const _viewKey2 = { ...mek.key }
+                let _viewed = false
+                try {
+                    await X.readMessages([_viewKey1])
+                    _viewed = true
+                    console.log(`[${phone}] ✅ Auto-viewed status from ${statusPosterJid}`)
+                } catch {}
+                if (!_viewed) {
+                    try {
+                        await X.readMessages([_viewKey2])
+                        console.log(`[${phone}] ✅ Auto-viewed status (raw key fallback) from ${statusPosterJid}`)
+                    } catch (ve) {
+                        console.log(`[${phone}] Auto-view failed:`, ve.message || ve)
+                    }
+                }
+            }
+
+            // ── Auto-like: react to the status ───────────────────────────────────
             if (global.autoLikeStatus) {
                 try {
-                    const _ar = global.arManager
-                    let _emoji = global.autoLikeEmoji || '❤️'
-                    if (_ar && _ar.enabled) {
-                        // deduplicate — stop here, do NOT proceed to send
-                        if (!_ar.reactedIds) _ar.reactedIds = []
-                        if (_ar.reactedIds.includes(mek.key.id)) {
-                            console.log(`[${phone}] Auto-like: duplicate ${mek.key.id}, skipping`)
-                            throw Object.assign(new Error('duplicate'), { skip: true })
-                        }
-                        // rate-limit — honour arManager.rateLimitDelay between reactions
-                        const _now = Date.now()
-                        const _delay = (_ar.rateLimitDelay || 2000) - (_now - (_ar.lastReactionTime || 0))
-                        if (_delay > 0) await new Promise(r => setTimeout(r, _delay))
-                        // pick emoji
-                        if (_ar.mode === 'random' && _ar.reactions && _ar.reactions.length) {
-                            _emoji = _ar.reactions[Math.floor(Math.random() * _ar.reactions.length)]
-                        } else {
-                            _emoji = _ar.fixedEmoji || _emoji
-                        }
-                        // commit stats
-                        _ar.reactedIds.push(mek.key.id)
-                        if (_ar.reactedIds.length > 2000) _ar.reactedIds.shift()
-                        _ar.totalReacted = (_ar.totalReacted || 0) + 1
-                        _ar.lastReactionTime = Date.now()
-                        global.autoLikeEmoji = _emoji
-                    } else {
-                        // simple path — small delay to avoid spam
-                        await new Promise(r => setTimeout(r, 800))
-                    }
-                    if (!_emoji) throw new Error('no emoji configured')
-                    // use the raw key participant for the react key — WhatsApp matches on this
+                    await new Promise(r => setTimeout(r, 800))
+                    const _emojis = ['💛', '❤️', '💜', '🤍', '💙', '🧡', '💚', '🔥', '😍', '👍']
+                    const _emoji  = global.autoLikeEmoji || _emojis[Math.floor(Math.random() * _emojis.length)]
+
+                    // React key always uses the raw participant from the message key
                     const _reactKey = {
                         remoteJid: 'status@broadcast',
                         id: mek.key.id,
-                        participant: mek.key.participant || statusPosterJid,
-                        fromMe: false
+                        participant: _rawParticipant,
+                        fromMe: false,
                     }
+
                     let _liked = false
-                    try {
-                        await X.sendMessage('status@broadcast', {
-                            react: { text: _emoji, key: _reactKey }
-                        }, { statusJidList: _statusJidList })
-                        _liked = true
-                        console.log(`[${phone}] ✅ Auto-liked status from ${statusPosterJid} with ${_emoji}`)
-                    } catch (_e1) {
-                        // fallback: try with minimal statusJidList
+
+                    // Method 1 (most reliable for LID): send react to poster's private DM JID
+                    if (statusPosterJid.endsWith('@s.whatsapp.net')) {
+                        try {
+                            await X.sendMessage(statusPosterJid, { react: { text: _emoji, key: _reactKey } })
+                            _liked = true
+                            console.log(`[${phone}] ✅ Auto-liked status from ${statusPosterJid} with ${_emoji}`)
+                        } catch {}
+                    }
+
+                    // Method 2: statusJidList approach (works when participant is phone JID)
+                    if (!_liked) {
+                        const _jidList = [statusPosterJid, botSelfJid, ...(botLidJid ? [botLidJid] : [])].filter(Boolean)
                         try {
                             await X.sendMessage('status@broadcast', {
                                 react: { text: _emoji, key: _reactKey }
-                            }, { statusJidList: [mek.key.participant || statusPosterJid, botSelfJid] })
+                            }, { statusJidList: _jidList })
                             _liked = true
-                            console.log(`[${phone}] ✅ Auto-liked (fallback jidList) from ${statusPosterJid} with ${_emoji}`)
+                            console.log(`[${phone}] ✅ Auto-liked (statusJidList) from ${statusPosterJid} with ${_emoji}`)
                         } catch {}
                     }
-                    if (!_liked) {
+
+                    // Method 3: raw participant JID as target
+                    if (!_liked && _rawParticipant !== statusPosterJid) {
                         try {
-                            await X.sendMessage(statusPosterJid, {
-                                react: { text: _emoji, key: _reactKey }
-                            })
-                            console.log(`[${phone}] ✅ Auto-liked (DM fallback) from ${statusPosterJid}`)
-                        } catch (likeErr2) {
-                            console.log(`[${phone}] Auto-like failed:`, likeErr2.message || likeErr2)
-                        }
+                            await X.sendMessage(_rawParticipant, { react: { text: _emoji, key: _reactKey } })
+                            _liked = true
+                            console.log(`[${phone}] ✅ Auto-liked (raw JID) from ${_rawParticipant} with ${_emoji}`)
+                        } catch {}
                     }
+
+                    if (!_liked) console.log(`[${phone}] Auto-like: all methods failed for ${statusPosterJid}`)
                 } catch (likeErr) {
-                    if (!likeErr.skip && likeErr.message !== 'no emoji configured')
-                        console.log(`[${phone}] Auto-like error:`, likeErr.message || likeErr)
+                    console.log(`[${phone}] Auto-like error:`, likeErr.message || likeErr)
                 }
             }
             if (global.autoReplyStatus && global.autoReplyStatusMsg) {
@@ -1342,15 +1340,11 @@ _presenceTimer = setInterval(async () => {
 if (!global._connMsgSent) global._connMsgSent = new Set()
 if (!global._connMsgSent.has(phone)) {
     global._connMsgSent.add(phone)
-    try { X.newsletterFollow('120363299254074394@newsletter') } catch (e) {}
-    try {
-        await X.groupAcceptInvite('CwNhH3QNvrVFdcKNgaKg4g')
-        console.log(`${c.green}[${phone}]${c.r} ${c.cyan}Auto-joined WhatsApp group${c.r}`)
-    } catch (e) {}
+    // Newsletter follow and group auto-join removed
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
         await X.sendMessage(connectedJid, {text: `╔══════════════════════════╗
-║   ⚡ *TOOSII-XD ULTRA*
+║   ⚡ *${global.botname || 'TOOSII-XD ULTRA'}*
 ║   _WhatsApp Multi-Device Bot_
 ╚══════════════════════════╝
 
@@ -1358,16 +1352,10 @@ if (!global._connMsgSent.has(phone)) {
 
   ├◈ 👤 *User*    › ${connUser}
   ├◈ 🟢 *Status*  › Active & Online
-  ├◈ 🤖 *Bot*     › TOOSII-XD ULTRA v2.0.0
-  ├◈ 🔑 *Session* › ${global.sessionUrl || 'https://toosii-xd-session-generator-woyo.onrender.com/pair'}
-  └◈ 📋 *Commands* › Type \`.menu\` to get started
+  ├◈ 🤖 *Bot*     › ${global.botname || 'TOOSII-XD ULTRA'}
+  ├◈ 📋 *Commands* › Type \`.menu\` to get started
 
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-  👥 *Join Our Community*
-  https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-_⚡ Powered by Toosii Tech — wa.me/254748340864_`})
+_⚡ Bot is online and ready._`})
     } catch (e) {}
 }
 console.log(`[BOT_CONNECTED:${connUser}]`)
