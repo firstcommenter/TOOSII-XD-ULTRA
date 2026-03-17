@@ -552,16 +552,21 @@ const _adCachePut = (msgs) => {
     try {
         let _added = 0
         for (const _adMsg of (msgs || [])) {
-            if (!_adMsg?.key?.id || !_adMsg.message) continue
+            if (!_adMsg?.key?.id) continue
             if (_adMsg.key.remoteJid === 'status@broadcast') continue
-            if (global._adCache.has(_adMsg.key.id)) continue // already cached
+
+            const _existingEntry = global._adCache.get(_adMsg.key.id)
+            // If already cached WITH content — skip (don't overwrite good data with null)
+            if (_existingEntry?.msg?.message) continue
+            // If no content and still no new content — skip (nothing gained)
+            if (!_adMsg.message && _existingEntry) continue
+
             // Prune by TTL first
-            if (global._adCache.size >= _AD_CACHE_MAX) {
+            if (!_existingEntry && global._adCache.size >= _AD_CACHE_MAX) {
                 const _now = Date.now()
                 for (const [_id, _entry] of global._adCache) {
                     if (_now - _entry.ts > _AD_CACHE_TTL) global._adCache.delete(_id)
                 }
-                // Still full — remove oldest
                 if (global._adCache.size >= _AD_CACHE_MAX) {
                     global._adCache.delete(global._adCache.keys().next().value)
                 }
@@ -569,20 +574,35 @@ const _adCachePut = (msgs) => {
             global._adCache.set(_adMsg.key.id, {
                 msg: _adMsg,
                 chatJid: _adMsg.key.remoteJid,
-                ts: Date.now()
+                ts: _existingEntry?.ts || Date.now() // keep original timestamp for TTL
             })
             _added++
         }
-        if (_added) _adCacheFlush() // schedule disk write only when something changed
+        if (_added) _adCacheFlush()
     } catch (_) {}
 }
 
-// Capture live messages
+// Capture live messages (upsert fires with content — or null on first delivery)
 X.ev.on('messages.upsert', ({ messages: _adMsgs }) => _adCachePut(_adMsgs))
 // Capture history sync on reconnect
 X.ev.on('messaging-history.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
 // Older Baileys history sync event
 X.ev.on('messages.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
+
+// When a message content arrives via update (e.g. decrypted after initial null delivery)
+// update the cache entry so antidelete can use the real content
+X.ev.on('messages.update', (_adUpdates) => {
+    try {
+        for (const _u of (_adUpdates || [])) {
+            if (!_u?.key?.id || !_u.update?.message) continue
+            const _ex = global._adCache.get(_u.key.id)
+            // Only upgrade: fill in null-content entries or merge missing content
+            if (!_ex || _ex.msg?.message) continue
+            _ex.msg = { ..._ex.msg, message: _u.update.message }
+            global._adCache.set(_u.key.id, _ex)
+        }
+    } catch (_) {}
+})
 
 // ── FIX 5: Suppress Bad MAC / libsignal decryption errors ────────────────
 // These errors occur when WhatsApp re-keys a session (normal behaviour).
