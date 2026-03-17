@@ -1265,9 +1265,9 @@ case 'ytplay': {
             return null
         }
 
-        // Method 1: loader.to — try 128kbps, fall back to default mp3
+        // Method 1: loader.to — 128kbps only, if it fails move on (no 320kbps fallback)
         try {
-            audioUrl = await _loaderTo('mp3-128') || await _loaderTo('mp3')
+            audioUrl = await _loaderTo('mp3-128')
             if (audioUrl) console.log('[play] loader.to: success')
         } catch (e1) { console.log('[play] loader.to:', e1.message) }
 
