@@ -3224,7 +3224,7 @@ break
                let welArg = (args[0] || '').toLowerCase()
                if (!welArg) {
                   let welState = global.welcome ? '✅ ON' : '❌ OFF'
-                  reply(`╔══════════════════════════╗\n║  👋 *WELCOME / GOODBYE*\n╚══════════════════════════╝\n\n  ├ 📊 *Status* › ${welState}\n  └ Sends greetings when members join/leave\n\n  ├ ${prefix}welcome on  — Enable\n  └ ${prefix}welcome off — Disable`)
+                  reply(`╔══════════════════════════╗\n║  👋 *WELCOME / GOODBYE*\n╚══════════════════════════╝\n\n  ├◈ 📊 *Status* › ${welState}\n  └◈ Sends greetings when members join/leave\n\n  ├◈ ${prefix}welcome on  — Enable\n  └◈ ${prefix}welcome off — Disable`)
                } else if (welArg === 'on' || welArg === 'enable') {
                   global.welcome = true
                   reply(`╔══════════════════════════╗\n║  👋 *WELCOME / GOODBYE*\n╚══════════════════════════╝\n\n  ✅ *Enabled in ${groupName || 'this group'}*\n  _Bot will greet joins & announce leaves._`)
@@ -3242,7 +3242,7 @@ break
                let evArg = (args[0] || '').toLowerCase()
                if (!evArg) {
                   let evState = global.adminevent ? '✅ ON' : '❌ OFF'
-                  reply(`╔══════════════════════════╗\n║  🌟 *ADMIN EVENTS*\n╚══════════════════════════╝\n\n  ├ 📊 *Status* › ${evState}\n  └ Announces admin promotions & demotions\n\n  ├ ${prefix}events on  — Enable\n  └ ${prefix}events off — Disable`)
+                  reply(`╔══════════════════════════╗\n║  🌟 *ADMIN EVENTS*\n╚══════════════════════════╝\n\n  ├◈ 📊 *Status* › ${evState}\n  └◈ Announces admin promotions & demotions\n\n  ├◈ ${prefix}events on  — Enable\n  └◈ ${prefix}events off — Disable`)
                } else if (evArg === 'on' || evArg === 'enable') {
                   global.adminevent = true
                   reply(`╔══════════════════════════╗\n║  🌟 *ADMIN EVENTS*\n╚══════════════════════════╝\n\n  ✅ *Enabled in ${groupName || 'this group'}*\n  _Admin changes will be announced._`)
@@ -5254,14 +5254,14 @@ if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let gbArg = (args[0] || '').toLowerCase()
 if (gbArg === 'on') {
-    global.welcome = true
+    global.goodbye = true
     reply(`╔══════════════════════════╗\n║  👋 *GOODBYE MESSAGES*\n╚══════════════════════════╝\n\n  ✅ *Enabled in ${groupName || 'this group'}*\n  _Bot will farewell departing members._`)
 } else if (gbArg === 'off') {
-    global.welcome = false
+    global.goodbye = false
     reply(`╔══════════════════════════╗\n║  👋 *GOODBYE MESSAGES*\n╚══════════════════════════╝\n\n  ❌ *Disabled in ${groupName || 'this group'}*\n  _Goodbye messages turned off._`)
 } else {
-    let gbState = global.welcome ? '✅ ON' : '❌ OFF'
-    reply(`╔══════════════════════════╗\n║  👋 *GOODBYE MESSAGES*\n╚══════════════════════════╝\n\n  ├ 📊 *Status* › ${gbState}\n  └ Farewells departing members\n\n  ├ ${prefix}goodbye on  — Enable\n  └ ${prefix}goodbye off — Disable`)
+    let gbState = (global.goodbye ?? global.welcome) ? '✅ ON' : '❌ OFF'
+    reply(`╔══════════════════════════╗\n║  👋 *GOODBYE MESSAGES*\n╚══════════════════════════╝\n\n  ├◈ 📊 *Status* › ${gbState}\n  └◈ Farewells departing members\n\n  ├◈ ${prefix}goodbye on  — Enable\n  └◈ ${prefix}goodbye off — Disable`)
 }
 } break
 
