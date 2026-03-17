@@ -91,7 +91,7 @@ global.mess = {
     OnlyOwner: '🔒 *Owner Only* — This command is restricted to the bot owner.',
     OnlyGrup: '👥 *Group Only* — This command can only be used in group chats.',
     private: '📩 *Private Chat Only* — Please send this command in my DM.',
-    wait: '',
+    wait: '⏳ _Processing..._',
     error: '❌ *Error* — Something went wrong. Please try again.',
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
