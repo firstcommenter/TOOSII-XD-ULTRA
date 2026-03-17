@@ -507,26 +507,61 @@ if (!X.authState.creds.registered) {
 store.bind(X.ev)
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
-// Anti-Delete Message Cache
-// Independent of the store — NOT cleared by messages.delete events.
-// Stores recent messages by ID so antidelete can retrieve them even
-// after WhatsApp's deletion event wipes them from the in-memory store.
-if (!global._adCache) global._adCache = new Map() // Map<msgId, {msg, chatJid, ts}>
-const _AD_CACHE_MAX = 800          // max number of messages to keep
-const _AD_CACHE_TTL = 30 * 60 * 1000 // purge entries older than 30 min
+// Anti-Delete Message Cache — DISK PERSISTENT
+// Survives bot restarts / 401 reconnections.
+// Stored at session/adcache.json — loaded on startup, saved every 30s.
+const _AD_CACHE_FILE = path.join(__dirname, 'session', 'adcache.json')
+const _AD_CACHE_MAX  = 1000                // max entries in memory
+const _AD_CACHE_TTL  = 6 * 60 * 60 * 1000 // 6 hours — survive short outages
 
-// Helper — feed a batch of messages into the _adCache
+if (!global._adCache) {
+    global._adCache = new Map()
+    // Load from disk on first boot
+    try {
+        if (fs.existsSync(_AD_CACHE_FILE)) {
+            const _diskData = JSON.parse(fs.readFileSync(_AD_CACHE_FILE, 'utf8'))
+            const _cutoff   = Date.now() - _AD_CACHE_TTL
+            let _loaded = 0
+            for (const [id, entry] of Object.entries(_diskData)) {
+                if (entry.ts > _cutoff && entry.msg) {
+                    global._adCache.set(id, entry)
+                    _loaded++
+                }
+            }
+            if (_loaded) console.log(`[Anti-Delete] Loaded ${_loaded} cached messages from disk`)
+        }
+    } catch (_) {}
+}
+
+// Debounced disk writer — writes at most once per 30 seconds
+let _adCacheWriteTimer = null
+const _adCacheFlush = () => {
+    if (_adCacheWriteTimer) return
+    _adCacheWriteTimer = setTimeout(() => {
+        _adCacheWriteTimer = null
+        try {
+            const _out = {}
+            for (const [id, entry] of global._adCache) _out[id] = entry
+            fs.writeFileSync(_AD_CACHE_FILE, JSON.stringify(_out), 'utf8')
+        } catch (_) {}
+    }, 30000)
+}
+
+// Helper — feed a batch of messages into _adCache
 const _adCachePut = (msgs) => {
     try {
+        let _added = 0
         for (const _adMsg of (msgs || [])) {
             if (!_adMsg?.key?.id || !_adMsg.message) continue
             if (_adMsg.key.remoteJid === 'status@broadcast') continue
-            // Prune if full
+            if (global._adCache.has(_adMsg.key.id)) continue // already cached
+            // Prune by TTL first
             if (global._adCache.size >= _AD_CACHE_MAX) {
                 const _now = Date.now()
                 for (const [_id, _entry] of global._adCache) {
                     if (_now - _entry.ts > _AD_CACHE_TTL) global._adCache.delete(_id)
                 }
+                // Still full — remove oldest
                 if (global._adCache.size >= _AD_CACHE_MAX) {
                     global._adCache.delete(global._adCache.keys().next().value)
                 }
@@ -536,17 +571,17 @@ const _adCachePut = (msgs) => {
                 chatJid: _adMsg.key.remoteJid,
                 ts: Date.now()
             })
+            _added++
         }
+        if (_added) _adCacheFlush() // schedule disk write only when something changed
     } catch (_) {}
 }
 
 // Capture live messages
 X.ev.on('messages.upsert', ({ messages: _adMsgs }) => _adCachePut(_adMsgs))
-
-// Capture history sync messages (arrive on reconnect via messaging-history.set)
+// Capture history sync on reconnect
 X.ev.on('messaging-history.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
-
-// Capture messages.set (older Baileys history sync event)
+// Older Baileys history sync event
 X.ev.on('messages.set', ({ messages: _adMsgs }) => _adCachePut(_adMsgs || []))
 
 // ── FIX 5: Suppress Bad MAC / libsignal decryption errors ────────────────
