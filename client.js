@@ -3814,6 +3814,78 @@ reply(global.mess.error)
 }
 break
 
+case 'stickercrop':
+case 'scrop': {
+  const _scIsImg = m.mtype === 'imageMessage'
+  const _scIsQuote = m.quoted && (m.quoted.mtype === 'imageMessage' || m.quoted.mtype === 'stickerMessage')
+  if (!_scIsImg && !_scIsQuote) return reply(`Reply to an image with *${prefix}${command}* to crop it into a square sticker.`)
+  try {
+    await X.sendMessage(m.chat, { react: { text: '✂️', key: m.key } })
+    const _scQuoted = m.quoted ? m.quoted : m
+    let _scBuf = await _scQuoted.download()
+    const Jimp = require('jimp')
+    let _scImg = await Jimp.read(_scBuf)
+    let _scW = _scImg.getWidth(), _scH = _scImg.getHeight()
+    let _scSize = Math.min(_scW, _scH)
+    _scImg.crop(Math.floor((_scW - _scSize) / 2), Math.floor((_scH - _scSize) / 2), _scSize, _scSize)
+    let _scOut = await _scImg.getBufferAsync(Jimp.MIME_JPEG)
+    const { StickerTypes } = require('wa-sticker-formatter')
+    let _scSticker = new Sticker(_scOut, { pack: global.packname || 'TOOSII-XD', author: global.authorname || 'Toosii Tech', type: StickerTypes.FULL, quality: 70 })
+    await X.sendMessage(m.chat, { sticker: await _scSticker.toBuffer() }, { quoted: m })
+  } catch (e) {
+    console.error('[STICKERCROP ERROR]', e.message)
+    reply('❌ Sticker crop failed: ' + e.message)
+  }
+}
+break
+
+case 'meme':
+case 'smeme': {
+  const _mmIsImg = m.mtype === 'imageMessage'
+  const _mmIsQuote = m.quoted && (m.quoted.mtype === 'imageMessage' || m.quoted.mtype === 'stickerMessage')
+  if (!_mmIsImg && !_mmIsQuote) return reply(`Reply to an image with:\n*${prefix}${command} top text | bottom text*\n\nOr just:\n*${prefix}${command} bottom text only*`)
+  if (!text) return reply(`Reply to an image with:\n*${prefix}${command} top text | bottom text*\n\nExample:\n*${prefix}meme When you finally fix a bug | 10 more appear*`)
+  try {
+    await X.sendMessage(m.chat, { react: { text: '🎭', key: m.key } })
+    const _mmQuoted = m.quoted ? m.quoted : m
+    const _mmParts = text.split('|')
+    const _mmTop = (_mmParts.length > 1 ? _mmParts[0].trim() : '').toUpperCase()
+    const _mmBot = (_mmParts.length > 1 ? _mmParts[1] : _mmParts[0]).trim().toUpperCase()
+    let _mmBuf = await _mmQuoted.download()
+    const Jimp = require('jimp')
+    let _mmImg = await Jimp.read(_mmBuf)
+    const _mmW = _mmImg.getWidth(), _mmH = _mmImg.getHeight()
+    const _mmFont = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
+    const _mmShadow = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK)
+    const _mmPad = 10
+    const _mmMaxW = _mmW - (_mmPad * 2)
+    const _mmFontH = 80
+    const _mmTextTop = _mmPad
+    const _mmTextBot = _mmH - _mmFontH - _mmPad
+    const _mmOffsets = [[-2,0],[2,0],[0,-2],[0,2],[-2,-2],[2,-2],[-2,2],[2,2]]
+    if (_mmTop) {
+      for (const [ox, oy] of _mmOffsets) _mmImg.print(_mmShadow, _mmPad + ox, _mmTextTop + oy, { text: _mmTop, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, _mmMaxW)
+      _mmImg.print(_mmFont, _mmPad, _mmTextTop, { text: _mmTop, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, _mmMaxW)
+    }
+    if (_mmBot) {
+      for (const [ox, oy] of _mmOffsets) _mmImg.print(_mmShadow, _mmPad + ox, _mmTextBot + oy, { text: _mmBot, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, _mmMaxW)
+      _mmImg.print(_mmFont, _mmPad, _mmTextBot, { text: _mmBot, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, _mmMaxW)
+    }
+    let _mmOut = await _mmImg.getBufferAsync(Jimp.MIME_JPEG)
+    if (command === 'smeme') {
+      const { StickerTypes } = require('wa-sticker-formatter')
+      let _mmStick = new Sticker(_mmOut, { pack: global.packname || 'TOOSII-XD', author: global.authorname || 'Meme', type: StickerTypes.FULL, quality: 70 })
+      await X.sendMessage(m.chat, { sticker: await _mmStick.toBuffer() }, { quoted: m })
+    } else {
+      await X.sendMessage(m.chat, { image: _mmOut, caption: '🎭 *Meme generated!*' }, { quoted: m })
+    }
+  } catch (e) {
+    console.error('[MEME ERROR]', e.message)
+    reply('❌ Meme generation failed: ' + e.message)
+  }
+}
+break
+
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Ai Features
 case 'quantum-ai':{
@@ -4059,61 +4131,25 @@ case 'gpt-4o':{
 break
 
 
-case 'aliceai' :{
+case 'aliceai': {
+  if (!text) return reply(`Example:\n${prefix+command} hello how are you?\n${prefix+command} generate an image of a sunset`)
   try {
-    if (!text) return reply(`Write something after this command.\n\nExample:\n${prefix+command} hello how are you?\n${prefix+command} https://vt.tiktok.com/ZSFxYcCdr/\n${prefix+command} generate an image of a sunset`)
-    let regexTikTok = /(https?:\/\/)?(www\.|vm\.|vt\.)?tiktok\.com\/[^\s]+/gi
-    let isTikTok = regexTikTok.test(text)
-    let isImageReq = /(gambar|buatkan.*gambar|bikin.*gambar|buat.*gambar)/i.test(text)
-
-    if (isTikTok) {
-      let link = text.match(regexTikTok)[0]
-      let res = await fetch(`https://www.velyn.biz.id/api/downloader/tiktok?url=${encodeURIComponent(link)}`)
-      let json = await res.json()
-
-      if (!json?.status || !json?.data?.no_watermark) {
-        return reply(`❌ Error\nLogs error : Failed to download TikTok video.`)
-      }
-
-      let prompt = `Create an attractive caption for a TikTok video titled: ${json?.data?.title || 'untitled'}`
-      let aiRes = await fetch(`https://www.velyn.biz.id/api/ai/velyn-1.0-1b?prompt=${encodeURIComponent(prompt)}`)
-      let aiJson = await aiRes.json()
-
-      if (!aiJson?.status || !aiJson?.result) {
-        return reply(`❌ Error\nLogs error : Failed to get caption from AI.`)
-      }
-
-      await X.sendMessage(m.chat, {
-        video: { url: json.data.no_watermark },
-        caption: aiJson.result.toString()
-      }, { quoted: m })
-
-    } else if (isImageReq) {
-      let prompt = text
-      let res = await fetch(`https://www.velyn.biz.id/api/ai/text2img?prompt=${encodeURIComponent(prompt)}`)
-      if (!res.ok) return reply(`❌ Error\nLogs error : Failed to contact image service.`)
-
-      let buffer = await res.buffer()
-      await X.sendMessage(m.chat, {
-        image: buffer,
-        caption: `Generated image for prompt:\n*${prompt}*`
-      }, { quoted: m })
-
+    await X.sendMessage(m.chat, { react: { text: '🤍', key: m.key } })
+    let isImageReq = /(generate.*image|create.*image|make.*image|image of|picture of|draw)/i.test(text)
+    if (isImageReq) {
+      await reply('🎨 _Generating image, please wait..._')
+      let seed = Math.floor(Math.random() * 999999)
+      let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?model=flux&width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`
+      let imgBuffer = await getBuffer(imgUrl)
+      if (!imgBuffer || imgBuffer.length < 5000) throw new Error('Image generation failed')
+      await X.sendMessage(m.chat, { image: imgBuffer, caption: `🤍 *Alice AI:*\n\n_${text}_` }, { quoted: m })
     } else {
-      let prompt = text
-      let res = await fetch(`https://www.velyn.biz.id/api/ai/velyn-1.0-1b?prompt=${encodeURIComponent(prompt)}`)
-      let json = await res.json()
-
-      if (!json?.status || !json?.result) {
-        throw `❌ Error\nLogs error : AI failed to respond.`
-      }
-
-      reply(json.result.toString())
+      const result = await _runAI('You are Alice AI, a warm, friendly and knowledgeable AI assistant. Be conversational, helpful and clear in your responses.', text)
+      reply(result)
     }
-
   } catch (e) {
-    console.error(e)
-    return reply(`❌ Error\nLogs error : ${(e?.message || e).toString()}`)
+    console.error('[ALICEAI ERROR]', e.message)
+    reply('❌ AliceAI is currently unavailable. Please try again.')
   }
 }
 break
@@ -4153,29 +4189,15 @@ case 'gemmaai':{
 }
 break
 case 'aivelyn':
-case 'velynai':{
-  if (!text) return reply('Please enter your question?');
+case 'velynai': {
+  if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
-    const url = `https://www.velyn.biz.id/api/ai/velyn-1.0-1b?prompt=${encodeURIComponent(text)}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const result = data.result || "Sorry, no answer available.";
-
-    return reply(result);
-  } catch (error) {
-    console.error("An error occurred:", error);
-    try {
-      let { data } = await axios.post('https://text.pollinations.ai/openai', {
-        messages: [{ role: 'system', content: 'You are Velyn AI, a creative and helpful AI assistant.' }, { role: 'user', content: text }],
-        model: 'openai', stream: false
-      }, { headers: { 'Content-Type': 'application/json' } })
-      return reply(data?.choices?.[0]?.message?.content || 'No response.')
-    } catch { return reply("Sorry, an error occurred while contacting the AI.") }
+    await X.sendMessage(m.chat, { react: { text: '🌸', key: m.key } })
+    const result = await _runAI('You are Velyn AI, a creative, friendly and helpful AI assistant. Provide engaging and informative responses.', text)
+    reply(result)
+  } catch (e) {
+    console.error('[VELYNAI ERROR]', e.message)
+    reply('❌ VelynAI is currently unavailable. Please try again.')
   }
 }
 break
@@ -4213,6 +4235,33 @@ case 'prayerchristian': {
     global.christianDevotion = _arg2 === 'on' ? 'all' : _arg2
     const _labels2 = { all: '✅ ON (DM + Groups)', dm: '✅ ON (DM only)', group: '✅ ON (Groups only)', off: '❌ OFF' }
     reply(`✝️ *Christian Devotion* › ${_labels2[global.christianDevotion]}`)
+}
+break
+
+case 'writecream': {
+  if (!text) return reply(`╔══════════════════════════╗\n║  ✍️  *WRITECREAM AI*\n╚══════════════════════════╝\n\n  AI-powered content writer.\n\n  └ *Usage:* ${prefix}writecream [topic or instruction]\n\n  _Examples:_\n  • blog post about social media marketing\n  • product description for wireless earbuds\n  • email subject lines for a sale campaign\n  • Instagram caption for a sunset photo`)
+  try {
+    await X.sendMessage(m.chat, { react: { text: '✍️', key: m.key } })
+    await reply('✍️ _WriteCream AI is writing your content..._')
+    const result = await _runAI('You are WriteCream AI, a professional content writer and copywriter. Create engaging, well-structured, high-quality written content including blog posts, product descriptions, email copy, social media captions, ad headlines, and more. Match the tone and format to the request. Use clear structure with headings or bullet points where appropriate.', text)
+    reply(`╔══════════════════════════╗\n║  ✍️  *WRITECREAM AI*\n╚══════════════════════════╝\n\n${result}`)
+  } catch (e) {
+    console.error('[WRITECREAM ERROR]', e.message)
+    reply('❌ WriteCream AI is currently unavailable. Please try again.')
+  }
+}
+break
+
+case 'chatbotai': {
+  if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
+  try {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+    const result = await _runAI('You are ChatbotAI, a friendly, intelligent and engaging conversational AI assistant. Have natural conversations, answer questions thoughtfully, and be helpful at all times.', text)
+    reply(result)
+  } catch (e) {
+    console.error('[CHATBOTAI ERROR]', e.message)
+    reply('❌ ChatbotAI is currently unavailable. Please try again.')
+  }
 }
 break
 
