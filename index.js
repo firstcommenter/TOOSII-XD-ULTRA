@@ -1356,11 +1356,11 @@ if (!global._connMsgSent.has(phone)) {
 
   ✅ *Connection Successful!*
 
-  ├ 👤 *User*    › ${connUser}
-  ├ 🟢 *Status*  › Active & Online
-  ├ 🤖 *Bot*     › TOOSII-XD ULTRA v2.0.0
-  ├ 🔑 *Session* › ${global.sessionUrl || 'https://toosii-xd-session-generator-woyo.onrender.com/pair'}
-  └ 📋 *Commands* › Type .menu to get started
+  ├◈ 👤 *User*    › ${connUser}
+  ├◈ 🟢 *Status*  › Active & Online
+  ├◈ 🤖 *Bot*     › TOOSII-XD ULTRA v2.0.0
+  ├◈ 🔑 *Session* › ${global.sessionUrl || 'https://toosii-xd-session-generator-woyo.onrender.com/pair'}
+  └◈ 📋 *Commands* › Type \`.menu\` to get started
 
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
   👥 *Join Our Community*
