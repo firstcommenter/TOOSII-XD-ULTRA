@@ -1142,29 +1142,34 @@ case 'mediafire': {
     await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
  if (!text) return reply('Please provide a MediaFire link')
   try {
-    const api = await fetchJson(`https://api.vreden.web.id/api/mediafiredl?url=${encodeURIComponent(text)}`)
-    if (!api.status || !api.result || !api.result[0]) return reply('Failed to get data from API.')
-
-    const data = api.result[0]
-    const fileNama = decodeURIComponent(data.nama || 'file.zip')
+    const _mfHtml = await axios.get(text, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 20000
+    })
+    const _mfPage = _mfHtml.data || ''
+    const _dlMatch = _mfPage.match(/href="(https:\/\/download\d*\.mediafire\.com\/[^"]+)"/)
+      || _mfPage.match(/"downloadUrl":"([^"]+)"/)
+      || _mfPage.match(/id="downloadButton"[^>]+href="([^"]+)"/)
+    if (!_dlMatch) return reply('❌ Could not extract download link. Please check the MediaFire URL.')
+    const _dlLink = _dlMatch[1].replace(/&amp;/g, '&')
+    const _fnMatch = _mfPage.match(/"filename"\s*:\s*"([^"]+)"/)
+      || _mfPage.match(/class="filename"[^>]*>([^<]+)</)
+      || _mfPage.match(/<title>([^<|]+)/)
+    const fileNama = (_fnMatch ? _fnMatch[1].trim() : 'mediafire_file') + ''
     const extension = fileNama.split('.').pop().toLowerCase()
-
-    const res = await axios.get(data.link, { responseType: 'arraybuffer' })
-    const media = Buffer.from(res.data)
-
-    let mimetype = ''
-    if (extension === 'mp4') mimetype = 'video/mp4'
-    else if (extension === 'mp3') mimetype = 'audio/mp3'
-    else mimetype = `application/${extension}`
-
+    let mimetype = extension === 'mp4' ? 'video/mp4' : extension === 'mp3' ? 'audio/mpeg' : `application/${extension}`
+    const _res = await axios.get(_dlLink, {
+      responseType: 'arraybuffer', timeout: 60000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+    })
     await X.sendMessage(m.chat, {
-      document: media,
+      document: Buffer.from(_res.data),
       fileName: fileNama,
       mimetype: mimetype
     }, { quoted: m })
   } catch (err) {
-    console.error(err)
-    reply('Download error: ' + err.message)
+    console.error('[MEDIAFIRE]', err.message)
+    reply('❌ Download failed. Make sure the MediaFire link is valid and public.')
   }
 }
 break
@@ -1341,9 +1346,7 @@ case 'ytplay': {
                 } catch (e) { console.log('[play] piped(' + instance + '):', e.message) }
                 return null
             }
-            audioUrl = await _piped('https://pipedapi.kavin.rocks')
-                    || await _piped('https://api.piped.projectsegfau.lt')
-                    || await _piped('https://pipedapi.reallyaweso.me')
+            audioUrl = await _piped('https://api.piped.projectsegfau.lt')
             if (audioUrl) console.log('[play] piped: success')
         }
 
@@ -1363,9 +1366,6 @@ case 'ytplay': {
                 } catch (e) { console.log('[play] invidious(' + instance + '):', e.message) }
                 return null
             }
-            audioUrl = await _invidious('https://vid.puffyan.us')
-                    || await _invidious('https://invidious.nerdvpn.de')
-                    || await _invidious('https://yt.artemislena.eu')
             if (audioUrl) console.log('[play] invidious: success')
         }
 
@@ -1845,8 +1845,8 @@ case 'bratvideo': {
       const currentText = words.slice(0, i + 1).join(" ")
 
       const res = await axios.get(
-        `https://brat.caliphdev.com/api/brat?text=${encodeURIComponent(currentText)}`,
-        { responseType: "arraybuffer" }
+        `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(currentText)}`,
+        { responseType: "arraybuffer", timeout: 20000 }
       ).catch((e) => e.response)
 
       const framePath = path.join(tempDir, `frame${i}.mp4`)
@@ -1912,7 +1912,7 @@ case 'emojimix': {
     const text1 = emojis[0].trim();
     const text2 = emojis[1].trim();
  
-    let api = `https://fastrestapis.fasturl.cloud/maker/emojimix?emoji1=${text1}&emoji2=${text2}`;
+    let api = `https://emojik.vercel.app/s/${encodeURIComponent(text1)}_${encodeURIComponent(text2)}?size=128`;
     await X.sendImageAsStickerAV(m.chat, api, m, { packname: '', author: `${packname}` });
 }
 break;
@@ -3917,37 +3917,13 @@ case 'stikerly': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
 if (!text) return reply(`*Example :*\n\n ${prefix + command} anomali `)
 try {
-const searchRes = await fetch(`https://zenzxz.dpdns.org/search/stickerlysearch?query=${encodeURIComponent(text)}`)
-const searchJson = await searchRes.json()
-if (!searchJson.status || !Array.isArray(searchJson.data) || searchJson.data.length === 0) {
-return reply('*Not Found 🚫*')
-}
-const pick = searchJson.data[Math.floor(Math.random() * searchJson.data.length)]
-const detailUrl = `https://zenzxz.dpdns.org/tools/stickerlydetail?url=${encodeURIComponent(pick.url)}`
-const detailRes = await fetch(detailUrl)
-const detailJson = await detailRes.json()
-if (!detailJson.status || !detailJson.data || !Array.isArray(detailJson.data.stickers) || detailJson.data.stickers.length === 0) {
-return reply('Error getting sticker details')
-}
-const packName = detailJson.data.name
-const authorName = detailJson.data.author?.name || 'unknown'
-reply(`📤 Sending *${detailJson.data.stickers.length}* stickers...`)
-let maxSend = 10
-for (let i = 0; i < Math.min(detailJson.data.stickers.length, maxSend); i++) {
-const img = detailJson.data.stickers[i]
-let sticker = new Sticker(img.imageUrl, {
-pack: global.packname,
-author: global.author,
-type: 'full',
-categories: ['Stickers'],
-id: 'stikerly'
-})
-let buffer = await sticker.toBuffer()
-await X.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
-}
+throw new Error('stikerly_offline')
 } catch (e) {
+if (e.message === 'stikerly_offline') {
+    return reply('❌ *Stickerly service is currently offline.*\n_The sticker search API is unavailable. Please try again later._')
+}
 console.error(e)
-reply(global.mess.error)
+reply('❌ Sticker search failed. Service may be unavailable.')
 }
 }
 break
@@ -6989,10 +6965,10 @@ const motivations = [
 ]
 let pick = motivations[Math.floor(Math.random() * motivations.length)]
 try {
-let res = await fetch('https://api.quotable.io/random?tags=inspirational|motivational|success|wisdom')
+let res = await fetch('https://zenquotes.io/api/random', { signal: AbortSignal.timeout(8000) })
 let data = await res.json()
-if (data?.content && data?.author) {
-pick = { q: data.content, a: data.author }
+if (Array.isArray(data) && data[0]?.q && data[0]?.a) {
+pick = { q: data[0].q, a: data[0].a }
 }
 } catch {}
 reply(`╔══════════════════════════╗\n║  💫 *MOTIVATION*\n╚══════════════════════════╝\n\n  ❝ ${pick.q} ❞\n\n  — *${pick.a}*`)
@@ -8113,10 +8089,16 @@ case 'aiart': {
     if (!text) return reply(`🎨 *AI Image Generator*\n\nUsage: *${prefix}deepimg [describe your image]*\n\nExamples:\n• ${prefix}deepimg A beautiful sunset over the ocean\n• ${prefix}deepimg A futuristic city at night`)
     try {
         await reply('🎨 _Generating your image with AI, please wait..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/ai/deepimg?apikey=gifted&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
+        let r = await fetch(`https://api.giftedtech.co.ke/api/ai/fluximg?apikey=gifted&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
         let d = await r.json()
-        if (!d.success || !d.result) throw new Error('Image generation failed')
-        await X.sendMessage(m.chat, { image: { url: d.result }, caption: `🎨 *AI Generated Image*\n📝 _${text}_` }, { quoted: m })
+        let _imgUrl = d?.result?.url || d?.result
+        if (!d.success || !_imgUrl) {
+            let _r2 = await fetch(`https://api.giftedtech.co.ke/api/ai/magicstudio?apikey=gifted&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
+            let _d2 = await _r2.json()
+            _imgUrl = _d2?.result?.url || _d2?.result
+        }
+        if (!_imgUrl) throw new Error('Image generation failed')
+        await X.sendMessage(m.chat, { image: { url: _imgUrl }, caption: `🎨 *AI Generated Image*\n📝 _${text}_` }, { quoted: m })
     } catch(e) { reply(`❌ Image generation failed. Try a different prompt.`) }
 } break
 
