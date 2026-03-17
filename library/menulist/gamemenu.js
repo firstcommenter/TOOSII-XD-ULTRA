@@ -7,11 +7,11 @@ const gameMenu = `
   ├◈  \`.trivia\`
   ├◈  \`.answer\`     › [answer]
   ├◈  \`.hangman\`
-  └◈  `.hangmanend
+  └◈  \`.hangmanend\`
 
 ╔══════════════════════════╗
 ║  🎮  *CLASSIC GAMES*
-╚══════════════════════════╝`
+╚══════════════════════════╝
   ├◈  \`.ttt\`        › @user
   ├◈  \`.tictactoe\`  › @user
   ├◈  \`.tttend\`
