@@ -555,11 +555,6 @@ const _adCachePut = (msgs) => {
             if (!_adMsg?.key?.id) continue
             if (_adMsg.key.remoteJid === 'status@broadcast') continue
 
-            // Diagnostic: log every message that flows through (id + content presence)
-            const _hasContent = !!_adMsg.message
-            const _jid = _adMsg.key.remoteJid || '?'
-            console.log(`[AD-PUT] id=${_adMsg.key.id} fromMe=${_adMsg.key.fromMe} jid=${_jid} hasContent=${_hasContent} cacheSize=${global._adCache.size}`)
-
             const _existingEntry = global._adCache.get(_adMsg.key.id)
             // If already cached WITH content — skip (don't overwrite good data with null)
             if (_existingEntry?.msg?.message) continue
@@ -1614,14 +1609,47 @@ X.ev.on('messages.update', async (updates) => {
             try {
                 let deletedMsg = null
 
-                // ── Priority 1: our own anti-delete cache (never wiped by deletion events)
-                // Try both: messageStubParameters[0] AND update.key.id — different Baileys
-                // versions put the deleted-message ID in different places
+                // ── Priority 1: exact ID lookup (works when IDs match)
                 const _altId  = _stubParams[0] !== update.key.id ? update.key.id : null
                 let _cached   = global._adCache?.get(msgId)
                 if (!_cached && _altId) _cached = global._adCache?.get(_altId)
-                if (_cached?.msg?.message) deletedMsg = _cached.msg
-                if (global._adCache) console.log(`[Anti-Delete] cache size=${global._adCache.size} | msgId=${msgId} | altId=${_altId} | found=${!!deletedMsg}`)
+                if (_cached?.msg?.message && !_cached._adConsumed) deletedMsg = _cached.msg
+
+                // ── Priority 1b: JID-based recency search
+                // gifted-baileys REVOKE uses a brand-new ID unrelated to the original msg.
+                // So fall back to: find the most recent un-consumed cached message from the
+                // same chat JID within a 10-minute window.
+                if (!deletedMsg && global._adCache) {
+                    const _revokeJids = [...new Set([chat, resolvedChat, senderJid, resolvedSender].filter(Boolean))]
+                    const _window     = 10 * 60 * 1000  // 10 minutes
+                    const _cutoff     = Date.now() - _window
+                    let   _bestEntry  = null
+                    let   _bestKey    = null
+                    for (const [_eid, _entry] of global._adCache) {
+                        if (_entry._adConsumed) continue
+                        if (!_entry.msg?.message) continue
+                        if (_entry.ts < _cutoff) continue
+                        // Match by remoteJid (direct equality or both after resolving @lid)
+                        const _entryJid = _entry.chatJid || _entry.msg?.key?.remoteJid || ''
+                        const _match = _revokeJids.some(rj =>
+                            rj === _entryJid ||
+                            rj?.split('@')[0] === _entryJid?.split('@')[0]
+                        )
+                        if (!_match) continue
+                        if (!_bestEntry || _entry.ts > _bestEntry.ts) {
+                            _bestEntry = _entry
+                            _bestKey   = _eid
+                        }
+                    }
+                    if (_bestEntry) {
+                        deletedMsg = _bestEntry.msg
+                        // Mark consumed so a second delete in the same chat doesn't reuse it
+                        _bestEntry._adConsumed = true
+                        global._adCache.set(_bestKey, _bestEntry)
+                    }
+                }
+
+                console.log(`[Anti-Delete] cache size=${global._adCache?.size} | msgId=${msgId} | found=${!!deletedMsg} | method=${deletedMsg ? (global._adCache?.get(msgId) ? 'id' : 'jid-recency') : 'none'}`)
 
                 // ── Priority 2: store lookup with multiple JID key variants
                 if (!deletedMsg) {
