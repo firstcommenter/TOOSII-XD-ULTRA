@@ -1244,10 +1244,11 @@ case 'ytplay': {
         let videoAuthor = firstVideo.author?.name || firstVideo.author || 'Unknown Artist'
         let cleanName   = `${videoAuthor} - ${videoTitle}.mp3`.replace(/[<>:"/\\|?*]/g, '')
 
-        let downloaded = false
-        let audioBuffer = null
+        // audioUrl  = remote HTTPS URL  (no RAM usage — baileys streams it)
+        // audioPath = local file path   (no readFileSync — baileys reads via file:// URL)
+        let audioUrl = null, audioPath = null
 
-        // Method 1: loader.to API
+        // Method 1: loader.to — get the download URL, don't buffer it
         try {
             let initRes = await fetch(`https://loader.to/ajax/download.php?format=mp3&url=${encodeURIComponent(firstVideo.url)}`)
             let initData = await initRes.json()
@@ -1258,8 +1259,7 @@ case 'ytplay': {
                     let progRes = await fetch(`https://loader.to/ajax/progress.php?id=${dlId}`)
                     let progData = await progRes.json()
                     if (progData.success === 1 && progData.progress >= 1000 && progData.download_url) {
-                        let buf = await getBuffer(progData.download_url)
-                        if (buf && buf.length > 10000) { audioBuffer = buf; downloaded = true }
+                        audioUrl = progData.download_url  // use URL directly — zero RAM cost
                         break
                     }
                     if (progData.progress < 0) break
@@ -1268,34 +1268,38 @@ case 'ytplay': {
             }
         } catch (e1) { console.log('[play] loader.to:', e1.message) }
 
-        // Method 2: ytdl-core — prefer ~128kbps audio only
-        if (!downloaded) {
+        // Method 2: ytdl-core — write stream to tmp file instead of RAM buffer
+        if (!audioUrl && !audioPath) {
             try {
                 const ytdl = require('@distube/ytdl-core')
                 let info = await ytdl.getInfo(firstVideo.url)
-                // Pick audio-only formats sorted by bitrate ascending so we get the smallest viable file
                 let audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo)
                 audioFormats.sort((a, b) => (a.audioBitrate || 0) - (b.audioBitrate || 0))
-                // Target ~128kbps: find closest format at or above 96kbps
                 let format = audioFormats.find(f => (f.audioBitrate || 0) >= 96) || audioFormats[audioFormats.length - 1]
                 if (!format) format = ytdl.chooseFormat(info.formats, { filter: f => f.hasAudio })
                 if (format) {
-                    let chunks = []
+                    let tmpDir = path.join(__dirname, 'tmp')
+                    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+                    let tmpBase = path.join(tmpDir, `play_${Date.now()}`)
+                    _tmpFile = tmpBase + '.mp3'
                     await new Promise((resolve, reject) => {
-                        let stream = ytdl(firstVideo.url, { format })
-                        stream.on('data', chunk => chunks.push(chunk))
-                        stream.on('end', resolve)
-                        stream.on('error', reject)
-                        setTimeout(() => { stream.destroy(); reject(new Error('timeout')) }, 300000)
+                        let writeStream = fs.createWriteStream(_tmpFile)
+                        let ytStream = ytdl(firstVideo.url, { format })
+                        ytStream.pipe(writeStream)
+                        writeStream.on('finish', resolve)
+                        writeStream.on('error', reject)
+                        ytStream.on('error', reject)
+                        setTimeout(() => { ytStream.destroy(); reject(new Error('timeout')) }, 300000)
                     })
-                    audioBuffer = Buffer.concat(chunks)
-                    if (audioBuffer.length > 10000) downloaded = true
+                    if (fs.existsSync(_tmpFile) && fs.statSync(_tmpFile).size > 10000) {
+                        audioPath = _tmpFile
+                    }
                 }
             } catch (e2) { console.log('[play] ytdl-core:', e2.message) }
         }
 
-        // Method 3: yt-dlp — 128kbps quality, no size limit
-        if (!downloaded) {
+        // Method 3: yt-dlp — saves to file, use path (no readFileSync)
+        if (!audioUrl && !audioPath) {
             try {
                 let tmpDir = path.join(__dirname, 'tmp')
                 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
@@ -1308,33 +1312,29 @@ case 'ytplay': {
                         (err) => err ? reject(err) : resolve()
                     )
                 })
-                // Find actual output file (extension may differ)
                 if (!fs.existsSync(_tmpFile)) {
                     let base = path.basename(tmpBase)
                     let found = fs.readdirSync(tmpDir).find(f => f.startsWith(base))
-                    if (found) _tmpFile = path.join(tmpDir, found)
+                    if (found) { _tmpFile = path.join(tmpDir, found) }
                 }
-                if (fs.existsSync(_tmpFile)) {
-                    audioBuffer = fs.readFileSync(_tmpFile)
-                    if (audioBuffer.length > 10000) downloaded = true
+                if (fs.existsSync(_tmpFile) && fs.statSync(_tmpFile).size > 10000) {
+                    audioPath = _tmpFile
                 }
             } catch (e3) { console.log('[play] yt-dlp:', e3.message) }
         }
 
-        if (downloaded && audioBuffer) {
+        if (audioUrl || audioPath) {
             let thumbBuffer = null
             try { thumbBuffer = await getBuffer(firstVideo.thumbnail) } catch {}
             let songInfo = `🎵 *Now Playing*\n\n📌 *Title:*  ${videoTitle}\n🎤 *Artist:* ${videoAuthor}\n⏱️ *Duration:* ${firstVideo.timestamp}\n👁️ *Views:* ${firstVideo.views?.toLocaleString?.() || firstVideo.views}`
-            // Send everything in one message: thumbnail as preview + song info as caption + audio as document
             let msgPayload = {
-                document: audioBuffer,
+                document: audioUrl ? { url: audioUrl } : { url: `file://${audioPath}` },
                 mimetype: 'audio/mpeg',
                 fileName: cleanName,
                 caption: songInfo
             }
             if (thumbBuffer) msgPayload.jpegThumbnail = thumbBuffer
             await X.sendMessage(m.chat, msgPayload, { quoted: m })
-            audioBuffer = null  // release memory immediately
         } else {
             reply(`🎵 *${videoTitle}*\nArtist: ${videoAuthor}\nDuration: ${firstVideo.timestamp}\n\n⚠️ Audio download failed. Please try again later.`)
         }
