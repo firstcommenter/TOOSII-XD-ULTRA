@@ -1506,7 +1506,7 @@ Examples:
         let _gtd = await _gt.json()
         if (_gtd.success && _gtd.result?.lyrics) {
             _lyrResult = { lyrics: _gtd.result.lyrics, title: _gtd.result.title || _lyrSong, artist: _gtd.result.artist || _lyrArtist, image: _gtd.result.image }
-            _lyrSource = 'GiftedTech'
+            _lyrSource = 'Toosii Tech'
         }
     } catch {}
 
