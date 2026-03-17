@@ -6,11 +6,11 @@ const otherMenu = `
   ├◈  \`.owner\`
   ├◈  \`.botinfo\`
   ├◈  \`.infobot\`
-  └◈  `.infoserver
+  └◈  \`.infoserver\`
 
 ╔══════════════════════════╗
 ║  😄  *FUN & SOCIAL*
-╚══════════════════════════╝`
+╚══════════════════════════╝
   ├◈  \`.advice\`    ├◈  \`.lovemsg\`
   ├◈  \`.gratitude\` ├◈  \`.thankyou\`
   ├◈  \`.friendship\` ├◈  \`.pickupline\`
@@ -38,11 +38,11 @@ const otherMenu = `
   ├◈  \`.kiss\`     › @user
   ├◈  \`.pat\`      › @user
   ├◈  \`.hug\`      › @user
-  └◈  `.facepalm
+  └◈  \`.facepalm\`
 
 ╔══════════════════════════╗
 ║  🖼️  *IMAGE EDIT*
-╚══════════════════════════╝`
+╚══════════════════════════╝
   ├◈  \`.heart\`     › @user
   ├◈  \`.circle\`    › reply img
   ├◈  \`.jail\`      › @user
