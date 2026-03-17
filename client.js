@@ -1235,118 +1235,135 @@ case 'music':
 case 'ytplay': {
     await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
     if (!text) return reply('What song do you want to search for?\n\nExample: .play Juice WRLD Lucid Dreams')
+    const _MAX_DURATION_SEC = 600   // 10 minutes max
+    const _MAX_SIZE_BYTES   = 15 * 1024 * 1024  // 15 MB max
+    let _tmpFile = null
     try {
-        let search = await yts(text);
+        let search = await yts(text)
         if (!search || !search.all || !search.all.length) return reply('No results found.')
-        let firstVideo = search.all.find(v => v.type === 'video') || search.all[0];
-        let videoTitle = firstVideo.title || 'Unknown Title'
+        let firstVideo = search.all.find(v => v.type === 'video') || search.all[0]
+        let videoTitle  = firstVideo.title || 'Unknown Title'
         let videoAuthor = firstVideo.author?.name || firstVideo.author || 'Unknown Artist'
-        let cleanName = `${videoAuthor} - ${videoTitle}.mp3`.replace(/[<>:"/\\|?*]/g, '')
-        let videoId = firstVideo.videoId || firstVideo.url.split('v=')[1]?.split('&')[0]
+        let cleanName   = `${videoAuthor} - ${videoTitle}.mp3`.replace(/[<>:"/\\|?*]/g, '')
+
+        // Duration check — reject anything over 10 minutes
+        let durSec = firstVideo.seconds || 0
+        if (!durSec && firstVideo.timestamp) {
+            let parts = firstVideo.timestamp.split(':').map(Number)
+            durSec = parts.length === 3 ? parts[0]*3600 + parts[1]*60 + parts[2] : parts[0]*60 + (parts[1]||0)
+        }
+        if (durSec > _MAX_DURATION_SEC) {
+            return reply(`⚠️ *Song too long* (${firstVideo.timestamp})\n\nMax allowed: 10 minutes.\nTry searching for a shorter version.`)
+        }
+
+        await reply(`🔍 _Searching: *${videoTitle}*_ (${firstVideo.timestamp})\n_Please wait..._`)
 
         let downloaded = false
         let audioBuffer = null
 
-        // Method 1: loader.to API (tested & working)
+        // Method 1: loader.to API
         try {
             let initRes = await fetch(`https://loader.to/ajax/download.php?format=mp3&url=${encodeURIComponent(firstVideo.url)}`)
             let initData = await initRes.json()
             if (initData.success && initData.id) {
-                let dlId = initData.id
-                let attempts = 0
-                while (attempts < 30) {
+                let dlId = initData.id, attempts = 0
+                while (attempts < 20) {
                     await new Promise(r => setTimeout(r, 3000))
                     let progRes = await fetch(`https://loader.to/ajax/progress.php?id=${dlId}`)
                     let progData = await progRes.json()
                     if (progData.success === 1 && progData.progress >= 1000 && progData.download_url) {
-                        audioBuffer = await getBuffer(progData.download_url)
-                        if (audioBuffer && audioBuffer.length > 10000) downloaded = true
+                        let buf = await getBuffer(progData.download_url)
+                        if (buf && buf.length > 10000 && buf.length <= _MAX_SIZE_BYTES) { audioBuffer = buf; downloaded = true }
                         break
                     }
                     if (progData.progress < 0) break
                     attempts++
                 }
             }
-        } catch (e1) {
-            console.log('loader.to failed:', e1.message)
-        }
+        } catch (e1) { console.log('[play] loader.to:', e1.message) }
 
-        // Method 2: ytdl-core (built-in dependency)
+        // Method 2: ytdl-core — prefer ~128kbps audio only
         if (!downloaded) {
             try {
                 const ytdl = require('@distube/ytdl-core')
                 let info = await ytdl.getInfo(firstVideo.url)
-                let format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio', filter: 'audioonly' })
+                // Pick audio-only formats sorted by bitrate ascending so we get the smallest viable file
+                let audioFormats = info.formats.filter(f => f.hasAudio && !f.hasVideo)
+                audioFormats.sort((a, b) => (a.audioBitrate || 0) - (b.audioBitrate || 0))
+                // Target ~128kbps: find closest format at or above 96kbps
+                let format = audioFormats.find(f => (f.audioBitrate || 0) >= 96) || audioFormats[audioFormats.length - 1]
                 if (!format) format = ytdl.chooseFormat(info.formats, { filter: f => f.hasAudio })
                 if (format) {
-                    let chunks = []
+                    let chunks = [], totalSize = 0, aborted = false
                     await new Promise((resolve, reject) => {
-                        let stream = ytdl(firstVideo.url, { format: format })
-                        stream.on('data', chunk => chunks.push(chunk))
+                        let stream = ytdl(firstVideo.url, { format })
+                        stream.on('data', chunk => {
+                            totalSize += chunk.length
+                            if (totalSize > _MAX_SIZE_BYTES) { aborted = true; stream.destroy(); reject(new Error('size limit exceeded')) }
+                            else chunks.push(chunk)
+                        })
                         stream.on('end', resolve)
                         stream.on('error', reject)
-                        setTimeout(() => { stream.destroy(); reject(new Error('timeout')) }, 120000)
+                        setTimeout(() => { stream.destroy(); reject(new Error('timeout')) }, 90000)
                     })
-                    audioBuffer = Buffer.concat(chunks)
-                    if (audioBuffer.length > 10000) downloaded = true
+                    if (!aborted) {
+                        audioBuffer = Buffer.concat(chunks)
+                        if (audioBuffer.length > 10000) downloaded = true
+                    }
                 }
-            } catch (e2) {
-                console.log('ytdl-core failed:', e2.message)
-            }
+            } catch (e2) { console.log('[play] ytdl-core:', e2.message) }
         }
 
-        // Method 3: yt-dlp binary fallback
+        // Method 3: yt-dlp — 128kbps quality, 15MB cap
         if (!downloaded) {
             try {
                 let tmpDir = path.join(__dirname, 'tmp')
                 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-                let tmpFile = path.join(tmpDir, `play_${Date.now()}.mp3`)
-                let tmpBase = tmpFile.replace('.mp3', '')
+                let tmpBase = path.join(tmpDir, `play_${Date.now()}`)
+                _tmpFile = tmpBase + '.mp3'
                 await new Promise((resolve, reject) => {
-                    exec(`yt-dlp -x --audio-format mp3 --audio-quality 0 --no-playlist --max-filesize 50M -o "${tmpBase}.%(ext)s" "${firstVideo.url}"`, { timeout: 120000 }, (err) => {
-                        if (err) reject(err)
-                        else resolve()
-                    })
+                    exec(
+                        `yt-dlp -x --audio-format mp3 --audio-quality 5 --no-playlist --max-filesize 15M -o "${tmpBase}.%(ext)s" "${firstVideo.url}"`,
+                        { timeout: 90000 },
+                        (err) => err ? reject(err) : resolve()
+                    )
                 })
-                if (!fs.existsSync(tmpFile)) {
-                    let baseName = path.basename(tmpBase)
-                    let candidates = fs.readdirSync(tmpDir).filter(f => f.startsWith(baseName))
-                    if (candidates.length > 0) tmpFile = path.join(tmpDir, candidates[0])
+                // Find actual output file (extension may differ)
+                if (!fs.existsSync(_tmpFile)) {
+                    let base = path.basename(tmpBase)
+                    let found = fs.readdirSync(tmpDir).find(f => f.startsWith(base))
+                    if (found) _tmpFile = path.join(tmpDir, found)
                 }
-                if (fs.existsSync(tmpFile)) {
-                    audioBuffer = fs.readFileSync(tmpFile)
-                    if (audioBuffer.length > 10000) downloaded = true
-                    try { fs.unlinkSync(tmpFile) } catch(e) {}
+                if (fs.existsSync(_tmpFile)) {
+                    let stat = fs.statSync(_tmpFile)
+                    if (stat.size <= _MAX_SIZE_BYTES) {
+                        audioBuffer = fs.readFileSync(_tmpFile)
+                        if (audioBuffer.length > 10000) downloaded = true
+                    }
                 }
-            } catch (e3) {
-                console.log('yt-dlp failed:', e3.message)
-            }
+            } catch (e3) { console.log('[play] yt-dlp:', e3.message) }
         }
 
         if (downloaded && audioBuffer) {
             let thumbBuffer = null
             try { thumbBuffer = await getBuffer(firstVideo.thumbnail) } catch {}
-            let songInfo = `🎵 *Now Playing*\n\n`
-            songInfo += `📌 *Title:* ${videoTitle}\n`
-            songInfo += `🎤 *Artist:* ${videoAuthor}\n`
-            songInfo += `⏱️ *Duration:* ${firstVideo.timestamp}\n`
-            songInfo += `👁️ *Views:* ${firstVideo.views}`
+            let songInfo = `🎵 *Now Playing*\n\n📌 *Title:*  ${videoTitle}\n🎤 *Artist:* ${videoAuthor}\n⏱️ *Duration:* ${firstVideo.timestamp}\n👁️ *Views:* ${firstVideo.views?.toLocaleString?.() || firstVideo.views}`
             if (thumbBuffer) {
                 await X.sendMessage(m.chat, { image: thumbBuffer, caption: songInfo }, { quoted: m })
             } else {
                 await X.sendMessage(m.chat, { text: songInfo }, { quoted: m })
             }
-            await X.sendMessage(m.chat, {
-                document: audioBuffer,
-                mimetype: 'audio/mpeg',
-                fileName: cleanName
-            }, { quoted: m })
+            await X.sendMessage(m.chat, { audio: audioBuffer, mimetype: 'audio/mpeg', ptt: false, fileName: cleanName }, { quoted: m })
+            audioBuffer = null  // release memory immediately
         } else {
             reply(`🎵 *${videoTitle}*\nArtist: ${videoAuthor}\nDuration: ${firstVideo.timestamp}\n\n⚠️ Audio download failed. Please try again later.`)
         }
     } catch (e) {
-        console.log(e)
-        reply('An error occurred while searching. Please try again.')
+        console.log('[play] error:', e.message)
+        reply('An error occurred while processing. Please try again.')
+    } finally {
+        // Always clean up tmp file
+        if (_tmpFile && fs.existsSync(_tmpFile)) { try { fs.unlinkSync(_tmpFile) } catch {} }
     }
 }
 break;
