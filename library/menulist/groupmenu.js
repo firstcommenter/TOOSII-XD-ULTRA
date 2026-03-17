@@ -17,11 +17,11 @@ const groupMenu = `
   ├◈  \`.reject\`     › [all/number]
   ├◈  \`.delete\`     › reply msg
   ├◈  \`.mute\`  ├◈  \`.unmute\`
-  └◈  \`.open\`  └◈  `.close
+  └◈  \`.open\`  └◈  \`.close\`
 
 ╔══════════════════════════╗
 ║  ⚙️  *GROUP SETTINGS*
-╚══════════════════════════╝`
+╚══════════════════════════╝
   ├◈  \`.setgname\` › [name]
   ├◈  \`.setgdesc\` › [desc]
   ├◈  \`.setgpp\`   › reply img
@@ -56,5 +56,5 @@ const groupMenu = `
   ├◈  \`.vcf\`
   ├◈  \`.leave\`
   └◈  \`.clear\`
-
-module.exports = groupMenu`
+`
+module.exports = groupMenu
