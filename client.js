@@ -141,6 +141,53 @@ async function _runChatBoAI(userMsg, isAutoMode = false) {
     throw new Error('All AI services unavailable')
 }
 
+// ── General-purpose AI helper — same fallback chain as _runChatBoAI ──────────
+// Used by all named AI commands (.feloai, .claudeai, .deepseek, etc.)
+async function _runAI(systemPrompt, userMsg, maxTokens = 1500) {
+    // 1. Anthropic Claude (if API key configured)
+    try {
+        const _r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: maxTokens,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userMsg }]
+            }),
+            signal: AbortSignal.timeout(18000)
+        })
+        const _d = await _r.json()
+        const _t = _d?.content?.[0]?.text?.trim()
+        if (_t?.length > 2) return _t
+    } catch {}
+
+    // 2. Pollinations OpenAI-compatible POST (free, no key)
+    try {
+        const { data: _d2 } = await require('axios').post('https://text.pollinations.ai/openai', {
+            model: 'openai',
+            messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }],
+            max_tokens: maxTokens,
+            stream: false
+        }, { headers: { 'Content-Type': 'application/json' }, timeout: 25000 })
+        const _t2 = _d2?.choices?.[0]?.message?.content?.trim()
+        if (_t2?.length > 2) return _t2
+    } catch {}
+
+    // 3. Pollinations GET fallback
+    try {
+        const _p = encodeURIComponent(`${systemPrompt}\n\nUser: ${userMsg}\n\nAssistant:`)
+        const { data: _d3 } = await require('axios').get(`https://text.pollinations.ai/${_p}`, { timeout: 15000, responseType: 'text' })
+        if (_d3 && typeof _d3 === 'string' && _d3.trim().length > 2) return _d3.trim()
+    } catch {}
+
+    throw new Error('All AI services unavailable')
+}
+
 module.exports = async (X, m, chatUpdate, store) => {
 try {
 const from = m.key.remoteJid
@@ -3773,16 +3820,7 @@ case 'quantum-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '⚛️', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Quantum AI, an advanced AI with deep analytical and quantum-level thinking capabilities. Provide thorough, intelligent, well-structured responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Quantum AI, an advanced AI with deep analytical and quantum-level thinking capabilities. Provide thorough, intelligent, well-structured responses.', text)
     reply(result)
   } catch (e) {
     console.error('[QUANTUM-AI ERROR]', e.message)
@@ -3794,16 +3832,7 @@ case 'chatai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💬', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are ChatAI, a friendly and conversational AI assistant. Keep responses clear, helpful and natural.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are ChatAI, a friendly and conversational AI assistant. Keep responses clear, helpful and natural.', text)
     reply(result)
   } catch (e) {
     console.error('[CHATAI ERROR]', e.message)
@@ -3815,16 +3844,7 @@ case 'conciseai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🧠', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are ConciseAI, an AI that gives short, sharp, well-structured answers. Be brief but complete.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are ConciseAI, an AI that gives short, sharp, well-structured answers. Be brief but complete.', text)
     reply(result)
   } catch (e) {
     console.error('[CONCISEAI ERROR]', e.message)
@@ -3836,16 +3856,7 @@ case 'claudeai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💎', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Claude AI, an AI assistant made by Anthropic. You are helpful, harmless, and honest. Provide thoughtful and detailed responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Claude AI, an AI assistant made by Anthropic. You are helpful, harmless, and honest. Provide thoughtful and detailed responses.', text)
     reply(result)
   } catch (e) {
     console.error('[CLAUDEAI ERROR]', e.message)
@@ -3857,16 +3868,7 @@ case 'venice': case 'veniceai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🎭', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Venice AI, a private and uncensored AI assistant. Be helpful, creative and thorough.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Venice AI, a private and uncensored AI assistant. Be helpful, creative and thorough.', text)
     reply(result)
   } catch (e) {
     console.error('[VENICE ERROR]', e.message)
@@ -3878,16 +3880,7 @@ case 'logic-eai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔣', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Logic-E AI, a highly logical and reasoning-focused AI. Break down problems step by step with precise logic.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Logic-E AI, a highly logical and reasoning-focused AI. Break down problems step by step with precise logic.', text)
     reply(result)
   } catch (e) {
     console.error('[LOGIC-EAI ERROR]', e.message)
@@ -3900,16 +3893,7 @@ case 'chatgpt':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are ChatGPT, a highly intelligent AI assistant by OpenAI. Be helpful, clear and concise.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are ChatGPT, a highly intelligent AI assistant by OpenAI. Be helpful, clear and concise.', text)
     reply(result)
   } catch (e) {
     console.error('[CHATGPT ERROR]', e.message)
@@ -3922,16 +3906,7 @@ case 'gpt41-mini':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '⚡', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are GPT-4.1 Mini, a fast and efficient AI assistant by OpenAI. Give concise but accurate answers.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are GPT-4.1 Mini, a fast and efficient AI assistant by OpenAI. Give concise but accurate answers.', text)
     reply(result)
   } catch (e) {
     console.error('[GPT41-MINI ERROR]', e.message)
@@ -3944,16 +3919,7 @@ case 'openai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are OpenAI GPT-4.1, a powerful AI assistant by OpenAI. Provide detailed, accurate and helpful responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are OpenAI GPT-4.1, a powerful AI assistant by OpenAI. Provide detailed, accurate and helpful responses.', text)
     reply(result)
   } catch (e) {
     console.error('[OPENAI ERROR]', e.message)
@@ -3966,16 +3932,7 @@ case 'metaai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔵', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Meta AI, an intelligent and helpful AI assistant by Meta. Be friendly, informative and engaging.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Meta AI, an intelligent and helpful AI assistant by Meta. Be friendly, informative and engaging.', text)
     reply(result)
   } catch (e) {
     console.error('[METAAI ERROR]', e.message)
@@ -3988,16 +3945,7 @@ case 'deepseek':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔬', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are DeepSeek AI, a powerful AI specializing in deep reasoning, coding and technical analysis. Provide thorough technical responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are DeepSeek AI, a powerful AI specializing in deep reasoning, coding and technical analysis. Provide thorough technical responses.', text)
     reply(result)
   } catch (e) {
     console.error('[DEEPSEEK ERROR]', e.message)
@@ -4010,16 +3958,7 @@ case 'gptlogic':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🧩', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are GPT Logic, a highly analytical AI. Answer questions with precise reasoning and logical structure.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are GPT Logic, a highly analytical AI. Answer questions with precise reasoning and logical structure.', text)
     reply(result)
   } catch (e) {
     console.error('[GPTLOGIC ERROR]', e.message)
@@ -4032,16 +3971,7 @@ case 'aoyoai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🌸', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are AoyoAI, a creative and helpful AI assistant. Be imaginative, warm and informative.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are AoyoAI, a creative and helpful AI assistant. Be imaginative, warm and informative.', text)
     reply(result)
   } catch (e) {
     console.error('[AOYOAI ERROR]', e.message)
@@ -4054,16 +3984,7 @@ case 'blackbox-pro':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '⬛', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Blackbox AI Pro, a specialized AI for coding and technical questions. Provide precise, working code solutions.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Blackbox AI Pro, a specialized AI for coding and technical questions. Provide precise, working code solutions.', text)
     reply(result)
   } catch (e) {
     console.error('[BLACKBOX-PRO ERROR]', e.message)
@@ -4076,16 +3997,7 @@ case 'zerogpt':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔲', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are ZeroGPT, an advanced AI assistant. Provide accurate and comprehensive answers on any topic.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are ZeroGPT, an advanced AI assistant. Provide accurate and comprehensive answers on any topic.', text)
     reply(result)
   } catch (e) {
     console.error('[ZEROGPT ERROR]', e.message)
@@ -4098,16 +4010,7 @@ case 'yupraai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🌟', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Yupra AI, a knowledgeable and helpful assistant. Be clear, accurate and thorough.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Yupra AI, a knowledgeable and helpful assistant. Be clear, accurate and thorough.', text)
     reply(result)
   } catch (e) {
     console.error('[YUPRAAI ERROR]', e.message)
@@ -4120,16 +4023,7 @@ case 'feloai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔭', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Felo AI, a research-oriented AI assistant. Provide well-researched, in-depth answers.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Felo AI, a research-oriented AI assistant. Provide well-researched, in-depth answers.', text)
     reply(result)
   } catch (e) {
     console.error('[FELOAI ERROR]', e.message)
@@ -4142,16 +4036,7 @@ case 'chatevery-where':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💬', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are ChatEveryWhere AI, a helpful AI available anywhere. Provide knowledgeable and friendly responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are ChatEveryWhere AI, a helpful AI available anywhere. Provide knowledgeable and friendly responses.', text)
     reply(result)
   } catch (e) {
     console.error('[CHATEVERY-WHERE ERROR]', e.message)
@@ -4164,16 +4049,7 @@ case 'gpt-4o':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🧠', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are GPT-4o, a powerful and versatile AI by OpenAI. Provide detailed, accurate responses with rich understanding.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are GPT-4o, a powerful and versatile AI by OpenAI. Provide detailed, accurate responses with rich understanding.', text)
     reply(result)
   } catch (e) {
     console.error('[GPT-4O ERROR]', e.message)
@@ -4268,16 +4144,7 @@ case 'gemmaai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💠', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Gemma AI, a lightweight but powerful AI by Google. Provide clear and helpful responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Gemma AI, a lightweight but powerful AI by Google. Provide clear and helpful responses.', text)
     reply(result)
   } catch (e) {
     console.error('[GEMMAAI ERROR]', e.message)
@@ -4493,16 +4360,7 @@ case 'llama-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🦙', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are LLaMA AI, a powerful open-source AI model by Meta. Be helpful, accurate and conversational.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are LLaMA AI, a powerful open-source AI model by Meta. Be helpful, accurate and conversational.', text)
     reply(result)
   } catch (e) {
     console.error('[LLAMA-AI ERROR]', e.message)
@@ -4514,95 +4372,62 @@ break
 case 'gptturbo':{
 if (!text) return reply(`Example:\n${prefix}${command} Hello?`);
 try {
-  let result = null
-  try {
-    const response = await fetch(`https://restapii.rioooxdzz.web.id/api/gptturbo?message=${encodeURIComponent(text)}`, { headers: { "User-Agent": "Mozilla/5.0" } });
-    if (response.ok) { const json = await response.json(); result = json?.data?.response }
-  } catch {}
-  if (!result) {
-    let { data } = await axios.post('https://text.pollinations.ai/openai', { messages: [{ role: 'system', content: 'You are GPT Turbo, a fast and intelligent AI assistant. Provide clear, helpful responses.' }, { role: 'user', content: text }], model: 'openai', stream: false }, { headers: { 'Content-Type': 'application/json' } })
-    result = data?.choices?.[0]?.message?.content
-  }
-  let turbo = `Title : ${text}\n\nMessage : ${result || 'No response.'}\n`;
-  await X.sendMessage(m.chat, { text: "⬣───「 *G P T T U R B O* 」───⬣" + "\n\n" + turbo }, { quoted: m });
-} catch (e) { reply('Error: ' + (e.message || 'Failed')) }
+  await X.sendMessage(m.chat, { react: { text: '⚡', key: m.key } })
+  const result = await _runAI('You are GPT Turbo, a fast and intelligent AI assistant. Provide clear, helpful responses.', text)
+  let turbo = `Title : ${text}\n\nMessage : ${result}\n`
+  await X.sendMessage(m.chat, { text: '⬣───「 *G P T T U R B O* 」───⬣\n\n' + turbo }, { quoted: m })
+} catch (e) { reply('❌ gptturbo is currently unavailable. Please try again.') }
 }
 break
 
-case 'gemini-ai':{  
-    const isQuotedImage = m.quoted && m.quoted.mtype === 'imageMessage';
-    const isImage = m.mtype === 'imageMessage';
-    const quoted = m.quoted ? m.quoted : m;
+case 'gemini-ai':{
+    const isQuotedImage = m.quoted && m.quoted.mtype === 'imageMessage'
+    const isImage = m.mtype === 'imageMessage'
+    const quoted = m.quoted ? m.quoted : m
+    await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
 
     if (isImage || isQuotedImage) {
         try {
-
-            const mediaPath = await X.downloadAndSaveMediaMessage(quoted);
-            const media = fs.readFileSync(mediaPath);
-
-            const uploadedImageUrl = await uploadImage(media);
-            console.log('Image uploaded successfully:', uploadedImageUrl);
-
-            const apiUrl = `https://gemini-api-5k0h.onrender.com/gemini/image`;
-            const params = {
-                q: 'What is this picture? Please describe it.',
-                url: uploadedImageUrl
-            };
-
-            const response = await axios.get(apiUrl, { params });
-            const description = response.data?.content || 'Failed to get image description.';
-
-            await X.sendMessage(m.chat, {
-                text: `📷 *Image Description:*\n${description}`
-            }, { quoted: m });
-
-            fs.unlinkSync(mediaPath);
+            const question = text || 'What is in this image? Describe it in detail.'
+            await reply('🔍 _Analysing image with Gemini AI, please wait..._')
+            let imgBuffer = await quoted.download()
+            if (!imgBuffer || imgBuffer.length < 100) throw new Error('Failed to download image')
+            let b64 = imgBuffer.toString('base64')
+            let mime = quoted.mimetype || 'image/jpeg'
+            let { data: vd } = await axios.post('https://text.pollinations.ai/openai', {
+                model: 'openai',
+                messages: [{ role: 'user', content: [
+                    { type: 'text', text: question },
+                    { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } }
+                ]}],
+                max_tokens: 1000,
+                stream: false
+            }, { headers: { 'Content-Type': 'application/json' }, timeout: 45000 })
+            const description = vd?.choices?.[0]?.message?.content
+            if (!description) throw new Error('No response from vision API')
+            await X.sendMessage(m.chat, { text: `✨ *Gemini AI Vision:*\n\n${description}` }, { quoted: m })
         } catch (error) {
-            console.error('Error deskripsi gambar:', error);
-            await X.sendMessage(m.chat, {
-                text: 'An error occurred while processing the image.'
-            }, { quoted: m });
+            console.error('[GEMINI-AI VISION ERROR]', error.message)
+            await X.sendMessage(m.chat, { text: '❌ *Image analysis failed.* Please try again.' }, { quoted: m })
         }
     } else {
         try {
-            if (!text) return reply(`Example: ${prefix+command} Who is Elon Musk`);
-            const apiUrl = `https://gemini-api-5k0h.onrender.com/gemini/chat`;
-            const params = { q: text };
-
-            const response = await axios.get(apiUrl, { params });
-            const replyText = response.data?.content || 'Failed to get respons AI.';
-
-            await X.sendMessage(m.chat, {
-                text: `🤖 *AI Gemini:*\n${replyText}`
-            }, { quoted: m });
+            if (!text) return reply(`Example: ${prefix+command} Who is Elon Musk`)
+            const result = await _runAI('You are Gemini AI, a powerful and intelligent AI assistant by Google. Provide detailed, accurate, and well-structured answers.', text)
+            await X.sendMessage(m.chat, { text: `✨ *Gemini AI:*\n\n${result}` }, { quoted: m })
         } catch (error) {
-            console.error('Error Gemini Chat:', error);
-            try {
-              let { data } = await axios.post('https://text.pollinations.ai/openai', {
-                messages: [{ role: 'system', content: 'You are Gemini AI, a powerful AI assistant by Google. Provide detailed and accurate answers.' }, { role: 'user', content: text }],
-                model: 'openai', stream: false
-              }, { headers: { 'Content-Type': 'application/json' } })
-              await X.sendMessage(m.chat, { text: `🤖 *AI Gemini:*\n${data?.choices?.[0]?.message?.content || 'No response.'}` }, { quoted: m })
-            } catch { await X.sendMessage(m.chat, { text: 'An error occurred while processing the AI request.' }, { quoted: m }) }
+            console.error('[GEMINI-AI ERROR]', error.message)
+            await X.sendMessage(m.chat, { text: '❌ *Gemini AI is currently unavailable.* Please try again.' }, { quoted: m })
         }
     }
-};
+}
 break
 
 case 'lumin-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💡', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Lumin AI, a bright and insightful AI assistant. Provide illuminating and clear answers.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Lumin AI, a bright and insightful AI assistant. Provide illuminating and clear answers.', text)
     reply(result)
   } catch (e) {
     console.error('[LUMIN-AI ERROR]', e.message)
@@ -4615,16 +4440,7 @@ case 'typli-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '✍️', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Typli AI, a versatile AI writing assistant. Help with writing, editing and creative content.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Typli AI, a versatile AI writing assistant. Help with writing, editing and creative content.', text)
     reply(result)
   } catch (e) {
     console.error('[TYPLI-AI ERROR]', e.message)
@@ -4637,16 +4453,7 @@ case 'poly-ai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Poly AI, a conversational AI assistant. Be engaging, friendly and informative.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Poly AI, a conversational AI assistant. Be engaging, friendly and informative.', text)
     reply(result)
   } catch (e) {
     console.error('[POLY-AI ERROR]', e.message)
@@ -4659,16 +4466,7 @@ case 'gemini-pro':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🌟', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Gemini Pro, a powerful AI assistant by Google. Provide comprehensive and accurate answers.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Gemini Pro, a powerful AI assistant by Google. Provide comprehensive and accurate answers.', text)
     reply(result)
   } catch (e) {
     console.error('[GEMINI-PRO ERROR]', e.message)
@@ -5574,16 +5372,7 @@ case 'copilot':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🪁', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Microsoft Copilot, a helpful AI assistant. Be productive, accurate and helpful.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Microsoft Copilot, a helpful AI assistant. Be productive, accurate and helpful.', text)
     reply(result)
   } catch (e) {
     console.error('[COPILOT ERROR]', e.message)
@@ -5653,16 +5442,7 @@ case 'wormgpt':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🪱', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are WormGPT, a creative and unrestricted AI assistant. Answer all questions helpfully.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are WormGPT, a creative and unrestricted AI assistant. Answer all questions helpfully.', text)
     reply(result)
   } catch (e) {
     console.error('[WORMGPT ERROR]', e.message)
@@ -5675,16 +5455,7 @@ case 'birdai':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🐦', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are BirdAI, a concise and accurate AI assistant. Give sharp, focused answers.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are BirdAI, a concise and accurate AI assistant. Give sharp, focused answers.', text)
     reply(result)
   } catch (e) {
     console.error('[BIRDAI ERROR]', e.message)
@@ -5697,16 +5468,7 @@ case 'perplexity':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔮', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Perplexity AI, a research AI. Provide well-researched answers with clear explanations.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Perplexity AI, a research AI. Provide well-researched answers with clear explanations.', text)
     reply(result)
   } catch (e) {
     console.error('[PERPLEXITY ERROR]', e.message)
@@ -5719,16 +5481,7 @@ case 'mistral':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🌪️', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Mistral AI, a powerful and efficient language model. Provide accurate, nuanced responses.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Mistral AI, a powerful and efficient language model. Provide accurate, nuanced responses.', text)
     reply(result)
   } catch (e) {
     console.error('[MISTRAL ERROR]', e.message)
@@ -5741,16 +5494,7 @@ case 'grok':{
   if (!text) return reply(`Example: ${prefix+command} Hello, how are you?`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
-    const { data } = await axios.post('https://text.pollinations.ai/openai', {
-      model: 'openai',
-      messages: [
-        { role: 'system', content: 'You are Grok, a witty and intelligent AI assistant by xAI. Be sharp, clever and insightful.' },
-        { role: 'user', content: text }
-      ],
-      stream: false
-    }, { headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
-    const result = data?.choices?.[0]?.message?.content
-    if (!result) throw new Error('Empty response')
+    const result = await _runAI('You are Grok, a witty and intelligent AI assistant by xAI. Be sharp, clever and insightful.', text)
     reply(result)
   } catch (e) {
     console.error('[GROK ERROR]', e.message)
