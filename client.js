@@ -1021,8 +1021,19 @@ const textmakerMenu = `
 
   let fullMenu = `${infoBot}\n${menu}`;
 
-  let _thumbBuf = null;
-  try { _thumbBuf = fs.readFileSync(path.join(__dirname, 'media', 'thumb.png')); } catch {}
+  // Resolve thumbnail — honour .menuimage setting, fall back to media/thumb.png
+  let _thumbBuf = null
+  try {
+    const _mt = global.menuThumb
+    if (_mt) {
+      if (/^https?:\/\//.test(_mt)) {
+        _thumbBuf = await getBuffer(_mt).catch(() => null)
+      } else if (fs.existsSync(_mt)) {
+        _thumbBuf = fs.readFileSync(_mt)
+      }
+    }
+    if (!_thumbBuf) _thumbBuf = fs.readFileSync(path.join(__dirname, 'media', 'thumb.png'))
+  } catch {}
 
   await X.sendMessage(
     m.chat,
