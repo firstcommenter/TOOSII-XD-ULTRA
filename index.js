@@ -1649,326 +1649,252 @@ X.ev.on('call', async (callData) => {
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Anti-Delete Handler
-X.ev.on('messages.update', async (updates) => {
-    const _adEnabled = global.adState ? (global.adState.gc?.enabled || global.adState.pm?.enabled) : global.antiDelete
+// ── Anti-Delete helpers (ported from attached code, adapted for gifted-baileys) ──
+
+  // Ensure tmp dir exists
+  const _AD_TMP = path.join(__dirname, 'tmp')
+  if (!fs.existsSync(_AD_TMP)) fs.mkdirSync(_AD_TMP, { recursive: true })
+
+  // Download media message to disk → returns file path or null
+  const _dlMedia = async (msgObj, type, fileName) => {
+      try {
+          const _stream = await downloadContentFromMessage(msgObj, type)
+          const _chunks = []; for await (const _c of _stream) _chunks.push(_c)
+          const _buf = Buffer.concat(_chunks)
+          if (!_buf.length) return null
+          const _fp = path.join(_AD_TMP, fileName)
+          fs.writeFileSync(_fp, _buf)
+          return _fp
+      } catch { return null }
+  }
+
+  // Get notification destinations based on gc/pm config
+  const _adGetTargets = (chatJid) => {
+      const _ownerJid = X.user.id.split(':')[0] + '@s.whatsapp.net'
+      const _isGrp = chatJid.endsWith('@g.us')
+      const _cfg = global.adState
+          ? (_isGrp ? global.adState.gc : global.adState.pm)
+          : { enabled: global.antiDelete, mode: global.antiDeleteMode === 'public' ? 'chat' : 'private' }
+      if (!_cfg?.enabled) return []
+      const _mode = _cfg.mode || 'private'
+      const _targets = []
+      if (_mode === 'private' || _mode === 'both') _targets.push(_ownerJid)
+      if ((_mode === 'chat' || _mode === 'both') && chatJid !== _ownerJid) _targets.push(chatJid)
+      if (_targets.length === 0) _targets.push(_ownerJid)
+      return _targets
+  }
+
+  // Download media when messages arrive → store path in cache
+  X.ev.on('messages.upsert', async ({ messages: _uMsgs }) => {
+      for (const _um of (_uMsgs || [])) {
+          try {
+              if (!_um?.key?.id || _um.key.remoteJid === 'status@broadcast') continue
+              const _entry = global._adCache?.get(_um.key.id)
+              if (!_entry || _entry._mediaPath || !_um.message) continue
+              const _msg = _um.message
+              if (_msg.protocolMessage || _msg.senderKeyDistributionMessage) continue
+              let _mPath = null, _mType = null
+              const _ts = Date.now()
+              if (_msg.imageMessage) {
+                  _mType = 'image'; _mPath = await _dlMedia(_msg.imageMessage, 'image', `${_ts}_${_um.key.id}.jpg`)
+              } else if (_msg.videoMessage) {
+                  _mType = 'video'; _mPath = await _dlMedia(_msg.videoMessage, 'video', `${_ts}_${_um.key.id}.mp4`)
+              } else if (_msg.audioMessage) {
+                  const _ext = _msg.audioMessage.mimetype?.includes('ogg') ? 'ogg' : 'mp3'
+                  _mType = 'audio'; _mPath = await _dlMedia(_msg.audioMessage, 'audio', `${_ts}_${_um.key.id}.${_ext}`)
+              } else if (_msg.documentMessage) {
+                  _mType = 'document'; _mPath = await _dlMedia(_msg.documentMessage, 'document', `${_ts}_${_um.key.id}_${_msg.documentMessage.fileName || 'file'}`)
+              } else if (_msg.stickerMessage) {
+                  _mType = 'sticker'; _mPath = await _dlMedia(_msg.stickerMessage, 'sticker', `${_ts}_${_um.key.id}.webp`)
+              }
+              if (_mPath) {
+                  _entry._mediaPath = _mPath
+                  _entry._mediaType = _mType
+                  global._adCache.set(_um.key.id, _entry)
+              }
+          } catch {}
+      }
+  })
+
+  // Anti-Delete: intercept revoked messages
+  X.ev.on('messages.update', async (updates) => {
+      const _adEnabled = global.adState ? (global.adState.gc?.enabled || global.adState.pm?.enabled) : global.antiDelete
       if (!_adEnabled) return
-    try {
-        let botJid = X.decodeJid(X.user.id)
-        let selfJid = botJid.replace(/:.*@/, '@')
+      try {
+          const _botJid  = X.decodeJid(X.user.id)
+          const _selfJid = _botJid.replace(/:.*@/, '@')
+          const _botPhone = _selfJid.split('@')[0].replace(/\D/g, '')
 
-        // Resolve @lid to real @s.whatsapp.net via store contacts map
-        const _resolveJid = (jid) => {
-            if (!jid) return jid
-            if (!jid.endsWith('@lid')) return jid
-            if (store?.contacts) {
-                // store.contacts may be Map or plain object
-                const _entries = typeof store.contacts.entries === 'function'
-                    ? store.contacts.entries()
-                    : Object.entries(store.contacts)
-                for (const [realJid, contact] of _entries) {
-                    if (!contact) continue
-                    if (contact.lid === jid || contact.id === jid) return realJid
-                }
-            }
-            // fallback: strip @lid suffix, keep the number only
-            return jid.split(':')[0].split('@')[0]
-        }
+          for (const update of updates) {
+              if (!update.update) continue
+              const _stubType = update.update.messageStubType
+              const _isRevoke = _stubType === 1 ||
+                  (proto?.WebMessageInfo?.StubType?.REVOKE && _stubType === proto.WebMessageInfo.StubType.REVOKE)
+              if (!_isRevoke) continue
 
-        for (let update of updates) {
-            if (!update.update) continue
-            const stubType = update.update.messageStubType
-            const isRevoke = stubType === 1 ||
-                (proto?.WebMessageInfo?.StubType?.REVOKE && stubType === proto.WebMessageInfo.StubType.REVOKE)
-            if (!isRevoke) continue
+              const _chatJid   = update.key.remoteJid
+              if (!_chatJid || _chatJid === 'status@broadcast') continue
 
-            // Full diagnostic dump of the raw REVOKE update
-            console.log('[AD-REVOKE] raw:', JSON.stringify({
-                keyId: update.key?.id,
-                remoteJid: update.key?.remoteJid,
-                fromMe: update.key?.fromMe,
-                participant: update.key?.participant,
-                stubType: update.update?.messageStubType,
-                stubParams: update.update?.messageStubParameters,
-                hasMsg: !!update.update?.message
-            }))
+              const _deleterJid   = update.key.participant || update.key.remoteJid
+              const _deleterPhone = (_deleterJid || '').split('@')[0].split(':')[0].replace(/\D/g, '')
+              if (_deleterPhone === _botPhone) continue  // bot deleted it — skip
 
-            let chat      = update.key.remoteJid
-            let senderJid = update.key.participant || update.key.remoteJid
+              const _stubParams = update.update?.messageStubParameters || []
+              const _msgId = _stubParams[0] || update.key.id
 
-            // Skip status@broadcast — those are story deletions, not chat deletions
-            if (!chat || chat === 'status@broadcast') continue
+              const _targets = _adGetTargets(_chatJid)
+              if (!_targets.length) continue
 
-            // The deleted message ID may be in messageStubParameters[0] (the original msg)
-            // update.key.id is the REVOKE notification's own ID — different from the deleted msg
-            const _stubParams = update.update?.messageStubParameters || []
-            const msgId = _stubParams[0] || update.key.id
+              const _fmtTime = (ms) => new Date(ms).toLocaleString('en-US', {
+                  month: '2-digit', day: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit', hour12: true
+              })
 
-            // Resolve @lid JIDs
-            let resolvedSender = _resolveJid(senderJid)
-            let resolvedChat   = _resolveJid(chat)
+              try {
+                  // ── Look up cached message ──────────────────────────────────────
+                  const _isProto = (m) => !!(m?.message?.protocolMessage || m?.message?.senderKeyDistributionMessage)
+                  let _entry = global._adCache?.get(_msgId)
+                  const _altId = _stubParams[0] !== update.key.id ? update.key.id : null
+                  if (!_entry && _altId) _entry = global._adCache?.get(_altId)
 
-            // Skip if the bot itself deleted the message
-            const _botNums = [botJid, selfJid, resolvedSender].map(j => j?.replace(/:.*@/, '@'))
-            if (_botNums.some(j => j && (j === selfJid || j === botJid))) {
-                if (resolvedSender === selfJid || resolvedSender === botJid ||
-                    senderJid === selfJid || senderJid === botJid) continue
-            }
-
-            // Format sender number cleanly
-            let senderNum = (resolvedSender || senderJid || '')
-                .replace('@s.whatsapp.net', '').replace('@lid', '').split(':')[0]
-
-            // Format chat name — no @lid in display
-            let chatName
-            if (chat.endsWith('@g.us')) {
-                const _gMeta = typeof store?.chats?.get === 'function'
-                    ? store.chats.get(chat)
-                    : (store?.chats?.[chat])
-                chatName = _gMeta?.name || _gMeta?.subject || chat
-            } else {
-                const _dispNum = (resolvedChat || chat)
-                    .replace('@s.whatsapp.net', '').replace('@lid', '').split(':')[0]
-                chatName = _dispNum ? `+${_dispNum}` : chat
-            }
-
-            // Determine where to send the alert
-            // Route by gc/pm config + mode (private|chat|both)
-              const _isGrp = chat.endsWith('@g.us')
-              const _adCfg = (() => {
-                  if (global.adState?.gc && global.adState?.pm) {
-                      return _isGrp ? global.adState.gc : global.adState.pm
+                  // Follow protocolMessage pointer to real message
+                  if (_entry && _isProto(_entry.msg)) {
+                      const _realId = _entry.msg.message?.protocolMessage?.key?.id
+                      if (_realId) {
+                          const _realEntry = global._adCache?.get(_realId)
+                          if (_realEntry && !_isProto(_realEntry.msg)) _entry = _realEntry
+                      }
                   }
-                  return { enabled: global.antiDelete, mode: global.antiDeleteMode === 'public' ? 'chat' : 'private' }
-              })()
-              if (!_adCfg.enabled) continue
-              const _adMode = _adCfg.mode || 'private'
-              const _destinations = _adMode === 'both'
-                  ? [...new Set([selfJid, resolvedChat || chat])]
-                  : _adMode === 'chat' ? [resolvedChat || chat] : [selfJid]
-              const _alertDest = _destinations[0]
 
-            try {
-                let deletedMsg = null
+                  // Recency fallback — scan cache for recent message in this chat
+                  if (!_entry || !_entry.msg?.message) {
+                      let _best = null, _bestKey = null
+                      const _window = 10 * 60 * 1000
+                      for (const [_eid, _e] of (global._adCache || new Map())) {
+                          if (_e._adConsumed || !_e.msg?.message || _isProto(_e.msg)) continue
+                          if (Date.now() - _e.ts > _window) continue
+                          const _eChat = _e.chatJid || _e.msg?.key?.remoteJid || ''
+                          if (_eChat.split('@')[0] !== _chatJid.split('@')[0]) continue
+                          if (!_best || _e.ts > _best.ts) { _best = _e; _bestKey = _eid }
+                      }
+                      if (_best) _entry = _best
+                  }
 
-                // Helper: true if a cached message is a WhatsApp internal protocol msg
-                const _isProtoMsg = (m) => !!(m?.message?.protocolMessage || m?.message?.senderKeyDistributionMessage)
+                  if (_entry) _entry._adConsumed = true
 
-                // ── Priority 1: exact ID lookup
-                const _altId = _stubParams[0] !== update.key.id ? update.key.id : null
-                let _cached  = global._adCache?.get(msgId)
-                if (!_cached && _altId) _cached = global._adCache?.get(_altId)
+                  const _original = _entry?.msg
+                  const _ts = _original?.messageTimestamp
+                      ? _fmtTime(Number(_original.messageTimestamp) * 1000)
+                      : _fmtTime(Date.now())
 
-                if (_cached?.msg?.message && !_cached._adConsumed) {
-                    // If what we got is a protocolMessage (the revoke wrapper itself),
-                    // follow the pointer inside it to find the REAL original message
-                    if (_isProtoMsg(_cached.msg)) {
-                        const _realId = _cached.msg.message?.protocolMessage?.key?.id
-                        if (_realId) {
-                            const _realEntry = global._adCache?.get(_realId)
-                            if (_realEntry?.msg?.message && !_realEntry._adConsumed && !_isProtoMsg(_realEntry.msg)) {
-                                deletedMsg = _realEntry.msg
-                                _realEntry._adConsumed = true
-                                global._adCache.set(_realId, _realEntry)
-                            }
-                        }
-                        // Mark the proto wrapper as consumed too
-                        _cached._adConsumed = true
-                        global._adCache.set(msgId, _cached)
-                    } else {
-                        deletedMsg = _cached.msg
-                        _cached._adConsumed = true
-                        global._adCache.set(msgId, _cached)
-                    }
-                }
+                  // ── Sender info ─────────────────────────────────────────────────
+                  const _origSenderJid = _original?.key?.participant || _original?.key?.remoteJid || _deleterJid
+                  const _origPhone     = _origSenderJid.split('@')[0].split(':')[0].replace(/\D/g, '')
+                  const _delPhone      = _deleterJid.split('@')[0].split(':')[0].replace(/\D/g, '')
+                  const _sameDeleter   = _delPhone === _origPhone
+                  const _pushName      = _original?.pushName || ''
 
-                // ── Priority 1b: JID-based recency search (skips protocol messages)
-                // Fallback when ID lookup fails or only found a proto wrapper with no pointer
-                if (!deletedMsg && global._adCache) {
-                    const _revokeJids = [...new Set([chat, resolvedChat, senderJid, resolvedSender].filter(Boolean))]
-                    const _window     = 10 * 60 * 1000  // 10 minutes
-                    const _cutoff     = Date.now() - _window
-                    let   _bestEntry  = null
-                    let   _bestKey    = null
-                    for (const [_eid, _entry] of global._adCache) {
-                        if (_entry._adConsumed) continue
-                        if (!_entry.msg?.message) continue
-                        if (_entry.ts < _cutoff) continue
-                        if (_isProtoMsg(_entry.msg)) continue  // skip internal protocol msgs
-                        const _entryJid = _entry.chatJid || _entry.msg?.key?.remoteJid || ''
-                        const _match = _revokeJids.some(rj =>
-                            rj === _entryJid ||
-                            rj?.split('@')[0] === _entryJid?.split('@')[0]
-                        )
-                        if (!_match) continue
-                        if (!_bestEntry || _entry.ts > _bestEntry.ts) {
-                            _bestEntry = _entry
-                            _bestKey   = _eid
-                        }
-                    }
-                    if (_bestEntry) {
-                        deletedMsg = _bestEntry.msg
-                        _bestEntry._adConsumed = true
-                        global._adCache.set(_bestKey, _bestEntry)
-                    }
-                }
+                  // Text content
+                  const _msg    = _original?.message || {}
+                  const _body   = _msg.conversation || _msg.extendedTextMessage?.text ||
+                                  _msg.imageMessage?.caption || _msg.videoMessage?.caption ||
+                                  _msg.audioMessage?.caption || ''
+                  const _mType  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
+                                  .find(k => _msg[k])
 
-                console.log(`[Anti-Delete] cache size=${global._adCache?.size} | msgId=${msgId} | found=${!!deletedMsg} | type=${getContentType(deletedMsg?.message) || 'none'}`)
+                  // ── Notification ─────────────────────────────────────────────────
+                  const _notif =
+                      `╔══════════════════════════╗\n` +
+                      `║  🗑️ *ANTI-DELETE*\n` +
+                      `╚══════════════════════════╝\n\n` +
+                      `  ├ 🗑️ *Deleted by* › +${_delPhone}\n` +
+                      (!_sameDeleter ? `  ├ 📤 *Sender*     › +${_origPhone}\n` : ``) +
+                      (_pushName     ? `  ├ 👤 *Name*       › ${_pushName}\n` : ``) +
+                      `  └ 🕐 *Time*       › ${_ts}\n\n` +
+                      `  *DELETED MESSAGE:*\n` +
+                      (_body ? `  ${_body}` : _mType ? `  [${_mType.replace('Message','')}]` : `  [no content]`)
 
-                // ── Priority 2: store lookup with multiple JID key variants
-                if (!deletedMsg) {
-                    const _keys = [...new Set([
-                        chat,
-                        resolvedChat,
-                        resolvedChat && !resolvedChat.includes('@') ? resolvedChat + '@s.whatsapp.net' : null
-                    ].filter(Boolean))]
-                    for (const _k of _keys) {
-                        if (deletedMsg) break
-                        if (!store?.messages) continue
-                        const _cm = typeof store.messages.get === 'function'
-                            ? store.messages.get(_k)
-                            : store.messages[_k]
-                        if (!_cm) continue
-                        if (typeof _cm.get === 'function') {
-                            deletedMsg = _cm.get(msgId) || (_altId ? _cm.get(_altId) : null) || null
-                        } else if (typeof _cm[Symbol.iterator] === 'function') {
-                            for (const [, _m] of _cm) {
-                                if (_m?.key?.id === msgId || (_altId && _m?.key?.id === _altId)) {
-                                    deletedMsg = _m; break
-                                }
-                            }
-                        }
-                    }
-                }
+                  for (const _dest of _targets) {
+                      await X.sendMessage(_dest, {
+                          text: _notif,
+                          mentions: [...new Set([_deleterJid, _origSenderJid].filter(Boolean))]
+                      }).catch(() => {})
+                  }
 
-                // ── Priority 3: store.loadMessage
-                if (!deletedMsg && typeof store?.loadMessage === 'function') {
-                    for (const _k of [chat, resolvedChat].filter(Boolean)) {
-                        try {
-                            deletedMsg = await store.loadMessage(_k, msgId) || null
-                            if (!deletedMsg && _altId) deletedMsg = await store.loadMessage(_k, _altId) || null
-                            if (deletedMsg) break
-                        } catch (_) {}
-                    }
-                }
+                  // ── Forward media ───────────────────────────────────────────────
+                  if (_mType && _original) {
+                      const _mObj    = _msg[_mType]
+                      const _mKey    = _mType.replace('Message', '')
+                      const _mime    = _mObj?.mimetype || ''
+                      const _isPtt   = !!_msg.audioMessage?.ptt
+                      const _cachedPath = _entry?._mediaPath
 
-                if (deletedMsg?.message) {
-                    let delType = getContentType(deletedMsg.message)
-                    let delBody = deletedMsg.message.conversation ||
-                                  deletedMsg.message.extendedTextMessage?.text ||
-                                  deletedMsg.message.imageMessage?.caption ||
-                                  deletedMsg.message.videoMessage?.caption ||
-                                  deletedMsg.message.audioMessage?.caption || ''
+                      let _sent = false
 
-                    // ── Sender info ──────────────────────────────────────────────
-                    const _origSenderJid = deletedMsg.key?.participant || deletedMsg.key?.remoteJid || senderJid
-                    const _origSenderNum = (_origSenderJid || '').split(/[:@]/)[0]
-                    const _displayName   = deletedMsg.pushName || ''
-                    const _sameDeleter   = senderJid?.split(/[:@]/)[0] === _origSenderNum
+                      // 1) Use pre-downloaded file from disk (most reliable)
+                      if (_cachedPath && fs.existsSync(_cachedPath)) {
+                          try {
+                              const _buf = fs.readFileSync(_cachedPath)
+                              const _so =
+                                  _mType === 'imageMessage'    ? { image: _buf, caption: _body || '', mimetype: _mime || 'image/jpeg' } :
+                                  _mType === 'videoMessage'    ? { video: _buf, caption: _body || '', mimetype: _mime || 'video/mp4'  } :
+                                  _mType === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
+                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
+                                  _mType === 'stickerMessage'  ? { sticker: _buf } : null
+                              if (_so) {
+                                  for (const _dest of _targets) await X.sendMessage(_dest, _so).catch(() => {})
+                                  _sent = true
+                              }
+                              fs.unlinkSync(_cachedPath)  // clean up after send
+                          } catch (_fe) { console.log('[Anti-Delete] file send failed:', _fe.message) }
+                      }
 
-                    // ── Timestamp ─────────────────────────────────────────────────
-                    const _fmtTime = (ms) => new Date(ms).toLocaleString('en-US', {
-                        month: '2-digit', day: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', hour12: true
-                    })
-                    const _ts = deletedMsg.messageTimestamp
-                        ? _fmtTime(Number(deletedMsg.messageTimestamp) * 1000)
-                        : _fmtTime(Date.now())
+                      // 2) Forward the cached message object
+                      if (!_sent) {
+                          try {
+                              for (const _dest of _targets) await X.sendMessage(_dest, { forward: _original }).catch(() => {})
+                              _sent = true
+                          } catch {}
+                      }
 
-                    // ── Notification text ────────────────────────────────────────
-                    const _notif =
-                        `╔══════════════════════════╗\n` +
-                        `║  🗑️ *ANTI-DELETE*\n` +
-                        `╚══════════════════════════╝\n\n` +
-                        `  ├ 🗑️ *Deleted by* › +${senderNum}\n` +
-                        (!_sameDeleter ? `  ├ 📤 *Sender*     › +${_origSenderNum}\n` : ``) +
-                        (_displayName   ? `  ├ 👤 *Name*       › ${_displayName}\n` : ``) +
-                        `  └ 🕐 *Time*       › ${_ts}\n\n` +
-                        `  *DELETED MESSAGE:*\n` +
-                        (delBody ? `  ${delBody}` : `  [media]`)
+                      // 3) Re-download from WhatsApp CDN
+                      if (!_sent) {
+                          try {
+                              const _path2 = await _dlMedia(_mObj, _mKey, `${Date.now()}_retry.${_mime.split('/')[1] || 'bin'}`)
+                              if (_path2) {
+                                  const _buf2 = fs.readFileSync(_path2)
+                                  const _so2 =
+                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _body || '', mimetype: _mime || 'image/jpeg' } :
+                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _body || '', mimetype: _mime || 'video/mp4'  } :
+                                      _mType === 'audioMessage'    ? { audio: _buf2, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
+                                      _mType === 'documentMessage' ? { document: _buf2, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
+                                      _mType === 'stickerMessage'  ? { sticker: _buf2 } : null
+                                  if (_so2) {
+                                      for (const _dest of _targets) await X.sendMessage(_dest, _so2).catch(() => {})
+                                      _sent = true
+                                  }
+                                  try { fs.unlinkSync(_path2) } catch {}
+                              }
+                          } catch (_re) { console.log('[Anti-Delete] CDN re-download failed:', _re.message) }
+                      }
 
-                    for (const _dest of _destinations) {
-                        await X.sendMessage(_dest, {
-                            text: _notif,
-                            mentions: [...new Set([resolvedSender || senderJid, _origSenderJid].filter(Boolean))]
-                        })
-                    }
+                      if (!_sent) {
+                          for (const _dest of _targets) {
+                              await X.sendMessage(_dest, { text: `  ⚠️ _${_mKey} could not be retrieved (expired)_` }).catch(() => {})
+                          }
+                      }
+                  }
 
-                    // ── Forward media ─────────────────────────────────────────────
-                    const _mediaTypes = {
-                        imageMessage:    'image',
-                        videoMessage:    'video',
-                        audioMessage:    'audio',
-                        documentMessage: 'document',
-                        stickerMessage:  'sticker',
-                    }
-                    const _mtype = Object.keys(_mediaTypes).find(k => deletedMsg.message[k])
-                    if (_mtype) {
-                        const _mobj  = deletedMsg.message[_mtype]
-                        const _mkey  = _mediaTypes[_mtype]
-                        const _mime  = _mobj?.mimetype || ''
-                        const _isPtt = !!deletedMsg.message.audioMessage?.ptt
-                        let _sent = false
-                        // 1) Try forward
-                        try {
-                            for (const _dest of _destinations) await X.sendMessage(_dest, { forward: deletedMsg })
-                            _sent = true
-                        } catch (_) {}
-                        // 2) Re-download and re-send
-                        if (!_sent) {
-                            try {
-                                const _stream = await downloadContentFromMessage(_mobj, _mkey)
-                                const _chunks = []; for await (const _c of _stream) _chunks.push(_c)
-                                const _buf = Buffer.concat(_chunks)
-                                if (!_buf.length) throw new Error('empty buffer')
-                                const _sendObj =
-                                    _mtype === 'imageMessage'    ? { image: _buf, caption: delBody || '', mimetype: _mime || 'image/jpeg' } :
-                                    _mtype === 'videoMessage'    ? { video: _buf, caption: delBody || '', mimetype: _mime || 'video/mp4'  } :
-                                    _mtype === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
-                                    _mtype === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mobj.fileName || 'file' } :
-                                    _mtype === 'stickerMessage'  ? { sticker: _buf } : null
-                                if (_sendObj) {
-                                    for (const _dest of _destinations) await X.sendMessage(_dest, _sendObj)
-                                    _sent = true
-                                }
-                            } catch (_re) {
-                                console.log('[Anti-Delete] media re-send failed:', _re.message)
-                                for (const _dest of _destinations) {
-                                    await X.sendMessage(_dest, { text: `  ⚠️ _${_mkey} could not be retrieved (URL expired)_` }).catch(() => {})
-                                }
-                            }
-                        }
-                    }
-                    global._adCache?.delete(msgId)
+                  global._adCache?.delete(_msgId)
 
-                } else {
-                    // Message not in cache — sent before bot started
-                    const _ts = new Date().toLocaleString('en-US', {
-                        month: '2-digit', day: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', hour12: true
-                    })
-                    for (const _dest of _destinations) {
-                        await X.sendMessage(_dest, {
-                            text:
-                                `╔══════════════════════════╗\n` +
-                                `║  🗑️ *ANTI-DELETE*\n` +
-                                `╚══════════════════════════╝\n\n` +
-                                `  ├ 🗑️ *Deleted by* › +${senderNum}\n` +
-                                `  ├ 💬 *Chat*       › ${chatName}\n` +
-                                `  └ 🕐 *Time*       › ${_ts}\n\n` +
-                                `  *DELETED MESSAGE:*\n` +
-                                `  ⚠️ _Message not in cache (sent before bot started)_`,
-                            mentions: [resolvedSender || senderJid]
-                        })
-                    }
-                }
-            } catch (e) {
-                console.log('[Anti-Delete] Error:', e.message || e)
-            }
-        }
-    } catch (err) {
-        console.log('[Anti-Delete] Top-level error:', err.message || err)
-    }
-})
+              } catch (_e) {
+                  console.log('[Anti-Delete] Error:', _e.message || _e)
+              }
+          }
+      } catch (_err) {
+          console.log('[Anti-Delete] Top-level error:', _err.message || _err)
+      }
+  })
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Auto Bio Handler
