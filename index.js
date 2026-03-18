@@ -23,11 +23,27 @@ require("./setting")
     const _origWarn  = console.warn.bind(console)
     const _origError = console.error.bind(console)
     const _origLog   = console.log.bind(console)
+    const _serialize = (a) => {
+        if (typeof a === 'string') return a
+        if (a && typeof a === 'object') {
+            // Fast path: check object keys directly (catches session state objects)
+            const keys = Object.keys(a).join(' ').toLowerCase()
+            if (keys.includes('_chains') || keys.includes('currentratchet') ||
+                keys.includes('registrationid') || keys.includes('rootkey') ||
+                keys.includes('indexinfo') || keys.includes('ephemeralkeyp') ||
+                keys.includes('basekeytype') || keys.includes('senderkey') ||
+                keys.includes('signedprekey') || keys.includes('identitykey') ||
+                keys.includes('prekey') || keys.includes('chainkey') ||
+                keys.includes('chaintype') || keys.includes('messagekeys') ||
+                keys.includes('privkey') || keys.includes('pubkey')) return '__signal_obj__'
+            try { return JSON.stringify(a).slice(0, 800) } catch { return a?.message || a?.stack || '[object]' }
+        }
+        return a?.message || a?.stack || String(a)
+    }
     const _noisy = (args) => {
-        const combined = args.map(a =>
-            typeof a === 'string' ? a : (a?.message || a?.stack || String(a))
-        ).join(' ').toLowerCase()
-        return combined.includes('bad mac') ||
+        const combined = args.map(_serialize).join(' ').toLowerCase()
+        return combined.includes('__signal_obj__') ||
+               combined.includes('bad mac') ||
                combined.includes('session already') ||
                combined.includes('v1 session storage') ||
                combined.includes('no sessions') ||
@@ -39,7 +55,15 @@ require("./setting")
                combined.includes('nosuchsession') ||
                combined.includes('invalid prekey') ||
                combined.includes('invalid message') ||
-               combined.includes('no senderkey')
+               combined.includes('no senderkey') ||
+               combined.includes('_chains') ||
+               combined.includes('currentratchet') ||
+               combined.includes('ephemeralkeyp') ||
+               combined.includes('registrationid') ||
+               combined.includes('privsenderkey') ||
+               combined.includes('basekeytype') ||
+               combined.includes('signedprekey') ||
+               combined.includes('identitykeypair')
     }
     console.warn  = (...args) => { if (!_noisy(args)) _origWarn(...args)  }
     console.error = (...args) => { if (!_noisy(args)) _origError(...args) }
