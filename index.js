@@ -1859,89 +1859,106 @@ X.ev.on('messages.update', async (updates) => {
                                   deletedMsg.message.videoMessage?.caption ||
                                   deletedMsg.message.audioMessage?.caption || ''
 
-                    // ── Name from pushName (most reliable — set when message was received) ──
+                    // ── Sender info ──────────────────────────────────────────────
                     const _origSenderJid = deletedMsg.key?.participant || deletedMsg.key?.remoteJid || senderJid
                     const _origSenderNum = (_origSenderJid || '').split(/[:@]/)[0]
                     const _displayName   = deletedMsg.pushName || ''
                     const _sameDeleter   = senderJid?.split(/[:@]/)[0] === _origSenderNum
 
-                    let notifText =
+                    // ── Timestamp ─────────────────────────────────────────────────
+                    const _fmtTime = (ms) => new Date(ms).toLocaleString('en-US', {
+                        month: '2-digit', day: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: true
+                    })
+                    const _ts = deletedMsg.messageTimestamp
+                        ? _fmtTime(Number(deletedMsg.messageTimestamp) * 1000)
+                        : _fmtTime(Date.now())
+
+                    // ── Notification text ────────────────────────────────────────
+                    const _notif =
                         `╔══════════════════════════╗\n` +
                         `║  🗑️ *ANTI-DELETE*\n` +
                         `╚══════════════════════════╝\n\n` +
-                        `  ├ 🗑️ *Deleted by* › @${senderNum}\n` +
-                        (!_sameDeleter ? `  ├ 📤 *Sender*     › @${_origSenderNum}\n` : ``) +
-                        (_displayName ? `  ├ 👤 *Name*       › ${_displayName}\n` : ``) +
+                        `  ├ 🗑️ *Deleted by* › +${senderNum}\n` +
+                        (!_sameDeleter ? `  ├ 📤 *Sender*     › +${_origSenderNum}\n` : ``) +
+                        (_displayName   ? `  ├ 👤 *Name*       › ${_displayName}\n` : ``) +
                         `  └ 🕐 *Time*       › ${_ts}\n\n` +
                         `  *DELETED MESSAGE:*\n` +
-                        (delBody ? `  ${delBody}` : `  [media / no text]`)
+                        (delBody ? `  ${delBody}` : `  [media]`)
 
                     for (const _dest of _destinations) {
-                        await X.sendMessage(_dest, { text: notifText, mentions: [resolvedSender || senderJid, _origSenderJid].filter(Boolean) })
+                        await X.sendMessage(_dest, {
+                            text: _notif,
+                            mentions: [...new Set([resolvedSender || senderJid, _origSenderJid].filter(Boolean))]
+                        })
                     }
-                    // ── Forward deleted media ─────────────────────────────────────────
-                    const _mediaTypeMap = {
-                        imageMessage:    { key: 'image',    field: 'image'    },
-                        videoMessage:    { key: 'video',    field: 'video'    },
-                        audioMessage:    { key: 'audio',    field: 'audio'    },
-                        documentMessage: { key: 'document', field: 'document' },
-                        stickerMessage:  { key: 'sticker',  field: 'sticker'  },
+
+                    // ── Forward media ─────────────────────────────────────────────
+                    const _mediaTypes = {
+                        imageMessage:    'image',
+                        videoMessage:    'video',
+                        audioMessage:    'audio',
+                        documentMessage: 'document',
+                        stickerMessage:  'sticker',
                     }
-                    const _mediaMtype = Object.keys(_mediaTypeMap).find(k => deletedMsg.message[k])
-                    if (_mediaMtype) {
-                        const _mobj   = deletedMsg.message[_mediaMtype]
-                        const _minfo  = _mediaTypeMap[_mediaMtype]
-                        const _mime   = _mobj?.mimetype || ''
-                        const _cap    = delBody || ''
-                        const _isPtt  = !!deletedMsg.message.audioMessage?.ptt
-                        // Try forwarding first (works if URL still valid)
-                        let _mediaOk = false
+                    const _mtype = Object.keys(_mediaTypes).find(k => deletedMsg.message[k])
+                    if (_mtype) {
+                        const _mobj  = deletedMsg.message[_mtype]
+                        const _mkey  = _mediaTypes[_mtype]
+                        const _mime  = _mobj?.mimetype || ''
+                        const _isPtt = !!deletedMsg.message.audioMessage?.ptt
+                        let _sent = false
+                        // 1) Try forward
                         try {
                             for (const _dest of _destinations) await X.sendMessage(_dest, { forward: deletedMsg })
-                            _mediaOk = true
-                        } catch (_fe) {}
-                        // Fallback: re-download and re-send
-                        if (!_mediaOk) {
+                            _sent = true
+                        } catch (_) {}
+                        // 2) Re-download and re-send
+                        if (!_sent) {
                             try {
-                                const _stream = await downloadContentFromMessage(_mobj, _minfo.key)
+                                const _stream = await downloadContentFromMessage(_mobj, _mkey)
                                 const _chunks = []; for await (const _c of _stream) _chunks.push(_c)
                                 const _buf = Buffer.concat(_chunks)
                                 if (!_buf.length) throw new Error('empty buffer')
-                                let _sendObj = {}
-                                if (_mediaMtype === 'imageMessage') {
-                                    _sendObj = { image: _buf, caption: _cap, mimetype: _mime || 'image/jpeg' }
-                                } else if (_mediaMtype === 'videoMessage') {
-                                    _sendObj = { video: _buf, caption: _cap, mimetype: _mime || 'video/mp4' }
-                                } else if (_mediaMtype === 'audioMessage') {
-                                    _sendObj = { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt }
-                                } else if (_mediaMtype === 'documentMessage') {
-                                    _sendObj = { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mobj.fileName || 'file' }
-                                } else if (_mediaMtype === 'stickerMessage') {
-                                    _sendObj = { sticker: _buf, mimetype: _mime || 'image/webp' }
+                                const _sendObj =
+                                    _mtype === 'imageMessage'    ? { image: _buf, caption: delBody || '', mimetype: _mime || 'image/jpeg' } :
+                                    _mtype === 'videoMessage'    ? { video: _buf, caption: delBody || '', mimetype: _mime || 'video/mp4'  } :
+                                    _mtype === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
+                                    _mtype === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mobj.fileName || 'file' } :
+                                    _mtype === 'stickerMessage'  ? { sticker: _buf } : null
+                                if (_sendObj) {
+                                    for (const _dest of _destinations) await X.sendMessage(_dest, _sendObj)
+                                    _sent = true
                                 }
-                                for (const _dest of _destinations) await X.sendMessage(_dest, _sendObj)
-                                _mediaOk = true
                             } catch (_re) {
-                                console.log('[Anti-Delete] Media re-send failed:', _re.message)
-                                // Last resort: notify that media could not be retrieved
+                                console.log('[Anti-Delete] media re-send failed:', _re.message)
                                 for (const _dest of _destinations) {
-                                    await X.sendMessage(_dest, {
-                                        text: `  ⚠️ _Media (${_mediaMtype.replace('Message','')}) could not be retrieved — URL may have expired._`
-                                    }).catch(() => {})
+                                    await X.sendMessage(_dest, { text: `  ⚠️ _${_mkey} could not be retrieved (URL expired)_` }).catch(() => {})
                                 }
                             }
                         }
                     }
-
-                    // Remove from our cache after delivery
                     global._adCache?.delete(msgId)
 
                 } else {
-                    // Not found in any cache — message arrived before bot started or is too old
+                    // Message not in cache — sent before bot started
+                    const _ts = new Date().toLocaleString('en-US', {
+                        month: '2-digit', day: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: true
+                    })
                     for (const _dest of _destinations) {
-
-                        await X.sendMessage(_dest, { text: `╔══════════════════════════╗\n` + `║  🗑️ *ANTI-DELETE*\n` + `╚══════════════════════════╝\n\n` + `  ├ 🗑️ *Deleted by* › @${senderNum}\n` + `  ├ 💬 *Chat*       › ${chatName}\n` + `  └ 🕐 *Time*       › ${_ts}\n\n` + `  *DELETED MESSAGE:*\n  ⚠️ _Message sent before bot came online_`, mentions: [resolvedSender || senderJid] })
-
+                        await X.sendMessage(_dest, {
+                            text:
+                                `╔══════════════════════════╗\n` +
+                                `║  🗑️ *ANTI-DELETE*\n` +
+                                `╚══════════════════════════╝\n\n` +
+                                `  ├ 🗑️ *Deleted by* › +${senderNum}\n` +
+                                `  ├ 💬 *Chat*       › ${chatName}\n` +
+                                `  └ 🕐 *Time*       › ${_ts}\n\n` +
+                                `  *DELETED MESSAGE:*\n` +
+                                `  ⚠️ _Message not in cache (sent before bot started)_`,
+                            mentions: [resolvedSender || senderJid]
+                        })
                     }
                 }
             } catch (e) {
