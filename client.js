@@ -5447,165 +5447,17 @@ await X.groupLeave(m.chat)
 } break
 
 case 'pair': {
-      await X.sendMessage(m.chat, { react: { text: '💑', key: m.key } })
-  if (!isDeployedNumber) return reply(mess.OnlyOwner)
-
-  // ── MODE 1: .pair session — encode & send the CURRENT active session ID ──
-  if (text?.trim().toLowerCase() === 'session') {
-      try {
-          const _fs = require('fs'), _path = require('path')
-          // Derive phone from socket's own JID (e.g. 2547xxx:0@s.whatsapp.net)
-          const _botJid = X.user?.id || ''
-          const _botPhone = _botJid.split(/[:@]/)[0].replace(/[^0-9]/g, '')
-          const _sessDir = _path.join(__dirname, 'sessions')
-          // Try phone-named folder first, fall back to any folder with creds.json
-          let _credsPath = _botPhone ? _path.join(_sessDir, _botPhone, 'creds.json') : ''
-          if (!_credsPath || !_fs.existsSync(_credsPath)) {
-              // scan sessions dir for any creds.json
-              const _dirs = _fs.existsSync(_sessDir)
-                  ? _fs.readdirSync(_sessDir).filter(d => _fs.existsSync(_path.join(_sessDir, d, 'creds.json')))
-                  : []
-              if (_dirs.length === 0) throw new Error('No session creds.json found')
-              _credsPath = _path.join(_sessDir, _dirs[0], 'creds.json')
-          }
-          const _sessionId = Buffer.from(_fs.readFileSync(_credsPath, 'utf-8')).toString('base64')
-          await reply(
-              `╔══════════════════════════╗\n` +
-              `║  🔑 *SESSION ID READY*\n` +
-              `╚══════════════════════════╝\n\n` +
-              `  Copy everything below and set it as\n` +
-              `  your *SESSION_ID* environment variable:\n\n` +
-              _sessionId + `\n\n` +
-              `  ⚠️ _Keep this private — it gives full access to your WhatsApp._`
-          )
-      } catch(e) {
-          reply(`❌ *Failed to get SESSION_ID:* _${e.message}_`)
-      }
-      break
-  }
-
-  // ── MODE 2: .pair <phone> — generate pairing code + auto-send SESSION_ID ──
-  let pairPhone = text ? text.replace(/[^0-9]/g, '') : ''
-  if (!pairPhone) {
-      return reply(
+      await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
+      await reply(
           `╔══════════════════════════╗\n` +
-          `║  🔗 *PAIRING CODE*\n` +
+          `║  🔗 *PAIRING SITE*\n` +
           `╚══════════════════════════╝\n\n` +
-          `  ├ *Get pairing code:*\n` +
-          `  │   ${prefix}pair 254712345678\n` +
-          `  │   _Include country code, no + or spaces._\n\n` +
-          `  └ *Get current SESSION ID:*\n` +
-          `      ${prefix}pair session\n\n` +
-          `  After entering the pairing code in WhatsApp,\n` +
-          `  your SESSION_ID will be sent here automatically.`
+          `  Click the link below to get your pairing code:\n\n` +
+          `  🌐 https://toosii-xd-ultra.onrender.com/pair\n\n` +
+          `  ├ Enter your WhatsApp number\n` +
+          `  ├ Copy the code shown\n` +
+          `  └ WhatsApp → Linked Devices → Link with phone number`
       )
-  }
-  if (pairPhone.length < 7 || pairPhone.length > 15) {
-      return reply(`❌ *Invalid phone number.*\nMust be 7–15 digits including country code.\n\n*Example:* ${prefix}pair 254712345678`)
-  }
-  try {
-      await reply('🔗 _Generating pairing code, please wait..._')
-
-      const { default: makeTmpSocket, useMultiFileAuthState: _umfas } = require("gifted-baileys")
-      const _os = require('os'), _path = require('path'), _fs = require('fs')
-      const tmpDir = _fs.mkdtempSync(_path.join(_os.tmpdir(), 'pair-tmp-'))
-      let tmpSock = null
-      let sessionSent = false
-
-      const _cleanup = () => {
-          try { tmpSock?.end() } catch(_e) {}
-          setTimeout(() => {
-              try { _fs.rmSync(tmpDir, { recursive: true, force: true }) } catch(_e) {}
-          }, 5000)
-      }
-
-      try {
-          const { state: tmpState, saveCreds: tmpSaveCreds } = await _umfas(tmpDir)
-          tmpSock = makeTmpSocket({
-              auth: tmpState,
-              printQRInTerminal: false,
-              browser: Browsers.ubuntu('Chrome'),
-              logger: { level: 'silent', trace(){}, debug(){}, info(){}, warn(){}, error(){}, fatal(){}, child(){ return this } }
-          })
-
-          // Save creds as they come in
-          tmpSock.ev.on('creds.update', tmpSaveCreds)
-
-          // Once linked → read creds → encode → send SESSION_ID
-          tmpSock.ev.on('connection.update', async (u) => {
-              if (u.connection === 'open' && !sessionSent) {
-                  sessionSent = true
-                  try {
-                      await new Promise(r => setTimeout(r, 1500)) // let creds.json settle
-                      const _cp = _path.join(tmpDir, 'creds.json')
-                      if (_fs.existsSync(_cp)) {
-                          const _sid = Buffer.from(_fs.readFileSync(_cp, 'utf-8')).toString('base64')
-                          await X.sendMessage(m.chat, {
-                              text:
-                                  `╔══════════════════════════╗\n` +
-                                  `║  ✅ *LINKED! SESSION ID READY*\n` +
-                                  `╚══════════════════════════╝\n\n` +
-                                  `  ├ 📱 *Phone* › +${pairPhone}\n` +
-                                  `  └ ✅ *Status* › Linked successfully!\n\n` +
-                                  `  Set this as your *SESSION_ID* in .env / environment variables:\n\n` +
-                                  _sid + `\n\n` +
-                                  `  ⚠️ _Keep this private — it gives full access to your WhatsApp._`
-                          }, { quoted: m })
-                      }
-                  } catch(_e2) {
-                      console.log('[pair session extract error]', _e2.message)
-                  } finally {
-                      _cleanup()
-                  }
-              }
-              if (u.connection === 'close') _cleanup()
-          })
-
-          // Wait for WebSocket handshake
-          await new Promise((res, rej) => {
-              const t = setTimeout(() => rej(new Error('WS handshake timeout')), 12000)
-              const poll = setInterval(() => {
-                  if (tmpSock.ws?.readyState === 1) { clearInterval(poll); clearTimeout(t); setTimeout(res, 1500) }
-              }, 300)
-          }).catch(() => {})
-          await new Promise(r => setTimeout(r, 2000))
-
-          let code = await tmpSock.requestPairingCode(pairPhone)
-          if (!code) throw new Error('No code returned')
-          code = code.replace(/[^A-Z0-9]/gi, '').toUpperCase()
-          let formatted = code.match(/.{1,4}/g)?.join('-') || code
-
-          await reply(
-              `╔══════════════════════════╗\n` +
-              `║  🔗 *PAIRING CODE READY!*\n` +
-              `╚══════════════════════════╝\n\n` +
-              `  ├ 📱 *Phone* › +${pairPhone}\n` +
-              `  └ 🔑 *Code*  › *${formatted}*\n\n` +
-              `  ├ Open WhatsApp → Settings\n` +
-              `  ├ Linked Devices → Link a Device\n` +
-              `  └ Choose "Link with phone number" → enter code above\n\n` +
-              `  ⏳ _Once linked, your SESSION_ID will be sent here automatically._`
-          )
-
-          // Keep tmpSock alive — auto-cleanup after 5 min if never linked
-          setTimeout(() => { if (!sessionSent) _cleanup() }, 5 * 60 * 1000)
-
-      } catch(e) {
-          _cleanup()
-          throw e
-      }
-  } catch(e) {
-      let msg = (e.message || '').toLowerCase()
-      if (msg.includes('bad request') || msg.includes('invalid')) {
-          reply(`❌ *Invalid phone number:* +${pairPhone}\n\nVerify the number has WhatsApp installed.`)
-      } else if (msg.includes('rate') || msg.includes('limit')) {
-          reply(`⏳ *Rate limited.* Too many pairing requests.\nWait a few minutes and try again.`)
-      } else if (msg.includes('not supported') || msg.includes('registered')) {
-          reply(`❌ *Number not registered on WhatsApp:* +${pairPhone}`)
-      } else {
-          reply(`❌ *Failed to generate pairing code.*\n_${e.message || 'Unknown error'}_\n\nTry again in a few seconds.`)
-      }
-  }
   } break
 
 case 'clear': {
