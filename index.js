@@ -1760,7 +1760,10 @@ X.ev.on('call', async (callData) => {
               if (_deleterPhone === _botPhone) continue  // bot deleted it — skip
 
               const _stubParams = update.update?.messageStubParameters || []
-              const _msgId = _stubParams[0] || update.key.id
+              // In gifted-baileys messages.update: update.key.id IS the deleted msg ID
+              // _stubParams[0] is the sender JID, NOT the message ID
+              const _msgId  = update.key.id
+              const _altId  = (_stubParams[0] && !_stubParams[0].includes('@')) ? _stubParams[0] : null
 
               const _targets = _adGetTargets(_chatJid)
               if (!_targets.length) continue
@@ -1774,7 +1777,6 @@ X.ev.on('call', async (callData) => {
                   // ── Look up cached message ──────────────────────────────────────
                   const _isProto = (m) => !!(m?.message?.protocolMessage || m?.message?.senderKeyDistributionMessage)
                   let _entry = global._adCache?.get(_msgId)
-                  const _altId = _stubParams[0] !== update.key.id ? update.key.id : null
                   if (!_entry && _altId) _entry = global._adCache?.get(_altId)
 
                   // Follow protocolMessage pointer to real message
