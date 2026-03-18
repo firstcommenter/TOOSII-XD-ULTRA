@@ -1859,17 +1859,40 @@ X.ev.on('messages.update', async (updates) => {
                                   deletedMsg.message.videoMessage?.caption ||
                                   deletedMsg.message.audioMessage?.caption || ''
 
+                    // ── Resolve display names ──────────────────────────────────
+                    const _resolveName = (jid, fallback) => {
+                        if (!jid) return fallback || 'Unknown'
+                        const _cj = jid.replace(/:.*@/, '@')
+                        if (store?.contacts) {
+                            const _c = typeof store.contacts.get === 'function'
+                                ? (store.contacts.get(_cj) || store.contacts.get(jid))
+                                : (store.contacts[_cj] || store.contacts[jid])
+                            const _n = _c?.notify || _c?.name || _c?.verifiedName || _c?.pushName
+                            if (_n) return _n
+                        }
+                        return fallback || '+' + jid.split(/[:@]/)[0]
+                    }
+                    const _deleterName   = _resolveName(senderJid, null)
+                    const _origSenderJid = deletedMsg.key?.participant || deletedMsg.key?.remoteJid || senderJid
+                    const _origSenderNum = (_origSenderJid || '').split(/[:@]/)[0]
+                    const _origName      = deletedMsg.pushName || _resolveName(_origSenderJid, null)
+                    const _sameDeleter   = senderJid?.split(/[:@]/)[0] === _origSenderNum
+                    const _ts = deletedMsg.messageTimestamp
+                        ? new Date(Number(deletedMsg.messageTimestamp) * 1000)
+                              .toLocaleString('en-US', { month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12: true })
+                        : new Date().toLocaleString('en-US', { month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12: true })
+
                     let notifText =
-                        `*🗑️ 𝔄𝔫𝔱𝔦-𝔇𝔢𝔩𝔢𝔱𝔢 𝔄𝔩𝔢𝔯𝔱*\n\n` +
-                        `👤 *𝔉𝔯𝔬𝔪:* @${senderNum}\n` +
-                        `💬 *ℭ𝔥𝔞𝔱:* ${chatName}\n` +
-                        `📄 *𝔗𝔶𝔭𝔢:* ${delType}` +
-                        (delBody ? `\n📝 *ℭ𝔬𝔫𝔱𝔢𝔫𝔱:* ${delBody}` : `\n📝 *ℭ𝔬𝔫𝔱𝔢𝔫𝔱:* [media / no text]`)
+                        `*MESSAGE DELETED*\n` +
+                        `Deleted by: @${senderNum}` + (_deleterName ? ` (${_deleterName})` : ``) + `\n` +
+                        (!_sameDeleter ? `Sender: @${_origSenderNum}` + (_origName ? ` (${_origName})` : ``) + `\n` : ``) +
+                        `Name: ${_origName || _deleterName || senderNum}\n` +
+                        `Time: ${_ts}\n` +
+                        (delBody ? `\n*DELETED MESSAGE:*\n${delBody}` : `\n*DELETED MESSAGE:*\n[media / no text]`)
 
                     for (const _dest of _destinations) {
-                          await X.sendMessage(_dest, { text: notifText, mentions: [resolvedSender || senderJid] })
-                      }
-
+                        await X.sendMessage(_dest, { text: notifText, mentions: [resolvedSender || senderJid, _origSenderJid].filter(Boolean) })
+                    }
                     // Forward media if present
                     const _hasMedia = deletedMsg.message.imageMessage ||
                                       deletedMsg.message.videoMessage ||
