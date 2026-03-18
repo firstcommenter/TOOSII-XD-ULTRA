@@ -679,7 +679,7 @@ function getCaseNames() {
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 let totalfitur = () =>{
-var mytext = fs.readFileSync("./client.js").toString()
+var mytext = fs.readFileSync(require("path").join(__dirname, "client.js")).toString()
 var numUpper = (mytext.match(/case '/g) || []).length;
 return numUpper
         }
