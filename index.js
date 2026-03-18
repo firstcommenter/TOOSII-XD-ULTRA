@@ -1929,7 +1929,7 @@ X.ev.on('messages.update', async (updates) => {
                     // Not found in any cache — message arrived before bot started or is too old
                     for (const _dest of _destinations) {
 
-                        await X.sendMessage(_dest, { text: `*🗑️ 𝔄𝔫𝔱𝔦-𝔇𝔢𝔩𝔢𝔱𝔢 𝔄𝔩𝔢𝔯𝔱*\n\n` + `👤 *𝔉𝔯𝔬𝔪:* @${senderNum}\n` + `💬 *ℭ𝔥𝔞𝔱:* ${chatName}\n` + `📝 *ℭ𝔬𝔫𝔱𝔢𝔫𝔱:* ⚠️ _Message sent before bot was online — content unavailable_`, mentions: [resolvedSender || senderJid] })
+                        await X.sendMessage(_dest, { text: `*MESSAGE DELETED*\nDeleted by: @${senderNum}\nChat: ${chatName}\n\n*DELETED MESSAGE:*\n⚠️ _Message was sent before bot came online — content unavailable_`, mentions: [resolvedSender || senderJid] })
 
                     }
                 }
