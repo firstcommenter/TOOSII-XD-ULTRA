@@ -8386,7 +8386,7 @@ case 'epltopscorers': {
         let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('No data')
-        let scorers = d.result.scorers || d.result
+        let scorers = d.result.topScorers || d.result.scorers || d.result
         if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
         let msg = `╔══════════════════════════╗\n║  ⚽ *EPL TOP SCORERS*\n╚══════════════════════════╝\n\n`
         for (let s of scorers) {
@@ -8410,7 +8410,7 @@ case 'eplupcoming': {
         let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('No data')
-        let matches = d.result.matches || d.result
+        let matches = d.result.upcomingMatches || d.result.matches || d.result
         if (!Array.isArray(matches) || matches.length === 0) throw new Error('No matches')
         let msg = `╔══════════════════════════╗\n║  📅 *EPL UPCOMING FIXTURES*\n╚══════════════════════════╝\n`
         for (let _fm of matches) {
@@ -8461,7 +8461,7 @@ case 'laligatopscorers': {
         let r = await fetch(`https://api.giftedtech.co.ke/api/football/laliga/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('No data')
-        let scorers = d.result.scorers || d.result
+        let scorers = d.result.topScorers || d.result.scorers || d.result
         if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
         let msg = `╔══════════════════════════╗\n║  ⚽ *LA LIGA TOP SCORERS*\n╚══════════════════════════╝\n\n`
         for (let s of scorers) {
@@ -8491,7 +8491,7 @@ case 'laligaupcoming': {
                 let r = await fetch(url, { signal: AbortSignal.timeout(20000) })
                 let d = await r.json()
                 if (d.success && d.result) {
-                    matches = d.result.matches || d.result
+                    matches = d.result.upcomingMatches || d.result.matches || d.result
                     if (Array.isArray(matches) && matches.length > 0) break
                 }
             } catch {}
@@ -8600,7 +8600,7 @@ case 'laligaupcoming': {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   case 'seriea':
   case 'serieastandings':
-  case 'serieastandings': {
+  case 'serieastandings':
       await X.sendMessage(m.chat, { react: { text: '🇮🇹', key: m.key } })
       try {
           await reply('🏆 _Fetching Serie A standings..._')
@@ -8625,6 +8625,31 @@ case 'laligaupcoming': {
           }
           await reply('```\n' + msg + '```')
       } catch(e) { reply('❌ Could not fetch Serie A standings. Try again later.') }
+  } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🇮🇹  SERIE A TOP SCORERS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  case 'serieascorers':
+  case 'serieaTopscorers': {
+      await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+      try {
+          await reply('⚽ _Fetching Serie A top scorers..._')
+          let r = await fetch(`https://api.giftedtech.co.ke/api/football/seriea/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          let d = await r.json()
+          if (!d.success || !d.result) throw new Error('No data')
+          let scorers = d.result.topScorers || d.result.scorers || d.result
+          if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+          let msg = `╔══════════════════════════╗\n║  ⚽ *SERIE A TOP SCORERS*\n╚══════════════════════════╝\n\n`
+          for (let s of scorers) {
+              msg += `${s.rank}. *${s.player}* (${s.team})\n`
+              msg += `   🥅 Goals: *${s.goals}*`
+              if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+              if (s.penalties && s.penalties !== 'N/A') msg += `  🎽 Pens: ${s.penalties}`
+              msg += '\n'
+          }
+          await reply(msg)
+      } catch(e) { reply('❌ Could not fetch Serie A top scorers. Try again later.') }
   } break
   
 
