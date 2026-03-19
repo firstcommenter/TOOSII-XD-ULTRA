@@ -1542,27 +1542,59 @@ case 'fbdl':
 case 'facebook' : {
 if (!text) return reply('Please provide the Facebook URL')
     try {
-      let res = await fdown.download(text);
-      if (res && res.length > 0) {
-        let videoData = res[0]; 
-        let videoUrl = videoData.hdQualityLink || videoData.normalQualityLink; 
-        if (videoUrl) {
-          let caption = `*Title:* ${videoData.title || '-'}\n*Description:* ${videoData.description || '-'}\n*Duration:* ${videoData.duration || '-'}`;
-          await safeSendMedia(m.chat, { 
-            video: { url: videoUrl }, 
-            caption: caption, 
-            mimetype: 'video/mp4'
-          }, {}, { quoted: m });
-        } else {
-          reply('Failed to get video download URL.')
+        await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+        let _fbUrl = null, _fbTitle = null, _fbDuration = null
+
+        // Source 1: EliteProTech API
+        try {
+          let _ep = await fetch(`https://eliteprotech-apis.zone.id/facebook?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+          let _epd = await _ep.json()
+          console.log('[fb] eliteprotech: success=', _epd.success)
+          if (_epd.success && _epd.result) {
+            _fbUrl      = _epd.result.hd || _epd.result.sd || _epd.result.video || _epd.result.download_url || _epd.result.url
+            _fbTitle    = _epd.result.title    || null
+            _fbDuration = _epd.result.duration || null
+          }
+        } catch (_e1) { console.log('[fb] eliteprotech:', _e1.message) }
+
+        // Source 2: fdown library fallback
+        if (!_fbUrl) {
+          try {
+            let res = await fdown.download(text)
+            if (res?.length > 0) {
+              _fbUrl      = res[0].hdQualityLink || res[0].normalQualityLink
+              _fbTitle    = res[0].title       || null
+              _fbDuration = res[0].duration    || null
+            }
+          } catch (_e2) { console.log('[fb] fdown:', _e2.message) }
         }
-      } else {
-        return reply('Failed to download. The link may be invalid.')
+
+        // Source 3: GiftedTech fbdl
+        if (!_fbUrl) {
+          try {
+            let _gt = await fetch(`https://api.giftedtech.co.ke/api/download/fbdl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+            let _gtd = await _gt.json()
+            console.log('[fb] giftedtech: success=', _gtd.success)
+            if (_gtd.success && _gtd.result) {
+              _fbUrl      = _gtd.result.video_hd || _gtd.result.video_sd || _gtd.result.download_url
+              _fbTitle    = _gtd.result.title    || null
+              _fbDuration = _gtd.result.duration || null
+            }
+          } catch (_e3) { console.log('[fb] giftedtech:', _e3.message) }
+        }
+
+        if (_fbUrl) {
+          let _cap = `📹 *Facebook Video*`
+          if (_fbTitle)    _cap += `\n📌 *Title:* ${_fbTitle}`
+          if (_fbDuration) _cap += `\n⏱️ *Duration:* ${_fbDuration}`
+          await safeSendMedia(m.chat, { video: { url: _fbUrl }, caption: _cap, mimetype: 'video/mp4' }, {}, { quoted: m })
+        } else {
+          reply('❌ Could not download that Facebook video. Make sure the video is public and the link is correct.')
+        }
+      } catch (e) {
+        console.log('[fb] error:', e.message)
+        reply('❌ An error occurred while downloading. Please try again.')
       }
-    } catch (e) {
-      console.log(e);
-      reply('An error occurred while downloading. Please try again.')
-    }
   }
 break
 case 'play':
