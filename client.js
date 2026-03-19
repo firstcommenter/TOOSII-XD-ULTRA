@@ -6044,7 +6044,44 @@ try {
     let data = await res.json()
     if (data.success && data.result?.download_url) videoUrl = data.result.download_url
 } catch (e1) { console.log('[ytdocvideo] giftedtech:', e1.message) }
-// Method 2: loader.to
+// Method 2: cobalt.tools — reliable yt downloader API
+if (!videoUrl && !videoPath) {
+    try {
+        let _cRes = await fetch('https://api.cobalt.tools/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ url: vid.url, downloadMode: 'auto', videoQuality: '720' }),
+            signal: AbortSignal.timeout(25000)
+        })
+        let _cData = await _cRes.json()
+        console.log('[ytdocvideo] cobalt:', _cData.status, _cData.url)
+        if ((_cData.status === 'tunnel' || _cData.status === 'redirect') && _cData.url) {
+            videoUrl = _cData.url
+        } else if (_cData.status === 'picker' && _cData.picker?.length) {
+            videoUrl = _cData.picker.find(x => x.type === 'video')?.url || _cData.picker[0]?.url
+        }
+        if (videoUrl) console.log('[ytdocvideo] cobalt: success')
+    } catch (_ce) { console.log('[ytdocvideo] cobalt:', _ce.message) }
+}
+// Method 3: InnerTube ANDROID — direct muxed mp4 stream
+if (!videoUrl && !videoPath) {
+    try {
+        let _itVid = (vid.url.match(/(?:v=|youtu\.be\/)([^&?#]+)/) || [])[1]
+        if (_itVid) {
+            let _itRes = await fetch('https://www.youtube.com/youtubei/v1/player?key=AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip' },
+                body: JSON.stringify({ context: { client: { clientName: 'ANDROID_TESTSUITE', clientVersion: '1.9', androidSdkVersion: 30, hl: 'en', gl: 'US' } }, videoId: _itVid }),
+                signal: AbortSignal.timeout(15000)
+            })
+            let _itData = await _itRes.json()
+            let _fmts = (_itData.streamingData?.formats || []).filter(f => f.mimeType?.includes('video/mp4') && f.url)
+            _fmts.sort((a, b) => (b.width || 0) - (a.width || 0))
+            if (_fmts[0]?.url) { videoUrl = _fmts[0].url; console.log('[ytdocvideo] innertube: success quality=', _fmts[0].qualityLabel) }
+        }
+    } catch (_ite) { console.log('[ytdocvideo] innertube:', _ite.message) }
+}
+// Method 4: loader.to
 if (!videoUrl && !videoPath) {
     try {
         let initData = await (await fetch(`https://loader.to/ajax/download.php?format=mp4&url=${encodeURIComponent(vid.url)}`, { signal: AbortSignal.timeout(10000) })).json()
@@ -6058,7 +6095,7 @@ if (!videoUrl && !videoPath) {
         }
     } catch (e2) { console.log('[ytdocvideo] loader.to:', e2.message) }
 }
-// Method 3: ytdl-core — stream to file
+// Method 5: ytdl-core — stream to file
 if (!videoUrl && !videoPath) {
     try {
         let ytdl = require('@distube/ytdl-core')
