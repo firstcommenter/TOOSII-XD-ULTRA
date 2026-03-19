@@ -1602,6 +1602,20 @@ case 'ytplay': {
                     audioUrl = data.result.download_url
                 }
             } catch (e0) { console.log('[play] giftedtech:', e0.message) }
+
+          // Method 1.5: EliteProTech API — fast single-call MP3 URL
+          if (!audioUrl && !audioPath) {
+              try {
+                  let _ep = await fetch(`https://eliteprotech-apis.zone.id/ytmp3?url=${encodeURIComponent(firstVideo.url)}`, { signal: AbortSignal.timeout(20000) })
+                  let _epd = await _ep.json()
+                  console.log('[play] eliteprotech: status=', _epd.status)
+                  if (_epd.status === true && _epd.result?.download) {
+                      audioUrl = _epd.result.download
+                      if (!videoTitle || videoTitle === 'Unknown Title') videoTitle = _epd.result.title || videoTitle
+                  }
+              } catch (_ep0) { console.log('[play] eliteprotech:', _ep0.message) }
+          }
+  
         }
 
         // Method 2: YouTube InnerTube API — try iOS then TV client (Android gets blocked)
