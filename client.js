@@ -128,7 +128,230 @@ const util = require('util')
       if (Date.now() - _invLastRefresh > 3600000) _refreshInvPool().catch(() => {})
       return _invPool
   }
-  // Kick off background refresh 5s after startup
+
+  //═══════════════════════════════════════════════════════════════════════════//
+  // ── Multi-source Sports Data Helpers (endless fallback chain) ─────────────//
+  // Sources: GiftedTech → ESPN (keyless) → TheSportsDB (keyless) → Football-Data.org
+  //═══════════════════════════════════════════════════════════════════════════//
+
+  const _ESPN_IDS  = { epl:'eng.1', laliga:'esp.1', bundesliga:'ger.1', seriea:'ita.1', ucl:'uefa.champions', uel:'uefa.europa', ligue1:'fra.1' }
+  const _TSDB_IDS  = { epl:4328, laliga:4335, bundesliga:4331, seriea:4332, ucl:4480, ligue1:4334, uel:4481 }
+  const _FD_CODES  = { epl:'PL', laliga:'PD', bundesliga:'BL1', seriea:'SA', ucl:'CL', uel:'EL', ligue1:'FL1' }
+
+  // ── ESPN unofficial standings ─────────────────────────────────────────────
+  async function _espnStandings(league) {
+      try {
+          const id = _ESPN_IDS[league]; if (!id) return null
+          const d = await safeJson(`https://site.api.espn.com/apis/v2/sports/soccer/${id}/standings`, { signal: AbortSignal.timeout(12000) })
+          const entries = d?.standings?.[0]?.entries || d?.children?.[0]?.standings?.[0]?.entries
+          if (!entries?.length) return null
+          return entries.map((e, i) => ({
+              position: i + 1,
+              team: e.team?.displayName || e.team?.shortDisplayName || '',
+              played:  +( e.stats?.find(s => s.name==='gamesPlayed')?.value  || 0),
+              won:     +( e.stats?.find(s => s.name==='wins')?.value          || 0),
+              draw:    +( e.stats?.find(s => s.name==='ties')?.value          || 0),
+              lost:    +( e.stats?.find(s => s.name==='losses')?.value        || 0),
+              goalDifference: +( e.stats?.find(s => s.name==='pointDifferential'||s.name==='goalDifferential')?.value || 0),
+              points:  +( e.stats?.find(s => s.name==='points')?.value        || 0),
+          }))
+      } catch { return null }
+  }
+
+  // ── TheSportsDB standings ─────────────────────────────────────────────────
+  async function _tsdbStandings(league) {
+      try {
+          const id = _TSDB_IDS[league]; if (!id) return null
+          const yr = new Date().getFullYear()
+          const d = await safeJson(`https://www.thesportsdb.com/api/v1/json/3/lookuptable.php?l=${id}&s=${yr-1}-${yr}`, { signal: AbortSignal.timeout(12000) })
+          if (!d?.table?.length) return null
+          return d.table.map(t => ({
+              position: +t.intRank||0, team: t.strTeam||'',
+              played: +t.intPlayed||0, won: +t.intWin||0, draw: +t.intDraw||0,
+              lost: +t.intLoss||0, goalDifference: +t.intGoalDifference||0, points: +t.intPoints||0,
+          }))
+      } catch { return null }
+  }
+
+  // ── Football-Data.org standings (uses FOOTBALL_DATA_API_KEY env var if set) ─
+  async function _fdStandings(league) {
+      try {
+          const code = _FD_CODES[league]; if (!code) return null
+          const hdrs = {}; if (process.env.FOOTBALL_DATA_API_KEY) hdrs['X-Auth-Token'] = process.env.FOOTBALL_DATA_API_KEY
+          const d = await safeJson(`https://api.football-data.org/v4/competitions/${code}/standings`, { headers: hdrs, signal: AbortSignal.timeout(12000) })
+          const table = d?.standings?.find(s => s.type==='TOTAL')?.table; if (!table?.length) return null
+          return table.map(t => ({ position: t.position, team: t.team?.name||'', played: t.playedGames||0, won: t.won||0, draw: t.draw||0, lost: t.lost||0, goalDifference: t.goalDifference||0, points: t.points||0 }))
+      } catch { return null }
+  }
+
+  // ── Master standings: GiftedTech → ESPN → TheSportsDB → Football-Data ───────
+  async function _getStandings(league, gtPath) {
+      try {
+          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const t = d?.result?.standings || d?.result; if (Array.isArray(t) && t.length) return t
+      } catch {}
+      return (await _espnStandings(league)) || (await _tsdbStandings(league)) || (await _fdStandings(league))
+  }
+
+  // ── ESPN top scorers ──────────────────────────────────────────────────────
+  async function _espnScorers(league) {
+      try {
+          const id = _ESPN_IDS[league]; if (!id) return null
+          const d = await safeJson(`https://site.web.api.espn.com/apis/v2/sports/soccer/${id}/leaders`, { signal: AbortSignal.timeout(12000) })
+          const cats = d?.leaders || []; const goals = cats.find(c => c.name==='goals' || c.shortDisplayName?.toLowerCase().includes('goal'))
+          if (!goals?.leaders?.length) return null
+          return goals.leaders.map((l, i) => ({ rank: i+1, player: l.athlete?.displayName||l.athlete?.fullName||'', team: l.team?.displayName||l.team?.abbreviation||'', goals: l.value||0, played: l.gamesPlayed||0 }))
+      } catch { return null }
+  }
+
+  // ── Football-Data.org scorers ─────────────────────────────────────────────
+  async function _fdScorers(league) {
+      try {
+          const code = _FD_CODES[league]; if (!code) return null
+          const hdrs = {}; if (process.env.FOOTBALL_DATA_API_KEY) hdrs['X-Auth-Token'] = process.env.FOOTBALL_DATA_API_KEY
+          const d = await safeJson(`https://api.football-data.org/v4/competitions/${code}/scorers`, { headers: hdrs, signal: AbortSignal.timeout(12000) })
+          if (!d?.scorers?.length) return null
+          return d.scorers.map((s, i) => ({ rank: i+1, player: s.player?.name||'', team: s.team?.name||'', goals: s.goals||0, assists: s.assists||0, played: s.playedMatches||0 }))
+      } catch { return null }
+  }
+
+  // ── Master scorers: GiftedTech → ESPN → Football-Data ────────────────────
+  async function _getScorers(league, gtPath, label) {
+      try {
+          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const sc = d?.result?.topScorers || d?.result?.scorers || d?.result; if (Array.isArray(sc) && sc.length) return sc
+      } catch {}
+      return (await _espnScorers(league)) || (await _fdScorers(league))
+  }
+
+  // ── ESPN fixtures/scoreboard ──────────────────────────────────────────────
+  async function _espnFixtures(league) {
+      try {
+          const id = _ESPN_IDS[league]; if (!id) return null
+          const d = await safeJson(`https://site.api.espn.com/apis/v2/sports/soccer/${id}/scoreboard`, { signal: AbortSignal.timeout(12000) })
+          if (!d?.events?.length) return null
+          return d.events.map(e => {
+              const comp = e.competitions?.[0]; const comps = comp?.competitors||[]
+              const home = comps.find(c => c.homeAway==='home'); const away = comps.find(c => c.homeAway==='away')
+              const st = comp?.status?.type
+              return { homeTeam: home?.team?.displayName||'', awayTeam: away?.team?.displayName||'', date: e.date?.slice(0,10)||'', time: e.date?.slice(11,16)||'', venue: comp?.venue?.fullName||'', status: st?.description||st?.name||'', homeScore: home?.score, awayScore: away?.score }
+          })
+      } catch { return null }
+  }
+
+  // ── TheSportsDB next matches ──────────────────────────────────────────────
+  async function _tsdbFixtures(league) {
+      try {
+          const id = _TSDB_IDS[league]; if (!id) return null
+          const d = await safeJson(`https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=${id}`, { signal: AbortSignal.timeout(12000) })
+          if (!d?.events?.length) return null
+          return d.events.map(e => ({ homeTeam: e.strHomeTeam||'', awayTeam: e.strAwayTeam||'', date: e.dateEvent||'', time: e.strTime||'', venue: e.strVenue||'' }))
+      } catch { return null }
+  }
+
+  // ── Football-Data.org scheduled matches ──────────────────────────────────
+  async function _fdFixtures(league) {
+      try {
+          const code = _FD_CODES[league]; if (!code) return null
+          const hdrs = {}; if (process.env.FOOTBALL_DATA_API_KEY) hdrs['X-Auth-Token'] = process.env.FOOTBALL_DATA_API_KEY
+          const d = await safeJson(`https://api.football-data.org/v4/competitions/${code}/matches?status=SCHEDULED`, { headers: hdrs, signal: AbortSignal.timeout(12000) })
+          if (!d?.matches?.length) return null
+          return d.matches.slice(0, 15).map(m => ({ homeTeam: m.homeTeam?.name||'', awayTeam: m.awayTeam?.name||'', date: m.utcDate?.slice(0,10)||'', time: m.utcDate?.slice(11,16)||'' }))
+      } catch { return null }
+  }
+
+  // ── Master fixtures: GiftedTech → ESPN → TheSportsDB → Football-Data ─────
+  async function _getFixtures(league, gtUrl) {
+      try {
+          const d = await giftedFetch(gtUrl, { signal: AbortSignal.timeout(20000) })
+          const m = d?.result?.upcomingMatches || d?.result?.matches || d?.result; if (Array.isArray(m) && m.length) return m
+      } catch {}
+      return (await _espnFixtures(league)) || (await _tsdbFixtures(league)) || (await _fdFixtures(league))
+  }
+
+  // ── Multi-source live scores ──────────────────────────────────────────────
+  async function _getLiveScores() {
+      // Source 1: GiftedTech
+      try {
+          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/livescore?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const m = d?.result?.matches || d?.result; if (Array.isArray(m) && m.length) return { source: 'GiftedTech', matches: m }
+      } catch {}
+      // Source 2: ESPN across top leagues (live events)
+      try {
+          const leagues = ['eng.1','esp.1','ger.1','ita.1','fra.1','uefa.champions']
+          const live = []
+          await Promise.allSettled(leagues.map(async id => {
+              const d = await safeJson(`https://site.api.espn.com/apis/v2/sports/soccer/${id}/scoreboard`, { signal: AbortSignal.timeout(10000) })
+              ;(d?.events || []).filter(e => e.status?.type?.state === 'in').forEach(e => {
+                  const c = e.competitions?.[0]; const cp = c?.competitors||[]
+                  const h = cp.find(x=>x.homeAway==='home'); const a = cp.find(x=>x.homeAway==='away')
+                  live.push({ league: e.name||id, homeTeam: h?.team?.displayName||'', awayTeam: a?.team?.displayName||'', homeScore: h?.score||'0', awayScore: a?.score||'0', status: c?.status?.type?.shortDetail||'LIVE' })
+              })
+          }))
+          if (live.length) return { source: 'ESPN', matches: live }
+      } catch {}
+      // Source 3: TheSportsDB live events
+      try {
+          const d = await safeJson(`https://www.thesportsdb.com/api/v1/json/3/eventslive.php`, { signal: AbortSignal.timeout(10000) })
+          const events = d?.events
+          if (Array.isArray(events) && events.length) {
+              const matches = events.filter(e => e.strSport==='Soccer').map(e => ({ league: e.strLeague||'', homeTeam: e.strHomeTeam||'', awayTeam: e.strAwayTeam||'', homeScore: e.intHomeScore||'', awayScore: e.intAwayScore||'', status: e.strProgress||'LIVE' }))
+              if (matches.length) return { source: 'TheSportsDB', matches }
+          }
+      } catch {}
+      return null
+  }
+
+  // ── Multi-source football news (BBC/ESPN RSS + GiftedTech) ────────────────
+  async function _getFootballNews() {
+      // Source 1: GiftedTech
+      try {
+          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/news?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const a = d?.result?.items || d?.result; if (Array.isArray(a) && a.length) return a
+      } catch {}
+      // Source 2: ESPN soccer RSS
+      try {
+          const r = await fetch(`https://www.espn.com/espn/rss/soccer/news`, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'Mozilla/5.0' } })
+          const xml = await r.text()
+          const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 8).map(m => {
+              const title = m[1].match(/<title><![CDATA[(.*?)]]>/)?.[1] || m[1].match(/<title>(.*?)<\/title>/)?.[1] || ''
+              const link  = m[1].match(/<link>(.*?)<\/link>/)?.[1] || ''
+              const desc  = m[1].match(/<description><![CDATA[(.*?)]]>/)?.[1]?.replace(/<[^>]+>/g,'')?.slice(0,120) || ''
+              return { title, summary: desc, link }
+          }).filter(a => a.title)
+          if (items.length) return items
+      } catch {}
+      // Source 3: BBC Sport football RSS
+      try {
+          const r = await fetch(`https://feeds.bbci.co.uk/sport/football/rss.xml`, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'Mozilla/5.0' } })
+          const xml = await r.text()
+          const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 8).map(m => {
+              const title = m[1].match(/<title>(.*?)<\/title>/)?.[1]?.replace(/<![CDATA[|]]>/g,'').replace(/&amp;/g,'&')||''
+              const link  = m[1].match(/<link>(.*?)<\/link>/)?.[1] || ''
+              return { title, link }
+          }).filter(a => a.title)
+          if (items.length) return items
+      } catch {}
+      return null
+  }
+
+  // ── Multi-source predictions (GiftedTech + ESPN form-based) ──────────────
+  async function _getPredictions() {
+      // Source 1: GiftedTech
+      try {
+          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/predictions?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const p = Array.isArray(d?.result) ? d.result : (d?.result?.items||[]); if (p.length) return p
+      } catch {}
+      // Source 2: Footystats upcoming (unofficial, no key for basic access)
+      try {
+          const d = await safeJson('https://api.football-prediction-api.com/api/v2/predictions?market=classic&iso_date=' + new Date().toISOString().slice(0,10), { headers: { 'Authorization': 'Bearer free' }, signal: AbortSignal.timeout(10000) })
+          if (d?.data?.length) return d.data.slice(0,10).map(m => ({ league: m.competition_name||'', match: `${m.home_team} vs ${m.away_team}`, time: m.start_date||'', predictions: { fulltime: { home: m.home_win_probability||0, draw: m.draw_probability||0, away: m.away_win_probability||0 } } }))
+      } catch {}
+      return null
+  }
+
+  //─────────────────────────────────────────────────────────────────────────────//
+    // Kick off background refresh 5s after startup
   setTimeout(() => _refreshInvPool().catch(() => {}), 5000)
 
   //─────────────────────────────────────────────────────────────────────────────//
@@ -8449,11 +8672,9 @@ case 'footballscore': {
     await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
     try {
         await reply('⚽ _Fetching live football scores..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/livescore?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let matches = d.result.matches || d.result
-        if (!Array.isArray(matches) || matches.length === 0) return reply('⚽ No live matches at the moment.')
+        const _lsData = await _getLiveScores()
+        if (!_lsData || !_lsData.matches?.length) return reply('⚽ No live matches right now. Try again during match time.')
+        let matches = _lsData.matches
         let msg = `╔══════════════════════════╗\n║  ⚽ *LIVE FOOTBALL SCORES* (${matches.length} matches)\n╚══════════════════════════╝\n`
         let currentLeague = ''
         for (let _lm of matches) {
@@ -8480,11 +8701,8 @@ case 'tips': {
     await X.sendMessage(m.chat, { react: { text: '🔮', key: m.key } })
     try {
         await reply('🔮 _Fetching today\'s football predictions..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/predictions?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let preds = Array.isArray(d.result) ? d.result : (d.result.items || [])
-        if (preds.length === 0) return reply('🔮 No predictions available at the moment.')
+        let preds = await _getPredictions()
+        if (!preds?.length) return reply('🔮 No predictions available right now. Try again later.')
         let msg = `╔══════════════════════════╗\n║  🔮 *FOOTBALL PREDICTIONS* (${preds.length})\n╚══════════════════════════╝\n`
         for (let p of preds) {
             msg += `\n🏆 *${p.league || 'Unknown League'}*\n`
@@ -8515,11 +8733,8 @@ case 'sportnews': {
     await X.sendMessage(m.chat, { react: { text: '📰', key: m.key } })
     try {
         await reply('📰 _Fetching latest football news..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/news?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let articles = d.result.items || d.result
-        if (!Array.isArray(articles) || articles.length === 0) return reply('📰 No football news available right now.')
+        let articles = await _getFootballNews()
+        if (!articles?.length) return reply('📰 No football news available right now. Try again later.')
         let msg = `╔══════════════════════════╗\n║  📰 *FOOTBALL NEWS*\n╚══════════════════════════╝\n`
         for (let a of articles) {
             msg += `\n📌 *${a.title}*\n`
@@ -8539,11 +8754,8 @@ case 'premierleague': {
     await X.sendMessage(m.chat, { react: { text: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', key: m.key } })
     try {
         await reply('🏆 _Fetching EPL standings..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/standings?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let teams = d.result.standings || d.result
-        if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        let teams = await _getStandings('epl', 'epl')
+        if (!teams?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  🏆 *EPL STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
         msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
         msg += `${'─'.repeat(50)}\n`
@@ -8567,11 +8779,8 @@ case 'epltopscorers': {
     await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
     try {
         await reply('⚽ _Fetching EPL top scorers..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/scorers?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let scorers = d.result.topScorers || d.result.scorers || d.result
-        if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        let scorers = await _getScorers('epl', 'epl')
+        if (!scorers?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  ⚽ *EPL TOP SCORERS*\n╚══════════════════════════╝\n\n`
         for (let s of scorers) {
             let rank = s.rank || s.position || ''
@@ -8591,11 +8800,8 @@ case 'eplupcoming': {
     await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
     try {
         await reply('📅 _Fetching upcoming EPL matches..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let matches = d.result.upcomingMatches || d.result.matches || d.result
-        if (!Array.isArray(matches) || matches.length === 0) throw new Error('No matches')
+        let matches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_giftedKey()}`)
+        if (!matches?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  📅 *EPL UPCOMING FIXTURES*\n╚══════════════════════════╝\n`
         for (let _fm of matches) {
             msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
@@ -8614,11 +8820,8 @@ case 'laligastandings': {
     await X.sendMessage(m.chat, { react: { text: '🇪🇸', key: m.key } })
     try {
         await reply('🏆 _Fetching La Liga standings..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/laliga/standings?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let teams = d.result.standings || d.result
-        if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        let teams = await _getStandings('laliga', 'laliga')
+        if (!teams?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  🏆 *LA LIGA STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
         msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
         msg += `${'─'.repeat(50)}\n`
@@ -8642,11 +8845,8 @@ case 'laligatopscorers': {
     await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
     try {
         await reply('⚽ _Fetching La Liga top scorers..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/football/laliga/scorers?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let scorers = d.result.topScorers || d.result.scorers || d.result
-        if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        let scorers = await _getScorers('laliga', 'laliga')
+        if (!scorers?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  ⚽ *LA LIGA TOP SCORERS*\n╚══════════════════════════╝\n\n`
         for (let s of scorers) {
             let rank = s.rank || s.position || ''
@@ -8666,21 +8866,8 @@ case 'laligaupcoming': {
     await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
     try {
         await reply('📅 _Fetching La Liga matches..._')
-        // Try upcoming first, then matches
-        let url1 = `https://api.giftedtech.co.ke/api/football/laliga/upcoming?apikey=${_giftedKey()}`
-        let url2 = `https://api.giftedtech.co.ke/api/football/laliga/matches?apikey=${_giftedKey()}`
-        let matches = null
-        for (let url of [url1, url2]) {
-            try {
-                let r = await fetch(url, { signal: AbortSignal.timeout(20000) })
-                let d = await r.json()
-                if (d.success && d.result) {
-                    matches = d.result.upcomingMatches || d.result.matches || d.result
-                    if (Array.isArray(matches) && matches.length > 0) break
-                }
-            } catch {}
-        }
-        if (!matches || !matches.length) throw new Error('No matches')
+        let matches = await _getFixtures('laliga', `https://api.giftedtech.co.ke/api/football/laliga/upcoming?apikey=${_giftedKey()}`)
+        if (!matches?.length) throw new Error('No data from any source')
         let msg = `╔══════════════════════════╗\n║  📅 *LA LIGA FIXTURES*\n╚══════════════════════════╝\n`
         for (let _fm of matches) {
             msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
@@ -8700,12 +8887,9 @@ case 'laligaupcoming': {
   case 'championsleague': {
       await X.sendMessage(m.chat, { react: { text: '🏆', key: m.key } })
       try {
-          await reply('🏆 _Fetching UCL standings..._')
-          let r = await fetch(`https://api.giftedtech.co.ke/api/football/ucl/standings?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-          let d = await r.json()
-          if (!d.success || !d.result) throw new Error('No data')
-          let teams = d.result.standings || d.result
-          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        await reply('🏆 _Fetching UCL standings..._')
+        let teams = await _getStandings('ucl', 'ucl')
+        if (!teams?.length) throw new Error('No data from any source')
           let msg = `╔══════════════════════════╗\n║  🏆 *UCL STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
@@ -8731,12 +8915,9 @@ case 'laligaupcoming': {
   case 'bundesligastandings': {
       await X.sendMessage(m.chat, { react: { text: '🇩🇪', key: m.key } })
       try {
-          await reply('🏆 _Fetching Bundesliga standings..._')
-          let r = await fetch(`https://api.giftedtech.co.ke/api/football/bundesliga/standings?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-          let d = await r.json()
-          if (!d.success || !d.result) throw new Error('No data')
-          let teams = d.result.standings || d.result
-          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        await reply('🏆 _Fetching Bundesliga standings..._')
+        let teams = await _getStandings('bundesliga', 'bundesliga')
+        if (!teams?.length) throw new Error('No data from any source')
           let msg = `╔══════════════════════════╗\n║  🏆 *BUNDESLIGA STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
@@ -8759,12 +8940,9 @@ case 'laligaupcoming': {
   case 'bundesligatopscorers': {
       await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
       try {
-          await reply('⚽ _Fetching Bundesliga top scorers..._')
-          let r = await fetch(`https://api.giftedtech.co.ke/api/football/bundesliga/scorers?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-          let d = await r.json()
-          if (!d.success || !d.result) throw new Error('No data')
-          let scorers = d.result.topScorers || d.result.scorers || d.result
-          if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        await reply('⚽ _Fetching Bundesliga top scorers..._')
+        let scorers = await _getScorers('bundesliga', 'bundesliga')
+        if (!scorers?.length) throw new Error('No data from any source')
           let msg = `╔══════════════════════════╗\n║  ⚽ *BUNDESLIGA TOP SCORERS*\n╚══════════════════════════╝\n\n`
           for (let s of scorers) {
               let rank = s.rank || s.position || ''
@@ -8786,12 +8964,9 @@ case 'laligaupcoming': {
   case 'serieastandings': {
       await X.sendMessage(m.chat, { react: { text: '🇮🇹', key: m.key } })
       try {
-          await reply('🏆 _Fetching Serie A standings..._')
-          let r = await fetch(`https://api.giftedtech.co.ke/api/football/seriea/standings?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-          let d = await r.json()
-          if (!d.success || !d.result) throw new Error('No data')
-          let teams = d.result.standings || d.result
-          if (!Array.isArray(teams) || teams.length === 0) throw new Error('No standings')
+        await reply('🏆 _Fetching Serie A standings..._')
+        let teams = await _getStandings('seriea', 'seriea')
+        if (!teams?.length) throw new Error('No data from any source')
           let msg = `╔══════════════════════════╗\n║  🏆 *SERIE A STANDINGS ${new Date().getFullYear()}*\n╚══════════════════════════╝\n\n`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
@@ -8817,12 +8992,9 @@ case 'laligaupcoming': {
   case 'serieaTopscorers': {
       await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
       try {
-          await reply('⚽ _Fetching Serie A top scorers..._')
-          let r = await fetch(`https://api.giftedtech.co.ke/api/football/seriea/scorers?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(20000) })
-          let d = await r.json()
-          if (!d.success || !d.result) throw new Error('No data')
-          let scorers = d.result.topScorers || d.result.scorers || d.result
-          if (!Array.isArray(scorers) || scorers.length === 0) throw new Error('No scorers')
+        await reply('⚽ _Fetching Serie A top scorers..._')
+        let scorers = await _getScorers('seriea', 'seriea')
+        if (!scorers?.length) throw new Error('No data from any source')
           let msg = `╔══════════════════════════╗\n║  ⚽ *SERIE A TOP SCORERS*\n╚══════════════════════════╝\n\n`
           for (let s of scorers) {
               msg += `${s.rank}. *${s.player}* (${s.team})\n`
