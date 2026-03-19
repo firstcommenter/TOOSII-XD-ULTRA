@@ -1379,13 +1379,6 @@ case 'ytplay': {
                 if (audioUrl) { console.log('[play] invidious: success', _inst); break }
             }
         }
-            if (audioUrl) console.log('[play] invidious: success')
-        }
-                        if (progData.progress < 0) { console.log('[play] loader.to: progress failed'); break }
-                    }
-                }
-            } catch (e4) { console.log('[play] loader.to:', e4.message) }
-        }
 
         // Method 5: ytdl-core with agent
         if (!audioUrl && !audioPath) {
