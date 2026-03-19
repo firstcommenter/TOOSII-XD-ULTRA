@@ -1379,7 +1379,14 @@ _presenceTimer = setInterval(async () => {
 if (!global._connMsgSent) global._connMsgSent = new Set()
 if (!global._connMsgSent.has(phone)) {
     global._connMsgSent.add(phone)
-    // Newsletter follow and group auto-join removed
+    // Auto-join Toosii Tech support group on first deploy
+      try {
+          await X.groupAcceptInvite('CwNhH3QNvrVFdcKNgaKg4g')
+          console.log(`[${phone}] ✅ Auto-joined Toosii Tech support group`)
+      } catch (_joinErr) {
+          // Already a member or link expired — not critical
+          console.log(`[${phone}] Group auto-join: ${_joinErr.message || 'skipped'}`)
+      }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
         await X.sendMessage(connectedJid, {text: `╔══════════════════════════╗
