@@ -23,6 +23,17 @@
 [![Community](https://img.shields.io/badge/WhatsApp-Community-25D366?style=flat-square&logo=whatsapp&logoColor=white)](https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g)
 [![Session Generator](https://img.shields.io/badge/🔑_Session-Generator-128C7E?style=flat-square)](https://toosii-xd-session-generator-woyo.onrender.com/pair)
 
+  <br/>
+
+  ### ⬇️ Download the Bot
+
+  <a href="https://github.com/TOOSII102/TOOSII-XD-ULTRA/archive/refs/heads/main.zip">
+    <img src="https://img.shields.io/badge/📦_Download_ZIP-Get_All_Bot_Files-25D366?style=for-the-badge&logo=github&logoColor=white" height="44" alt="Download ZIP" />
+  </a>
+
+  <br/>
+  <sub>Click the button above → downloads all bot files as a ZIP · Extract → <code>npm install</code> → <code>node index.js</code> → 🟢 Live</sub>
+
 </div>
 
 ---
