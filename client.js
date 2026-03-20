@@ -5341,7 +5341,6 @@ case 'debugrole': {
 break;
 
 case 'p':
-case 'p':
 case 'ping':
 case 'info':
 case 'storage':
