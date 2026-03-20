@@ -1,7 +1,7 @@
 const toolsMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  🔧  *UTILITIES*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.ping\`    ├◈  \`.info\`
   ├◈  \`.server\`  ├◈  \`.runtime\`
   ├◈  \`.alive\`   ├◈  \`.myip\`
@@ -18,9 +18,9 @@ const toolsMenu = `
   ├◈  \`.prefix\`
   └◈  \`.save\`       › reply msg
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🛠️  *TOOLS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.weather\`    › [city]
   ├◈  \`.tinyurl\`    › [url]
   ├◈  \`.shorturl\`   › [url]
@@ -29,16 +29,16 @@ const toolsMenu = `
   ├◈  \`.xmascard\`   › [text]
   └◈  \`.robottext\`  › [text]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🤖  *AI CHAT*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.gpt4o\`      › [question]
   ├◈  \`.gemini\`     › [question]
   └◈  \`.transcript\` › [youtube url]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🎨  *AI CREATION*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.magicstudio\` › [prompt]
   ├◈  \`.fluximg\`     › [prompt]
   ├◈  \`.deepimg\`     › [prompt]
@@ -46,16 +46,16 @@ const toolsMenu = `
   ├◈  \`.imagine\`     › [prompt]
   └◈  \`.songgenerator\` › [prompt]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  👻  *PRESENCE*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.vv\`          ├◈  \`.autoonline\`
   ├◈  \`.autorecording\` ├◈  \`.autotyping\`
   └◈  \`.fakestatus\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  📊  *STATUS TOOLS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.autostatus\`
   ├◈  \`.autoviewstatus\`
   ├◈  \`.autolikestatus\`     › [emoji/off]
