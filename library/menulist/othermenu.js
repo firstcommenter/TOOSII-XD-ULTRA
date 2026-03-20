@@ -1,16 +1,16 @@
 const otherMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  ℹ️  *BOT INFO*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.sc\`  ├◈  \`.script\`  ├◈  \`.source\`
   ├◈  \`.owner\`
   ├◈  \`.botinfo\`
   ├◈  \`.infobot\`
   └◈  \`.infoserver\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  😄  *FUN & SOCIAL*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.advice\`    ├◈  \`.lovemsg\`
   ├◈  \`.gratitude\` ├◈  \`.thankyou\`
   ├◈  \`.friendship\` ├◈  \`.pickupline\`
@@ -26,9 +26,9 @@ const otherMenu = `
   ├◈  \`.tweet\`     › [text]
   └◈  \`.ytcomment\` › [text]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🎌  *ANIME*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.anime\`      › [name]
   ├◈  \`.animequote\` ├◈  \`.animerandom\`
   ├◈  \`.waifu\`    ├◈  \`.neko\`
@@ -40,9 +40,9 @@ const otherMenu = `
   ├◈  \`.hug\`      › @user
   └◈  \`.facepalm\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🖼️  *IMAGE EDIT*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.heart\`     › @user
   ├◈  \`.circle\`    › reply img
   ├◈  \`.jail\`      › @user
@@ -53,9 +53,9 @@ const otherMenu = `
   ├◈  \`.lolice\`    › @user
   └◈  \`.glass\`     › reply img
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🐙  *GITHUB*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.github\` › [username]
   ├◈  \`.git\`    › [username]
   ├◈  \`.repo\`   › [user/repo]
