@@ -1,7 +1,7 @@
 const searchMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  🔍  *SEARCH*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.google\`    › [query]
   ├◈  \`.define\`    › [word]
   ├◈  \`.dictionary\` › [word]
@@ -11,9 +11,9 @@ const searchMenu = `
   ├◈  \`.movie\`     › [name]
   └◈  \`.wikimedia\` › [query]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🎵  *MUSIC & LYRICS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.lyrics\`    › [song - artist]
   ├◈  \`.lyric\`     › [song name]
   ├◈  \`.shazam\`    › reply audio
