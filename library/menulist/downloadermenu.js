@@ -1,7 +1,7 @@
 const downloaderMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  📥  *DOWNLOADERS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.play\`        › [query]
   ├◈  \`.song\`        › [query]
   ├◈  \`.video\`       › [query/url]
