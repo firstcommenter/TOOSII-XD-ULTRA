@@ -1,7 +1,7 @@
 const gameMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  🧩  *TRIVIA GAMES*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.tebak\`      › [category]
   ├◈  \`.tebakld\`
   ├◈  \`.trivia\`
@@ -9,9 +9,9 @@ const gameMenu = `
   ├◈  \`.hangman\`
   └◈  \`.hangmanend\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🎮  *CLASSIC GAMES*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.ttt\`        › @user
   ├◈  \`.tictactoe\`  › @user
   ├◈  \`.tttend\`
@@ -21,9 +21,9 @@ const gameMenu = `
   ├◈  \`.slot\`
   └◈  \`.8ball\`      › [question]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🎭  *SOCIAL GAMES*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.truth\`
   ├◈  \`.dare\`
   ├◈  \`.ship\`   › @user @user
