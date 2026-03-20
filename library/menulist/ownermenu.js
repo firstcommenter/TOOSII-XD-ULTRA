@@ -1,7 +1,7 @@
 const ownerMenu = `
-╔══════════════════════════╗
+╔═════════╗
 ║  👑  *OWNER TOOLS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.> / .$ / .=>\`
   ├◈  \`.self\`      ├◈  \`.public\`
   ├◈  \`.restart\`
@@ -14,9 +14,9 @@ const ownerMenu = `
   ├◈  \`.clearsession\`
   └◈  \`.cleartmp\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  ⚙️  *BOT SETTINGS*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.botname\`    › [name]
   ├◈  \`.author\`     › [name]
   ├◈  \`.packname\`   › [name]
@@ -29,18 +29,18 @@ const ownerMenu = `
   ├◈  \`.configimage\` ├◈  \`.setmenu\`
   └◈  \`.botsettings\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🛡️  *PROTECTION*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.anticall\`          › on/off
   ├◈  \`.antilink\`          › on/off
   ├◈  \`.antidelete\`        › on/off
   ├◈  \`.antistatusmention\` › on/off
   └◈  \`.pmblocker\`         › on/off
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🔄  *AUTOMATION*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.autoread\`       › on/off
   ├◈  \`.chatbot\`        › on/off
   ├◈  \`.autobio\`        › on/off
@@ -52,9 +52,9 @@ const ownerMenu = `
   ├◈  \`.muslimprayer\`     › [on/off/dm/group]
   └◈  \`.christianprayer\`  › [on/off/dm/group]
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🤖  *AI CHATBOT MODES*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.setaimode status\`
   ├◈  \`.setaimode global\` › on/off
   ├◈  \`.setaimode dm\`     › on/off
@@ -63,9 +63,9 @@ const ownerMenu = `
   ├◈  \`.setaimode group\`  › add/remove/list
   └◈  \`.setaimode reset\`
 
-╔══════════════════════════╗
+╔═════════╗
 ║  🚫  *BLOCK MANAGEMENT*
-╚══════════════════════════╝
+╚═════════╝
   ├◈  \`.block\`    › @user
   ├◈  \`.unblock\`  › @user
   └◈  \`.listblock\`
