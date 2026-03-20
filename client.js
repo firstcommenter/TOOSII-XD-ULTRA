@@ -5504,8 +5504,10 @@ _⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
 }
 
 if (command === 'ping' || command === 'p') {
-  const _pingMs = Date.now() - _pingStart
-  await X.sendMessage(m.chat, { text: `╔═════════╗\n║  ⚡ *PONG!*  📡 *${_pingMs}ms*\n╚═════════╝` }, { quoted: m })
+    const _t = Date.now()
+    const _sent = await X.sendMessage(m.chat, { text: `╔═════════╗\n║  ⚡ *PONG!*  🏓\n╚═════════╝` }, { quoted: m })
+    const _ms = Date.now() - _t
+    await X.sendMessage(m.chat, { text: `╔═════════╗\n║  ⚡ *PONG!*  📡 *${_ms}ms*\n╚═════════╝`, edit: _sent.key })
 } else {
   const responseText = await getServerInfo()
   await X.sendMessage(m.chat, { text: responseText }, { quoted: m })
