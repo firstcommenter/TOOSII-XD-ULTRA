@@ -5550,25 +5550,40 @@ case 'block': {
         : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
         : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
     if (!_blkTarget) return reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}block @user | number`)
-    // Resolve LID JIDs → real phone JIDs (WhatsApp uses LID internally for some users)
+    // Resolve LID JIDs → real phone JIDs using multiple strategies
     if (_blkTarget.endsWith('@lid')) {
-        // Try 1: group participants list
-        if (m.isGroup && participants) {
-            const lidNum = _blkTarget.split('@')[0]
-            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && p.lid.includes(lidNum))
-            if (real) _blkTarget = real.id
+        const _normLid = (j) => (j || '').split('@')[0].split(':')[0]
+        const _lidKey = _normLid(_blkTarget)
+        let _resolved = null
+        // Strategy 1: group participants list (normalize LID before compare)
+        if (!_resolved && m.isGroup && participants) {
+            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normLid(p.lid) === _lidKey)
+            if (real) _resolved = real.id
         }
-        // Try 2: store.contacts reverse-map
-        if (_blkTarget.endsWith('@lid') && store?.contacts) {
+        // Strategy 2: store.contacts keyed by real JID with .lid property
+        if (!_resolved && store?.contacts) {
             for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@s.whatsapp.net') && c?.lid === _blkTarget) { _blkTarget = jid; break }
-                if (jid.endsWith('@lid') && jid === _blkTarget && c?.phone) { _blkTarget = c.phone + '@s.whatsapp.net'; break }
+                if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normLid(c.lid) === _lidKey) { _resolved = jid; break }
             }
         }
+        // Strategy 3: store.contacts keyed by LID with .phone property
+        if (!_resolved && store?.contacts) {
+            for (const [jid, c] of Object.entries(store.contacts)) {
+                if (jid.endsWith('@lid') && _normLid(jid) === _lidKey && c?.phone) { _resolved = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
+            }
+        }
+        // Strategy 4: load quoted message from store — may carry real sender JID
+        if (!_resolved && m.quoted?.id) {
+            try {
+                const _origMsg = await store.loadMessage(m.chat, m.quoted.id, X)
+                const _realP = _origMsg?.key?.participant || _origMsg?.participant
+                if (_realP && !_realP.endsWith('@lid')) _resolved = _realP
+            } catch {}
+        }
+        if (_resolved) _blkTarget = _resolved
     }
     if (_blkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}block 254xxxxxxxxx`)
     let _blkNum = _blkTarget.split('@')[0].split(':')[0]
-    // Exact number comparison — avoids false positives from substring matching
     if (ownerNums.some(o => _blkNum === o) || _blkNum === botNum) return reply('🛡️ Cannot block the bot owner.')
     try {
         await X.updateBlockStatus(_blkTarget, 'block')
@@ -5586,21 +5601,37 @@ case 'unblock': {
         : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
         : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
     if (!_ublkTarget) return reply(`╔═════════╗\n║  ✅ *UNBLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}unblock @user | number`)
-    // Resolve LID JIDs → real phone JIDs (WhatsApp uses LID internally for some users)
+    // Resolve LID JIDs → real phone JIDs using multiple strategies
     if (_ublkTarget.endsWith('@lid')) {
-        // Try 1: group participants list
-        if (m.isGroup && participants) {
-            const lidNum = _ublkTarget.split('@')[0]
-            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && p.lid.includes(lidNum))
-            if (real) _ublkTarget = real.id
+        const _normLid = (j) => (j || '').split('@')[0].split(':')[0]
+        const _lidKey = _normLid(_ublkTarget)
+        let _resolved = null
+        // Strategy 1: group participants list
+        if (!_resolved && m.isGroup && participants) {
+            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normLid(p.lid) === _lidKey)
+            if (real) _resolved = real.id
         }
-        // Try 2: store.contacts reverse-map
-        if (_ublkTarget.endsWith('@lid') && store?.contacts) {
+        // Strategy 2: store.contacts keyed by real JID with .lid property
+        if (!_resolved && store?.contacts) {
             for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@s.whatsapp.net') && c?.lid === _ublkTarget) { _ublkTarget = jid; break }
-                if (jid.endsWith('@lid') && jid === _ublkTarget && c?.phone) { _ublkTarget = c.phone + '@s.whatsapp.net'; break }
+                if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normLid(c.lid) === _lidKey) { _resolved = jid; break }
             }
         }
+        // Strategy 3: store.contacts keyed by LID with .phone property
+        if (!_resolved && store?.contacts) {
+            for (const [jid, c] of Object.entries(store.contacts)) {
+                if (jid.endsWith('@lid') && _normLid(jid) === _lidKey && c?.phone) { _resolved = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
+            }
+        }
+        // Strategy 4: load quoted message from store — may carry real sender JID
+        if (!_resolved && m.quoted?.id) {
+            try {
+                const _origMsg = await store.loadMessage(m.chat, m.quoted.id, X)
+                const _realP = _origMsg?.key?.participant || _origMsg?.participant
+                if (_realP && !_realP.endsWith('@lid')) _resolved = _realP
+            } catch {}
+        }
+        if (_resolved) _ublkTarget = _resolved
     }
     if (_ublkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}unblock 254xxxxxxxxx`)
     let _ublkNum = _ublkTarget.split('@')[0].split(':')[0]
