@@ -5543,107 +5543,105 @@ else reply(`*PM Blocker: ${global.pmBlocker ? 'ON' : 'OFF'}*\nUsage: ${prefix}pm
 } break
 
 case 'block': {
-    await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
-    if (!isOwner) return reply(mess.OnlyOwner)
-    let _blkTarget = (m.mentionedJid && m.mentionedJid[0])
-        ? m.mentionedJid[0]
-        : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
-        : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
-    if (!_blkTarget) return reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}block @user | number`)
-    // Resolve LID JIDs → real phone JIDs using multiple strategies
-    if (_blkTarget.endsWith('@lid')) {
-        const _normLid = (j) => (j || '').split('@')[0].split(':')[0]
-        const _lidKey = _normLid(_blkTarget)
-        let _resolved = null
-        // Strategy 1: group participants list (normalize LID before compare)
-        if (!_resolved && m.isGroup && participants) {
-            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normLid(p.lid) === _lidKey)
-            if (real) _resolved = real.id
-        }
-        // Strategy 2: store.contacts keyed by real JID with .lid property
-        if (!_resolved && store?.contacts) {
-            for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normLid(c.lid) === _lidKey) { _resolved = jid; break }
-            }
-        }
-        // Strategy 3: store.contacts keyed by LID with .phone property
-        if (!_resolved && store?.contacts) {
-            for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@lid') && _normLid(jid) === _lidKey && c?.phone) { _resolved = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
-            }
-        }
-        // Strategy 4: load quoted message from store — may carry real sender JID
-        if (!_resolved && m.quoted?.id) {
-            try {
-                const _origMsg = await store.loadMessage(m.chat, m.quoted.id, X)
-                const _realP = _origMsg?.key?.participant || _origMsg?.participant
-                if (_realP && !_realP.endsWith('@lid')) _resolved = _realP
-            } catch {}
-        }
-        if (_resolved) _blkTarget = _resolved
-    }
-    if (_blkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}block 254xxxxxxxxx`)
-    _blkTarget = _blkTarget.split(':')[0].split('@')[0] + '@s.whatsapp.net'
-    let _blkNum = _blkTarget.split('@')[0].split(':')[0]
-    if (ownerNums.some(o => _blkNum === o) || _blkNum === botNum) return reply('🛡️ Cannot block the bot owner.')
-    try {
-        await X.updateBlockStatus(_blkTarget, 'block')
-        reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ✅ *Blocked*\n  └ +${_blkNum} has been blocked.`)
-    } catch (e) {
-        reply('❌ Failed to block: ' + (e.message || 'Unknown error') + '\nJID tried: ' + _blkTarget)
-    }
-} break
+      await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
+      if (!isOwner) return reply(mess.OnlyOwner)
+      const _normJ = (j) => (j || '').split(':')[0].split('@')[0]
+      let _blkRaw = (m.mentionedJid && m.mentionedJid[0])
+          ? m.mentionedJid[0]
+          : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
+          : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
+      if (!_blkRaw) return reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}block @user | number`)
+      // If LID → try resolving to real JID via contacts/participants
+      if (_blkRaw.endsWith('@lid')) {
+          const _lidKey = _normJ(_blkRaw)
+          let _res = null
+          if (!_res && m.isGroup && participants) {
+              const p = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normJ(p.lid) === _lidKey)
+              if (p) _res = p.id
+          }
+          if (!_res && store?.contacts) {
+              for (const [jid, c] of Object.entries(store.contacts)) {
+                  if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normJ(c.lid) === _lidKey) { _res = jid; break }
+                  if (jid.endsWith('@lid') && _normJ(jid) === _lidKey && c?.phone) { _res = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
+              }
+          }
+          if (!_res && m.quoted?.id) {
+              try {
+                  const _qm = await store.loadMessage(m.chat, m.quoted.id, X)
+                  const _rp = _qm?.key?.participant || _qm?.participant
+                  if (_rp && !_rp.endsWith('@lid')) _res = _rp
+              } catch {}
+          }
+          if (_res) _blkRaw = _res
+          else return reply(`❌ Cannot identify this user's number.\nUse: ${prefix}block 254xxxxxxxxx`)
+      }
+      const _blkPhone = _normJ(_blkRaw)
+      if (ownerNums.some(o => _blkPhone === o) || _blkPhone === botNum) return reply('🛡️ Cannot block the bot owner.')
+      // Query WhatsApp for this number to get the correct JID and LID
+      let _blkJid = _blkPhone + '@s.whatsapp.net'
+      let _blkLid = null
+      try {
+          const _wa = await X.onWhatsApp(_blkPhone)
+          if (_wa && _wa[0]) { _blkJid = _wa[0].jid || _blkJid; _blkLid = _wa[0].lid || null }
+      } catch {}
+      let _blkOk = false
+      if (_blkLid) { try { await X.updateBlockStatus(_blkLid, 'block'); _blkOk = true } catch {} }
+      if (!_blkOk) { try { await X.updateBlockStatus(_blkJid, 'block'); _blkOk = true } catch {} }
+      if (_blkOk) {
+          reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ✅ *Blocked*\n  └ +${_blkPhone} has been blocked.`)
+      } else {
+          reply(`❌ Failed to block +${_blkPhone}.\nTry: ${prefix}block 254xxxxxxxxx with their number.`)
+      }
+  } break
 
 case 'unblock': {
-    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-    if (!isOwner) return reply(mess.OnlyOwner)
-    let _ublkTarget = (m.mentionedJid && m.mentionedJid[0])
-        ? m.mentionedJid[0]
-        : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
-        : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
-    if (!_ublkTarget) return reply(`╔═════════╗\n║  ✅ *UNBLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}unblock @user | number`)
-    // Resolve LID JIDs → real phone JIDs using multiple strategies
-    if (_ublkTarget.endsWith('@lid')) {
-        const _normLid = (j) => (j || '').split('@')[0].split(':')[0]
-        const _lidKey = _normLid(_ublkTarget)
-        let _resolved = null
-        // Strategy 1: group participants list
-        if (!_resolved && m.isGroup && participants) {
-            const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normLid(p.lid) === _lidKey)
-            if (real) _resolved = real.id
-        }
-        // Strategy 2: store.contacts keyed by real JID with .lid property
-        if (!_resolved && store?.contacts) {
-            for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normLid(c.lid) === _lidKey) { _resolved = jid; break }
-            }
-        }
-        // Strategy 3: store.contacts keyed by LID with .phone property
-        if (!_resolved && store?.contacts) {
-            for (const [jid, c] of Object.entries(store.contacts)) {
-                if (jid.endsWith('@lid') && _normLid(jid) === _lidKey && c?.phone) { _resolved = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
-            }
-        }
-        // Strategy 4: load quoted message from store — may carry real sender JID
-        if (!_resolved && m.quoted?.id) {
-            try {
-                const _origMsg = await store.loadMessage(m.chat, m.quoted.id, X)
-                const _realP = _origMsg?.key?.participant || _origMsg?.participant
-                if (_realP && !_realP.endsWith('@lid')) _resolved = _realP
-            } catch {}
-        }
-        if (_resolved) _ublkTarget = _resolved
-    }
-    if (_ublkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}unblock 254xxxxxxxxx`)
-    _ublkTarget = _ublkTarget.split(':')[0].split('@')[0] + '@s.whatsapp.net'
-    let _ublkNum = _ublkTarget.split('@')[0].split(':')[0]
-    try {
-        await X.updateBlockStatus(_ublkTarget, 'unblock')
-        reply(`╔═════════╗\n║  ✅ *UNBLOCK USER*\n╚═════════╝\n\n  ✅ *Unblocked*\n  └ +${_ublkNum} has been unblocked.`)
-    } catch (e) {
-        reply('❌ Failed to unblock: ' + (e.message || 'Unknown error'))
-    }
-} break
+      await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+      if (!isOwner) return reply(mess.OnlyOwner)
+      const _normU = (j) => (j || '').split(':')[0].split('@')[0]
+      let _ublkRaw = (m.mentionedJid && m.mentionedJid[0])
+          ? m.mentionedJid[0]
+          : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
+          : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
+      if (!_ublkRaw) return reply(`╔═════════╗\n║  ✅ *UNBLOCK USER*\n╚═════════╝\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}unblock @user | number`)
+      if (_ublkRaw.endsWith('@lid')) {
+          const _lidKey = _normU(_ublkRaw)
+          let _res = null
+          if (!_res && m.isGroup && participants) {
+              const p = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && _normU(p.lid) === _lidKey)
+              if (p) _res = p.id
+          }
+          if (!_res && store?.contacts) {
+              for (const [jid, c] of Object.entries(store.contacts)) {
+                  if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normU(c.lid) === _lidKey) { _res = jid; break }
+                  if (jid.endsWith('@lid') && _normU(jid) === _lidKey && c?.phone) { _res = c.phone.replace(/[^0-9]/g,'') + '@s.whatsapp.net'; break }
+              }
+          }
+          if (!_res && m.quoted?.id) {
+              try {
+                  const _qm = await store.loadMessage(m.chat, m.quoted.id, X)
+                  const _rp = _qm?.key?.participant || _qm?.participant
+                  if (_rp && !_rp.endsWith('@lid')) _res = _rp
+              } catch {}
+          }
+          if (_res) _ublkRaw = _res
+          else return reply(`❌ Cannot identify this user's number.\nUse: ${prefix}unblock 254xxxxxxxxx`)
+      }
+      const _ublkPhone = _normU(_ublkRaw)
+      let _ublkJid = _ublkPhone + '@s.whatsapp.net'
+      let _ublkLid = null
+      try {
+          const _wa = await X.onWhatsApp(_ublkPhone)
+          if (_wa && _wa[0]) { _ublkJid = _wa[0].jid || _ublkJid; _ublkLid = _wa[0].lid || null }
+      } catch {}
+      let _ublkOk = false
+      if (_ublkLid) { try { await X.updateBlockStatus(_ublkLid, 'unblock'); _ublkOk = true } catch {} }
+      if (!_ublkOk) { try { await X.updateBlockStatus(_ublkJid, 'unblock'); _ublkOk = true } catch {} }
+      if (_ublkOk) {
+          reply(`╔═════════╗\n║  ✅ *UNBLOCK USER*\n╚═════════╝\n\n  ✅ *Unblocked*\n  └ +${_ublkPhone} has been unblocked.`)
+      } else {
+          reply(`❌ Failed to unblock +${_ublkPhone}.\nTry: ${prefix}unblock 254xxxxxxxxx with their number.`)
+      }
+  } break
 
 case 'blocklist': {
     await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
