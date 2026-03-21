@@ -5588,12 +5588,13 @@ case 'block': {
           if (_wa && _wa[0]) { _blkJid = _wa[0].jid || _blkJid; _blkLid = _wa[0].lid || null }
       } catch {}
       let _blkOk = false
-      if (_blkLid) { try { await X.updateBlockStatus(_blkLid, 'block'); _blkOk = true } catch {} }
-      if (!_blkOk) { try { await X.updateBlockStatus(_blkJid, 'block'); _blkOk = true } catch {} }
+      let _blkErr1 = '', _blkErr2 = ''
+      if (_blkLid) { try { await X.updateBlockStatus(_blkLid, 'block'); _blkOk = true } catch(e) { _blkErr1 = e.message } }
+      if (!_blkOk) { try { await X.updateBlockStatus(_blkJid, 'block'); _blkOk = true } catch(e) { _blkErr2 = e.message } }
       if (_blkOk) {
           reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ✅ *Blocked*\n  └ +${_blkPhone} has been blocked.`)
       } else {
-          reply(`❌ Failed to block +${_blkPhone}.\nTry: ${prefix}block 254xxxxxxxxx with their number.`)
+          reply(`❌ Block failed\nPhone: ${_blkPhone}\nJID: ${_blkJid}\nLID: ${_blkLid || 'none'}\nErr1(lid): ${_blkErr1||'n/a'}\nErr2(jid): ${_blkErr2||'n/a'}`)
       }
   } break
 
