@@ -5590,7 +5590,7 @@ case 'block': {
         await X.updateBlockStatus(_blkTarget, 'block')
         reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ✅ *Blocked*\n  └ +${_blkNum} has been blocked.`)
     } catch (e) {
-        reply('❌ Failed to block: ' + (e.message || 'Unknown error'))
+        reply('❌ Failed to block: ' + (e.message || 'Unknown error') + '\nJID tried: ' + _blkTarget)
     }
 } break
 
