@@ -5583,6 +5583,7 @@ case 'block': {
         if (_resolved) _blkTarget = _resolved
     }
     if (_blkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}block 254xxxxxxxxx`)
+    _blkTarget = _blkTarget.split(':')[0].split('@')[0] + '@s.whatsapp.net'
     let _blkNum = _blkTarget.split('@')[0].split(':')[0]
     if (ownerNums.some(o => _blkNum === o) || _blkNum === botNum) return reply('🛡️ Cannot block the bot owner.')
     try {
@@ -5634,6 +5635,7 @@ case 'unblock': {
         if (_resolved) _ublkTarget = _resolved
     }
     if (_ublkTarget.endsWith('@lid')) return reply(`❌ Cannot resolve this user's real number.\nPlease use their number directly:\n${prefix}unblock 254xxxxxxxxx`)
+    _ublkTarget = _ublkTarget.split(':')[0].split('@')[0] + '@s.whatsapp.net'
     let _ublkNum = _ublkTarget.split('@')[0].split(':')[0]
     try {
         await X.updateBlockStatus(_ublkTarget, 'unblock')
