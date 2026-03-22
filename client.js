@@ -5587,18 +5587,29 @@ case 'block': {
           const _wa = await X.onWhatsApp(_blkPhone)
           if (_wa && _wa[0]) { _blkJid = _wa[0].jid || _blkJid; _blkLid = _wa[0].lid || null }
       } catch {}
-      // Check current blocklist first
+      // Fetch blocklist via raw query to inspect full response (hash/ver attrs)
+    let _blkListAttrs = {}
     let _currentBL = []
-    try { _currentBL = await X.fetchBlocklist() } catch {}
+    try {
+        const _blkGetResult = await X.query({ tag: 'iq', attrs: { xmlns: 'blocklist', to: 's.whatsapp.net', type: 'get' } })
+        const _blkListNode = _blkGetResult?.content?.find?.(n => n.tag === 'list')
+        _blkListAttrs = _blkListNode?.attrs || {}
+        _currentBL = (_blkListNode?.content || []).filter(n => n.tag === 'item').map(n => n.attrs?.jid || '')
+    } catch {}
     const _alreadyBlocked = _currentBL.some(j => j.includes(_blkPhone) || (_blkLid && j.includes(_blkLid.split('@')[0])))
     if (_alreadyBlocked) return reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ⚠️ Already blocked\n  └ +${_blkPhone} is already on your block list.`)
+    const _blkJidToUse = _blkLid || _blkJid
     let _blkOk = false
-    if (_blkLid) { try { await X.updateBlockStatus(_blkLid, 'block'); _blkOk = true } catch {} }
+    // Try with list attrs (hash/ver) that WhatsApp might require
+    try {
+        await X.query({ tag: 'iq', attrs: { xmlns: 'blocklist', to: 's.whatsapp.net', type: 'set' }, content: [{ tag: 'item', attrs: { action: 'block', jid: _blkJidToUse, ..._blkListAttrs } }] })
+        _blkOk = true
+    } catch {}
     if (!_blkOk) { try { await X.updateBlockStatus(_blkJid, 'block'); _blkOk = true } catch {} }
     if (_blkOk) {
         reply(`╔═════════╗\n║  🚫 *BLOCK USER*\n╚═════════╝\n\n  ✅ *Blocked*\n  └ +${_blkPhone} has been blocked.`)
     } else {
-        reply(`❌ debug — BL(${_currentBL.length}): ${_currentBL.slice(0,3).join(' | ')} | Trying JID:${_blkJid} LID:${_blkLid}`)
+        reply(`❌ debug — listAttrs:${JSON.stringify(_blkListAttrs)} JID:${_blkJidToUse} BL(${_currentBL.length})`)
     }
   } break
 
