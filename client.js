@@ -7019,12 +7019,13 @@ case 'series': {
     await X.sendMessage(m.chat, { react: { text: '🎬', key: m.key } })
     if (!text) return reply(
         `╔═════════╗\n` +
-        `║  🎬 *MOVIE SEARCH*\n` +
+        `║  🎬 *MOVIE / SERIES*\n` +
         `╚═════════╝\n\n` +
-        `  Search any movie or TV series.\n\n` +
+        `  Search any movie or TV series and get info + stream links.\n\n` +
         `  ├ *${prefix}movie* Inception\n` +
         `  ├ *${prefix}movie* Breaking Bad\n` +
-        `  └ *${prefix}movie* Avengers 2019`
+        `  ├ *${prefix}movie* Avengers 2019\n` +
+        `  └ *${prefix}stream* [id] [movie|tv] — get episodes/streams directly`
     )
     try {
         await reply(`🎬 _Searching for_ *${text}*_..._`)
@@ -7032,24 +7033,33 @@ case 'series': {
         const _TMDB = '8265bd1679663a7ea12ac168da84d2e8'
         const _BASE = 'https://api.themoviedb.org/3'
         const _IMG  = 'https://image.tmdb.org/t/p/w500'
+        const _XCASPER = 'https://movieapi.xcasper.space'
         const _na   = (v) => (v !== null && v !== undefined && v !== '') ? v : '—'
         const _q    = text.trim()
         const _ym   = _q.match(/(19|20)\d{2}/)
         const _year = _ym ? _ym[0] : ''
         const _titl = _q.replace(_year, '').trim()
 
-        // Search movies + TV in parallel
-        const [_mRes, _tRes] = await Promise.all([
+        // Search movies + TV + xcasper showbox in parallel
+        const [_mRes, _tRes, _xmRes, _xtvRes] = await Promise.allSettled([
             fetch(`${_BASE}/search/movie?api_key=${_TMDB}&query=${encodeURIComponent(_titl)}${_year ? `&year=${_year}` : ''}`).then(r => r.json()),
-            fetch(`${_BASE}/search/tv?api_key=${_TMDB}&query=${encodeURIComponent(_titl)}${_year ? `&first_air_date_year=${_year}` : ''}`).then(r => r.json())
+            fetch(`${_BASE}/search/tv?api_key=${_TMDB}&query=${encodeURIComponent(_titl)}${_year ? `&first_air_date_year=${_year}` : ''}`).then(r => r.json()),
+            fetch(`${_XCASPER}/api/showbox/search?keyword=${encodeURIComponent(_q)}&type=movie`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()),
+            fetch(`${_XCASPER}/api/showbox/search?keyword=${encodeURIComponent(_q)}&type=tv`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()),
         ])
 
-        const _all = [
-            ...(_mRes.results || []).map(x => ({ ...x, _mt: 'movie' })),
-            ...(_tRes.results  || []).map(x => ({ ...x, _mt: 'tv'    }))
+        const _tmdbAll = [
+            ...((_mRes.value?.results || _mRes.status==='fulfilled' ? _mRes.value?.results||[] : [])).map(x => ({ ...x, _mt: 'movie' })),
+            ...((_tRes.value?.results || _tRes.status==='fulfilled' ? _tRes.value?.results||[] : [])).map(x => ({ ...x, _mt: 'tv'    }))
         ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
 
-        if (!_all.length) return reply(
+        // Best xcasper match (movie preferred, then tv)
+        const _xcMovies = _xmRes.status==='fulfilled' && _xmRes.value?.success ? (_xmRes.value.data||[]) : []
+        const _xcTV     = _xtvRes.status==='fulfilled' && _xtvRes.value?.success ? (_xtvRes.value.data||[]) : []
+        const _xcPick   = _xcMovies[0] || _xcTV[0] || null
+        const _xcIsTV   = !_xcMovies[0] && !!_xcTV[0]
+
+        if (!_tmdbAll.length && !_xcPick) return reply(
             `╔═════════╗\n` +
             `║  🎬 *MOVIE SEARCH*\n` +
             `╚═════════╝\n\n` +
@@ -7058,50 +7068,85 @@ case 'series': {
             `  _Example:_ *${prefix}movie Inception 2010*`
         )
 
-        const _pick = _all[0]
-        const _mt   = _pick._mt
+        // Get TMDB details + xcasper stream data in parallel
+        const _pick = _tmdbAll[0]
+        const _mt   = _pick?._mt || (_xcIsTV ? 'tv' : 'movie')
+        const _isTV = _mt === 'tv'
 
-        // Full details
-        const _d = await fetch(`${_BASE}/${_mt}/${_pick.id}?api_key=${_TMDB}&append_to_response=credits`).then(r => r.json())
+        const [_dRes, _streamRes] = await Promise.allSettled([
+            _pick ? fetch(`${_BASE}/${_mt}/${_pick.id}?api_key=${_TMDB}&append_to_response=credits`).then(r => r.json()) : Promise.resolve(null),
+            _xcPick ? fetch(`${_XCASPER}/api/showbox/${_xcIsTV ? 'tv' : 'movie'}?id=${_xcPick.id}${_xcIsTV ? '&season=1&episode=1' : ''}`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()) : Promise.resolve(null)
+        ])
+        const _d = _dRes.status === 'fulfilled' ? _dRes.value : null
+        const _sd = _streamRes.status === 'fulfilled' ? _streamRes.value : null
 
-        const _isTV   = _mt === 'tv'
         const _icon   = _isTV ? '📺' : '🎬'
-        const _tStr   = _isTV ? 'TV SERIES INFO' : 'MOVIE INFO'
-        const _title2 = _na(_d.title || _d.name)
-        const _yr2    = (_d.release_date || _d.first_air_date || '').slice(0, 4)
-        const _genres = (_d.genres || []).map(g => g.name).join(', ') || '—'
+        const _tStr   = _isTV ? 'TV SERIES' : 'MOVIE'
+        const _title2 = _na(_d?.title || _d?.name || _xcPick?.title || _pick?.title || _pick?.name)
+        const _yr2    = (_d?.release_date || _d?.first_air_date || '').slice(0, 4) || (_xcPick?.year ? String(_xcPick.year) : '')
+        const _genres = (_d?.genres || []).map(g => g.name).join(', ') || (_xcPick?.cats || '—')
         const _rt     = _isTV
-            ? (_d.episode_run_time?.[0] ? `${_d.episode_run_time[0]} min/ep` : '—')
-            : (_d.runtime ? `${_d.runtime} min` : '—')
-        const _lang   = _na((_d.original_language || '').toUpperCase())
-        const _score  = _d.vote_average
-            ? `${_d.vote_average.toFixed(1)}/10 (${(_d.vote_count || 0).toLocaleString()} votes)`
-            : '—'
-        const _status = _na(_d.status)
-        const _plot   = _na(_d.overview)
-        const _poster = _d.poster_path ? `${_IMG}${_d.poster_path}` : null
+            ? (_d?.episode_run_time?.[0] ? `${_d.episode_run_time[0]} min/ep` : '—')
+            : (_d?.runtime ? `${_d.runtime} min` : (_sd?.data?.runtime ? `${_sd.data.runtime} min` : '—'))
+        const _lang   = _na((_d?.original_language || '').toUpperCase())
+        const _score  = _d?.vote_average
+            ? `${_d.vote_average.toFixed(1)}/10 ⭐`
+            : (_sd?.data?.imdb_rating ? `${_sd.data.imdb_rating}/10 ⭐ (IMDb)` : '—')
+        const _plot   = _na(_d?.overview || _sd?.data?.description)
+        const _poster = _d?.poster_path ? `${_IMG}${_d.poster_path}` : (_xcPick?.poster_org || _xcPick?.poster_min || null)
         const _dir    = !_isTV
-            ? (_d.credits?.crew?.find(c => c.job === 'Director')?.name || '—')
-            : (_d.created_by?.map(c => c.name).join(', ') || '—')
-        const _cast   = (_d.credits?.cast || []).slice(0, 5).map(c => c.name).join(', ') || '—'
-        const _imdbId = _d.imdb_id || ''
+            ? (_d?.credits?.crew?.find(c => c.job === 'Director')?.name || _sd?.data?.director || '—')
+            : (_d?.created_by?.map(c => c.name).join(', ') || '—')
+        const _cast   = (_d?.credits?.cast || []).slice(0, 5).map(c => c.name).join(', ') || (_sd?.data?.actors?.split(',').slice(0,4).join(',').trim() || '—')
+        const _imdbId = _d?.imdb_id || _sd?.data?.imdb_id || ''
+
+        // ── Stream links from xcasper ──
+        const _files = _sd?.data?.file || []
+        const _freeFiles = _files.filter(f => !f.vip_only && f.path && f.path.startsWith('http'))
+        const _vipFiles  = _files.filter(f =>  f.vip_only && f.path && f.path.startsWith('http'))
+        const _allPlayable = [..._freeFiles, ..._vipFiles]
 
         let _cap  = `╔═════════╗\n`
-            _cap += `║  ${_icon} *${_tStr}*\n`
+            _cap += `║  ${_icon} *${_tStr} INFO*\n`
             _cap += `╚═════════╝\n\n`
             _cap += `  *${_title2}*  _(${_yr2 || '?'})_\n\n`
             _cap += `  ├ 🎭 *Genre*     › ${_genres}\n`
             _cap += `  ├ ⏱️  *Runtime*  › ${_rt}\n`
             _cap += `  ├ 🌍 *Language* › ${_lang}\n`
             _cap += `  ├ ⭐ *Rating*    › ${_score}\n`
-            _cap += `  ├ 📋 *Status*   › ${_status}\n`
-        if (_isTV) {
+        if (_isTV && _d) {
             _cap += `  ├ 📺 *Seasons*  › ${_na(_d.number_of_seasons)} seasons · ${_na(_d.number_of_episodes)} episodes\n`
         }
             _cap += `  ├ 🎬 *${_isTV ? 'Creator ' : 'Director'}* › ${_dir}\n`
             _cap += `  └ 🎭 *Cast*     › ${_cast}\n`
-            _cap += `\n  *📝 Plot:*\n  _${_plot}_\n`
-        if (_imdbId) _cap += `\n  🔗 https://www.imdb.com/title/${_imdbId}`
+            _cap += `\n  *📝 Plot:*\n  _${_plot.slice(0, 300)}${_plot.length > 300 ? '…' : ''}_\n`
+        if (_imdbId) _cap += `\n  🔗 https://www.imdb.com/title/${_imdbId}\n`
+
+        // Stream section
+        if (_allPlayable.length) {
+            _cap += `\n━━━━━━━━━━━━━━━━━━━━━━\n`
+            _cap += `📥 *STREAM / DOWNLOAD LINKS*\n`
+            if (_isTV) _cap += `_Season 1, Episode 1 — use ${prefix}stream for other episodes_\n`
+            _cap += `━━━━━━━━━━━━━━━━━━━━━━\n`
+            for (const _f of _allPlayable.slice(0, 5)) {
+                _cap += `\n🎞️ *${_f.quality || '?'}* ${_f.format ? `(${_f.format.toUpperCase()})` : ''} — ${_f.size || '?'}\n`
+                _cap += `${_f.path}\n`
+            }
+            if (_allPlayable.length > 5) _cap += `\n_...and ${_allPlayable.length - 5} more quality options_\n`
+            _cap += `\n_Open links in VLC / MX Player / browser to watch_`
+        } else if (_xcPick) {
+            // Has xcasper data but no free stream links (VIP only or not yet available)
+            _cap += `\n━━━━━━━━━━━━━━━━━━━━━━\n`
+            _cap += `📡 *STREAM*\n`
+            _cap += `_Streams for this title require VIP access on ShowBox._\n`
+            if (_isTV) {
+                _cap += `\nUse *${prefix}stream ${_xcPick.id} tv [season] [ep]* to check specific episodes`
+            } else {
+                _cap += `\nUse *${prefix}stream ${_xcPick.id} movie* to check availability`
+            }
+        } else {
+            _cap += `\n_No direct stream found. Try searching on:_\n🔗 https://showbox.media\n🔗 https://fmovies.ps`
+        }
 
         if (_poster) {
             await X.sendMessage(m.chat, { image: { url: _poster }, caption: _cap }, { quoted: m })
@@ -7111,6 +7156,72 @@ case 'series': {
 
     } catch(e) {
         reply(`❌ *Movie search failed.*\n_${e.message || 'Please try again.'}_`)
+    }
+} break
+
+// ── Direct stream lookup: .stream [xcasper-id] [movie|tv] [season?] [ep?]
+case 'stream':
+case 'getstream':
+case 'episode': {
+    await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
+    const _sArgs = text?.trim().split(/\s+/) || []
+    const _sId   = _sArgs[0]
+    const _sType = (_sArgs[1] || 'movie').toLowerCase()
+    const _sSeas = parseInt(_sArgs[2]) || 1
+    const _sEp   = parseInt(_sArgs[3]) || 1
+    if (!_sId) return reply(
+        `╔═════════╗\n║  📺 *STREAM LOOKUP*\n╚═════════╝\n\n` +
+        `Usage: *${prefix}stream [id] [movie|tv] [season] [episode]*\n\n` +
+        `Examples:\n  ${prefix}stream 4059 movie\n  ${prefix}stream 77 tv 1 3\n\n` +
+        `_Get the ID from ${prefix}movie search results_`
+    )
+    try {
+        await reply(`📺 _Fetching stream links..._`)
+        const _XCASPER = 'https://movieapi.xcasper.space'
+        const _isTV = _sType === 'tv'
+        const _url = _isTV
+            ? `${_XCASPER}/api/showbox/tv?id=${_sId}&season=${_sSeas}&episode=${_sEp}`
+            : `${_XCASPER}/api/showbox/movie?id=${_sId}`
+        const _sr = await fetch(_url, { signal: AbortSignal.timeout(20000) })
+        const _sd = await _sr.json()
+        if (!_sd.success || !_sd.data) return reply(`❌ Title ID *${_sId}* not found. Get IDs from *${prefix}movie* search.`)
+
+        const _files = _sd.data.file || []
+        const _freeFiles = _files.filter(f => !f.vip_only && f.path && f.path.startsWith('http'))
+        const _allFiles  = _files.filter(f => f.path && f.path.startsWith('http'))
+        const _title = _sd.data.title || `ID ${_sId}`
+
+        let _msg = `╔═════════╗\n║  📺 *STREAM LINKS*\n╚═════════╝\n\n`
+        _msg += `🎬 *${_title}*`
+        if (_isTV) _msg += ` — S${_sSeas}E${_sEp}`
+        _msg += '\n'
+        if (_sd.data.imdb_rating) _msg += `⭐ IMDb: ${_sd.data.imdb_rating}/10\n`
+
+        if (!_allFiles.length) {
+            _msg += `\n⚠️ _No stream links available for this title right now._\n`
+            _msg += _isTV ? `\nTry a different season/episode.` : `\nThis movie may be VIP-only or not yet available.`
+        } else {
+            if (_freeFiles.length) {
+                _msg += `\n✅ *FREE STREAMS (${_freeFiles.length}):*\n`
+                for (const _f of _freeFiles) {
+                    _msg += `\n🎞️ *${_f.quality}* ${_f.format ? `(${_f.format.toUpperCase()})` : ''} — ${_f.size || '?'}\n`
+                    _msg += `${_f.path}\n`
+                }
+            }
+            const _vipOnly = _allFiles.filter(f => f.vip_only)
+            if (_vipOnly.length) {
+                _msg += `\n🔒 *VIP QUALITY OPTIONS:* ${_vipOnly.map(f => f.quality).join(', ')}\n`
+            }
+            _msg += `\n_Open in VLC / MX Player / any video player_`
+        }
+
+        if (_isTV && _sd.data.seasons?.length) {
+            _msg += `\n\n📺 *Seasons available:* ${_sd.data.seasons.map(s => `S${s.season_num}`).join(', ')}`
+            _msg += `\n_Use ${prefix}stream ${_sId} tv [season] [episode] for specific episodes_`
+        }
+        await reply(_msg)
+    } catch(e) {
+        reply(`❌ Stream lookup failed: ${e.message}`)
     }
 } break
 
