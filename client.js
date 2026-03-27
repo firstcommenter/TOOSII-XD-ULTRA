@@ -3555,6 +3555,7 @@ case 'antidelete':
       const _syncLegacy = () => {
           global.antiDelete = _ad.gc.enabled || _ad.pm.enabled
           global.antiDeleteMode = _ad.gc.mode === 'chat' || _ad.pm.mode === 'chat' ? 'public' : 'private'
+          global._saveAdState?.()
       }
 
       const _arg = (args[0] || '').toLowerCase().trim()
