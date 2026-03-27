@@ -9543,89 +9543,126 @@ case 'laligaupcoming': {
   
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🏅  SPORTS — LIVE, ALL, CATEGORIES, STREAM
+// 🏅  SPORTS — LIVE, ALL, CATEGORIES, STREAM  (xcasper /api/live)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 case 'sportscategories':
 case 'sportcategories':
 case 'sportcat': {
     await X.sendMessage(m.chat, { react: { text: '🏅', key: m.key } })
     try {
-        let r = await fetch(`https://api.giftedtech.co.ke/api/sports/categories?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(15000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let cats = Array.isArray(d.result) ? d.result : []
-        let msg = `╔═════════╗\n║  🏅 *SPORTS CATEGORIES*\n╚═════════╝\n\n`
-        for (let c of cats) {
-            let icon = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', 'motor-sports': '🏎️', boxing: '🥊', mma: '🥋' }[c.category] || '🏅'
-            msg += `  ${icon} *${c.category}* — ${c.matchCount} matches\n`
+        let _r = await fetch('https://movieapi.xcasper.space/api/live', { signal: AbortSignal.timeout(15000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.data?.matchList) throw new Error('No data')
+        let _all = _d.data.matchList
+        let _catMap = {}
+        for (let _ev of _all) {
+            let _t = (_ev.type || 'other').toLowerCase()
+            _catMap[_t] = (_catMap[_t] || 0) + 1
         }
-        msg += `\n_Use ${prefix}livesports [category] to see live events_\n_Use ${prefix}allsports [category] to see all events_`
-        await reply(msg)
+        const _sportIcon = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋', badminton: '🏸', tabletennis: '🏓', snooker: '🎱' }
+        let _msg = `╔═════════╗\n║  🏅 *SPORTS CATEGORIES*\n╚═════════╝\n\n`
+        for (let [_cat, _cnt] of Object.entries(_catMap).sort((a,b) => b[1]-a[1])) {
+            _msg += `  ${_sportIcon[_cat] || '🏅'} *${_cat}* — ${_cnt} match${_cnt!==1?'es':''}\n`
+        }
+        _msg += `\n_Use ${prefix}livesports [sport] to see live events_\n_Use ${prefix}allsports [sport] to see all events_\n_Use ${prefix}watchsport [match-id] to get stream link_`
+        await reply(_msg)
     } catch(e) { reply('❌ Could not fetch sports categories. Try again later.') }
 } break
 
 case 'livesports':
 case 'sportslive': {
-    await X.sendMessage(m.chat, { react: { text: '🏅', key: m.key } })
-    let _sportCat = text?.toLowerCase().trim() || 'football'
+    await X.sendMessage(m.chat, { react: { text: '🔴', key: m.key } })
+    let _lsCat = (text?.toLowerCase().trim()) || ''
     try {
-        await reply(`🏅 _Fetching live ${_sportCat} events..._`)
-        let r = await fetch(`https://api.giftedtech.co.ke/api/sports/live?apikey=${_giftedKey()}&category=${encodeURIComponent(_sportCat)}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let matches = d.result.matches || []
-        if (!matches.length) return reply(`🏅 No live *${_sportCat}* events at the moment.\n\nTry: ${prefix}sportscategories to see all categories`)
-        let msg = `╔═════════╗\n║  🔴 *LIVE ${_sportCat.toUpperCase()}* (${matches.length})\n╚═════════╝\n`
-        for (let ev of matches) {
-            msg += `\n🔴 *${ev.homeTeam || ev.team1 || ''} vs ${ev.awayTeam || ev.team2 || ''}*\n`
-            if (ev.league || ev.competition) msg += `   🏆 ${ev.league || ev.competition}\n`
-            if (ev.time || ev.status) msg += `   ⏱️ ${ev.time || ev.status}\n`
-            if (ev.id) msg += `   🆔 \`${ev.id}\`\n`
+        await reply(`🔴 _Fetching live sports events..._`)
+        let _r = await fetch('https://movieapi.xcasper.space/api/live', { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.data?.matchList) throw new Error('No data')
+        let _all = _d.data.matchList
+        // Filter: only genuinely live/ongoing matches
+        let _live = _all.filter(ev => {
+            let _st = (ev.status || '').toLowerCase()
+            let _sl = (ev.statusLive || '').toLowerCase()
+            return _st === 'living' || _sl === 'living' || _st.includes('live') || _st.includes('progress') || _st.includes('half')
+        })
+        if (_lsCat) _live = _live.filter(ev => (ev.type || '').toLowerCase().includes(_lsCat))
+        if (!_live.length) {
+            let _label = _lsCat ? `*${_lsCat}*` : 'any sport'
+            return reply(`🔴 No live events for ${_label} right now.\n\nTry: *${prefix}allsports* to see all scheduled/finished matches\n*${prefix}sportscategories* to see available sports`)
         }
-        await reply(msg)
-    } catch(e) { reply(`❌ Could not fetch live ${_sportCat} events. Try: ${prefix}sportscategories`) }
+        const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
+        let _msg = `╔═════════╗\n║  🔴 *LIVE SPORTS* (${_live.length})\n╚═════════╝\n`
+        for (let _ev of _live) {
+            let _icon = _si[(_ev.type||'').toLowerCase()] || '🏅'
+            let _sc1 = _ev.team1?.score || '0', _sc2 = _ev.team2?.score || '0'
+            _msg += `\n${_icon} *${_ev.team1?.name || '?'} ${_sc1} - ${_sc2} ${_ev.team2?.name || '?'}*\n`
+            if (_ev.league) _msg += `   🏆 ${_ev.league}\n`
+            if (_ev.timeDesc) _msg += `   ⏱️ ${_ev.timeDesc}\n`
+            _msg += `   🆔 \`${_ev.id}\`\n`
+        }
+        _msg += `\n_Use ${prefix}watchsport [match-id] to get the stream link_`
+        await reply(_msg)
+    } catch(e) { reply(`❌ Could not fetch live sports. Try again later.`) }
 } break
 
 case 'allsports':
 case 'sportsall': {
     await X.sendMessage(m.chat, { react: { text: '🏅', key: m.key } })
-    let _sportCat2 = text?.toLowerCase().trim() || 'football'
+    let _asCat = (text?.toLowerCase().trim()) || ''
     try {
-        await reply(`🏅 _Fetching all ${_sportCat2} events..._`)
-        let r = await fetch(`https://api.giftedtech.co.ke/api/sports/all?apikey=${_giftedKey()}&category=${encodeURIComponent(_sportCat2)}`, { signal: AbortSignal.timeout(20000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No data')
-        let matches = d.result.matches || d.result
-        if (!Array.isArray(matches) || !matches.length) return reply(`🏅 No *${_sportCat2}* events found.\n\nTry: ${prefix}sportscategories to see all categories`)
-        let msg = `╔═════════╗\n║  🏅 *ALL ${_sportCat2.toUpperCase()} EVENTS*\n╚═════════╝\n\n_Total: ${matches.length} events_\n`
-        for (let ev of matches) {
-            msg += `\n⚽ *${ev.homeTeam || ev.team1 || ''} vs ${ev.awayTeam || ev.team2 || ''}*\n`
-            if (ev.league || ev.competition) msg += `   🏆 ${ev.league || ev.competition}\n`
-            if (ev.date || ev.time) msg += `   📅 ${ev.date || ''} ${ev.time || ''}\n`
-            if (ev.id) msg += `   🆔 \`${ev.id}\`\n`
+        await reply(`🏅 _Fetching sports events..._`)
+        let _r = await fetch('https://movieapi.xcasper.space/api/live', { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.data?.matchList) throw new Error('No data')
+        let _all = _d.data.matchList
+        if (_asCat) _all = _all.filter(ev => (ev.type || '').toLowerCase().includes(_asCat))
+        if (!_all.length) return reply(`🏅 No *${_asCat || 'sports'}* events found.\n\nTry: *${prefix}sportscategories* to see available sports`)
+        const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
+        const _statusLabel = { living: '🔴 LIVE', matchended: '✅ Ended', matchnotstart: '🕐 Not Started' }
+        let _msg = `╔═════════╗\n║  🏅 *${_asCat ? _asCat.toUpperCase() + ' EVENTS' : 'ALL SPORTS'}* (${_all.length})\n╚═════════╝\n`
+        for (let _ev of _all) {
+            let _icon = _si[(_ev.type||'').toLowerCase()] || '🏅'
+            let _sc1 = _ev.team1?.score || '0', _sc2 = _ev.team2?.score || '0'
+            let _stKey = (_ev.status || '').toLowerCase().replace(/\s/g,'')
+            let _stLabel = _statusLabel[_stKey] || _ev.timeDesc || _ev.status || ''
+            _msg += `\n${_icon} *${_ev.team1?.name || '?'} ${_sc1} - ${_sc2} ${_ev.team2?.name || '?'}*\n`
+            if (_ev.league) _msg += `   🏆 ${_ev.league}\n`
+            if (_stLabel) _msg += `   📊 ${_stLabel}\n`
+            _msg += `   🆔 \`${_ev.id}\`\n`
         }
-        await reply(msg)
-    } catch(e) { reply(`❌ Could not fetch ${_sportCat2} events. Try: ${prefix}sportscategories`) }
+        _msg += `\n_Use ${prefix}watchsport [match-id] to get the stream link_`
+        await reply(_msg)
+    } catch(e) { reply(`❌ Could not fetch sports events. Try again later.`) }
 } break
 
 case 'watchsport':
 case 'streamsport':
 case 'sportsstream': {
     await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
-    if (!text) return reply(`📺 *Stream a Sport Event*\n\nUsage: *${prefix}watchsport [event-id]*\n\nFirst use *${prefix}allsports [category]* to get event IDs\n\nExample:\n${prefix}allsports football\n${prefix}watchsport motor-lublin-vs-korona-kielce-football-1380587`)
+    if (!text) return reply(`📺 *Stream a Sport Match*\n\nUsage: *${prefix}watchsport [match-id]*\n\nGet match IDs from:\n  *${prefix}livesports* — live events\n  *${prefix}allsports* — all events\n  *${prefix}allsports basketball* — filter by sport\n\nExample:\n${prefix}watchsport 4789881499804909776`)
     try {
         await reply('📺 _Fetching stream link..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/sports/stream?apikey=${_giftedKey()}&source=echo&id=${encodeURIComponent(text.trim())}`, { signal: AbortSignal.timeout(25000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No stream found')
-        let streamData = d.result
-        let streamUrl = typeof streamData === 'string' ? streamData : (streamData.url || streamData.stream_url || streamData.link || JSON.stringify(streamData))
-        let msg = `╔═════════╗\n║  📺 *SPORT STREAM LINK*\n╚═════════╝\n\n`
-        msg += `🆔 *Event ID:* ${text.trim()}\n`
-        msg += `🔗 *Stream URL:*\n${streamUrl}\n\n`
-        msg += `_Note: Open the link in a browser to watch the stream._`
-        await reply(msg)
-    } catch(e) { reply(`❌ Could not find stream for event *${text}*.\n\nMake sure you are using the correct event ID from ${prefix}allsports`) }
+        let _r = await fetch('https://movieapi.xcasper.space/api/live', { signal: AbortSignal.timeout(20000) })
+        let _d = await _r.json()
+        if (!_d.success || !_d.data?.matchList) throw new Error('No data')
+        let _ev = _d.data.matchList.find(ev => ev.id === text.trim())
+        if (!_ev) return reply(`❌ Match ID *${text.trim()}* not found.\n\nUse *${prefix}allsports* to get valid match IDs.`)
+        let _streamUrl = _ev.playPath || ''
+        let _msg = `╔═════════╗\n║  📺 *SPORT STREAM*\n╚═════════╝\n\n`
+        _msg += `⚽ *${_ev.team1?.name || '?'} vs ${_ev.team2?.name || '?'}*\n`
+        if (_ev.league) _msg += `🏆 *League:* ${_ev.league}\n`
+        let _stKey = (_ev.status || '').toLowerCase()
+        if (_stKey === 'living') _msg += `📊 *Status:* 🔴 LIVE\n`
+        else if (_stKey === 'matchended') _msg += `📊 *Status:* ✅ Ended (${_ev.team1?.score || 0}-${_ev.team2?.score || 0})\n`
+        else _msg += `📊 *Status:* ${_ev.status || 'Unknown'}\n`
+        if (_streamUrl) {
+            _msg += `\n🔗 *Stream URL (HLS/M3U8):*\n${_streamUrl}\n\n`
+            _msg += `_Open with VLC, MX Player, or any HLS-compatible player_`
+        } else {
+            _msg += `\n⚠️ _No stream available for this match right now._\n_Streams are only available for live/ongoing matches._`
+        }
+        await reply(_msg)
+    } catch(e) { reply(`❌ Could not get stream for match *${text}*. Try again later.`) }
 } break
 
 
