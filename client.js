@@ -2944,34 +2944,36 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
         let freshMeta = await X.groupMetadata(from).catch(() => null)
         let freshParts = (freshMeta?.participants?.length ? freshMeta.participants : participants)
         const _normTGS = (j) => (j || '').split(':')[0].split('@')[0]
-        // Step 1: collect phone JIDs directly
+        // Step 1: collect @s.whatsapp.net phone JIDs directly
         let phoneJids = freshParts
             .map(p => p?.id)
             .filter(id => id && id.endsWith('@s.whatsapp.net'))
-        // Step 2: for @lid entries, try to resolve via participants' lid field or store contacts
-        if (phoneJids.length < freshParts.length) {
-            for (const p of freshParts) {
-                if (!p?.id || p.id.endsWith('@s.whatsapp.net')) continue
-                if (p.id.endsWith('@lid')) {
-                    const lidKey = _normTGS(p.id)
-                    const match = freshParts.find(x => x.id && !x.id.endsWith('@lid') && x.lid && _normTGS(x.lid) === lidKey)
-                    if (match && !phoneJids.includes(match.id)) { phoneJids.push(match.id); continue }
-                    if (store?.contacts) {
-                        for (const [jid, c] of Object.entries(store.contacts)) {
-                            if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normTGS(c.lid) === lidKey) {
-                                if (!phoneJids.includes(jid)) phoneJids.push(jid)
-                                break
-                            }
+        // Step 2: for @lid entries try to resolve → phone JID via participants lid field or store contacts
+        for (const p of freshParts) {
+            if (!p?.id || p.id.endsWith('@s.whatsapp.net')) continue
+            if (p.id.endsWith('@lid')) {
+                const lidKey = _normTGS(p.id)
+                const matchP = freshParts.find(x => x.id && !x.id.endsWith('@lid') && x.lid && _normTGS(x.lid) === lidKey)
+                if (matchP && !phoneJids.includes(matchP.id)) { phoneJids.push(matchP.id); continue }
+                if (store?.contacts) {
+                    for (const [jid, c] of Object.entries(store.contacts)) {
+                        if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normTGS(c.lid) === lidKey) {
+                            if (!phoneJids.includes(jid)) phoneJids.push(jid)
+                            break
                         }
                     }
                 }
             }
         }
-        // Step 3: if we still have nothing, fall back to raw IDs (any format) — at least attempt the send
-        let groupParticipants = phoneJids.length
-            ? phoneJids
-            : freshParts.map(p => p?.id).filter(Boolean)
-        if (!groupParticipants.length) return reply('Could not fetch group participants. Try again.')
+        // Step 3: build send options.
+        // - If phone JIDs resolved → targeted to group members via statusJidList
+        // - If none resolved (all @lid, store not populated) → omit statusJidList so WhatsApp
+        //   broadcasts to all contacts using the bot's own privacy settings (actually visible)
+        const targeted = phoneJids.length > 0
+        const sendOpts = targeted ? { statusJidList: phoneJids } : {}
+        const sentNote = targeted
+            ? `_(targeted to ${phoneJids.length} group members)_`
+            : `_(broadcast — group members will see it based on your privacy settings)_`
 
         if (m.quoted) {
             let qType = m.quoted.mtype || ''
@@ -2979,24 +2981,24 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
             if (qType === 'imageMessage' || /image/.test(qMime)) {
                 let buf = await m.quoted.download()
                 let cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { image: buf, caption: cap, backgroundColor: '#000000', font: 0 }, { statusJidList: groupParticipants })
-                reply('✅ *Image posted to group status!*')
+                await X.sendMessage('status@broadcast', { image: buf, caption: cap, backgroundColor: '#000000', font: 0 }, sendOpts)
+                reply(`✅ *Image posted to status!*\n${sentNote}`)
             } else if (qType === 'videoMessage' || /video/.test(qMime)) {
                 let buf = await m.quoted.download()
                 let cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { video: buf, caption: cap, gifPlayback: false }, { statusJidList: groupParticipants })
-                reply('✅ *Video posted to group status!*')
+                await X.sendMessage('status@broadcast', { video: buf, caption: cap, gifPlayback: false }, sendOpts)
+                reply(`✅ *Video posted to status!*\n${sentNote}`)
             } else if (m.quoted.text) {
-                await X.sendMessage('status@broadcast', { text: m.quoted.text, backgroundColor: '#075E54', font: 4 }, { statusJidList: groupParticipants })
-                reply('✅ *Text posted to group status!*')
+                await X.sendMessage('status@broadcast', { text: m.quoted.text, backgroundColor: '#075E54', font: 4 }, sendOpts)
+                reply(`✅ *Text posted to status!*\n${sentNote}`)
             } else {
                 reply(`❌ Unsupported type. Reply to an image, video, or text message.`)
             }
         } else if (text) {
-            await X.sendMessage('status@broadcast', { text: text, backgroundColor: '#075E54', font: 4 }, { statusJidList: groupParticipants })
-            reply(`✅ *Text posted to group status!*`)
+            await X.sendMessage('status@broadcast', { text: text, backgroundColor: '#075E54', font: 4 }, sendOpts)
+            reply(`✅ *Text posted to status!*\n${sentNote}`)
         } else {
-reply(`╔═════════╗\n║  📤 *GROUP STATUS POSTER*\n╚═════════╝\n\n  ├ Reply to media with *${prefix}togroupstatus*\n  ├ Or: *${prefix}togroupstatus [text]*\n  └ Auto-forward: *${prefix}togroupstatus on*`)
+            reply(`╔═════════╗\n║  📤 *GROUP STATUS POSTER*\n╚═════════╝\n\n  ├ Reply to media with *${prefix}togroupstatus*\n  ├ Or: *${prefix}togroupstatus [text]*\n  └ Auto-forward: *${prefix}togroupstatus on*`)
         }
     } catch(e) {
         reply(`❌ Failed to post group status: ${e.message}`)
