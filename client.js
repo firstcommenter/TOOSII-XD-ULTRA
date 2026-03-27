@@ -3029,6 +3029,32 @@ case 'tostatus':
 case 'poststatus':
 case 'mystatus': {
     try {
+        // Post to personal status using groupStatusMessageV2 + relayMessage
+        const _postMyStatus = async (content) => {
+            const crypto = require('crypto')
+            const { backgroundColor } = content
+            delete content.backgroundColor
+            const inside = await generateWAMessageContent(content, {
+                upload: X.waUploadToServer,
+                backgroundColor: backgroundColor || '#9C27B0',
+            })
+            const secret = crypto.randomBytes(32)
+            const built = generateWAMessageFromContent(
+                'status@broadcast',
+                {
+                    messageContextInfo: { messageSecret: secret },
+                    groupStatusMessageV2: {
+                        message: {
+                            ...inside,
+                            messageContextInfo: { messageSecret: secret },
+                        },
+                    },
+                },
+                {}
+            )
+            await X.relayMessage('status@broadcast', built.message, { messageId: built.key.id })
+        }
+
         if (m.quoted) {
             const ctxInfo = m.msg?.contextInfo
             const qMsg = ctxInfo?.quotedMessage
@@ -3046,29 +3072,29 @@ case 'mystatus': {
                 const mediaType = /sticker/i.test(qType) ? 'sticker' : 'image'
                 const buf = await _dlTS(mediaType)
                 const cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { image: buf, caption: cap })
+                await _postMyStatus({ image: buf, caption: cap })
                 reply(`✅ *Image posted to your status!*`)
             } else if (/video/i.test(qType)) {
                 const buf = await _dlTS('video')
                 const cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { video: buf, caption: cap, gifPlayback: false })
+                await _postMyStatus({ video: buf, caption: cap })
                 reply(`✅ *Video posted to your status!*`)
             } else if (/audio/i.test(qType)) {
                 const buf = await _dlTS('audio')
-                await X.sendMessage('status@broadcast', { audio: buf, mimetype: 'audio/ogg; codecs=opus', ptt: true })
+                await _postMyStatus({ audio: buf, mimetype: 'audio/ogg; codecs=opus', ptt: true })
                 reply(`✅ *Audio posted to your status!*`)
             } else {
                 const quotedText = m.quoted.text || m.quoted.body || m.quoted.caption
                     || m.quoted.conversation || m.quoted.title || m.quoted.description || ''
                 if (quotedText.trim()) {
-                    await X.sendMessage('status@broadcast', { text: quotedText, backgroundColor: '#075E54', font: 4 })
+                    await _postMyStatus({ text: quotedText, backgroundColor: '#9C27B0' })
                     reply(`✅ *Text posted to your status!*`)
                 } else {
                     reply(`❌ Unsupported type. Reply to an image, video, audio, or text message.`)
                 }
             }
         } else if (text) {
-            await X.sendMessage('status@broadcast', { text: text, backgroundColor: '#075E54', font: 4 })
+            await _postMyStatus({ text: text, backgroundColor: '#9C27B0' })
             reply(`✅ *Text posted to your status!*`)
         } else {
             reply(`╔═════════╗\n║  📤 *STATUS POSTER*\n╚═════════╝\n\n  ├ Reply to media with *${prefix}tostatus*\n  └ Or: *${prefix}tostatus [text]*`)
