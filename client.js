@@ -2988,11 +2988,16 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
                 let cap = m.quoted.text || m.quoted.caption || ''
                 await X.sendMessage('status@broadcast', { video: buf, caption: cap, gifPlayback: false }, sendOpts)
                 reply(`✅ *Video posted to status!*\n${sentNote}`)
-            } else if (m.quoted.text) {
-                await X.sendMessage('status@broadcast', { text: m.quoted.text, backgroundColor: '#075E54', font: 4 }, sendOpts)
-                reply(`✅ *Text posted to status!*\n${sentNote}`)
             } else {
-                reply(`❌ Unsupported type. Reply to an image, video, or text message.`)
+                // Grab text from any property it might live in
+                const quotedText = m.quoted.text || m.quoted.body || m.quoted.caption
+                    || m.quoted.conversation || m.quoted.title || m.quoted.description || ''
+                if (quotedText.trim()) {
+                    await X.sendMessage('status@broadcast', { text: quotedText, backgroundColor: '#075E54', font: 4 }, sendOpts)
+                    reply(`✅ *Text posted to status!*\n${sentNote}`)
+                } else {
+                    reply(`❌ Unsupported type. Reply to an image, video, or text message.`)
+                }
             }
         } else if (text) {
             await X.sendMessage('status@broadcast', { text: text, backgroundColor: '#075E54', font: 4 }, sendOpts)
