@@ -630,6 +630,25 @@ const _AD_CACHE_FILE = path.join(__dirname, 'sessions', 'adcache.json')
 const _AD_CACHE_MAX  = 1000                // max entries in memory
 const _AD_CACHE_TTL  = 6 * 60 * 60 * 1000 // 6 hours — survive short outages
 
+// ── Anti-Delete STATE persistence (on/off setting survives restarts) ─────────
+const _AD_STATE_FILE = path.join(__dirname, 'sessions', 'adstate.json')
+if (!global.adState) {
+    try {
+        if (fs.existsSync(_AD_STATE_FILE)) {
+            global.adState = JSON.parse(fs.readFileSync(_AD_STATE_FILE, 'utf8'))
+        }
+    } catch (_) {}
+}
+if (!global.adState) global.adState = {
+    gc: { enabled: false, mode: 'private' },
+    pm: { enabled: false, mode: 'private' },
+    stats: { total: 0, retrieved: 0, media: 0 }
+}
+// Exposed globally so client.js can call it after toggling settings
+global._saveAdState = () => {
+    try { fs.writeFileSync(_AD_STATE_FILE, JSON.stringify(global.adState, null, 2)) } catch (_) {}
+}
+
 if (!global._adCache) {
     global._adCache = new Map()
     // Load from disk on first boot
@@ -1939,6 +1958,90 @@ X.ev.on('call', async (callData) => {
       } catch (_err) {
           console.log('[Anti-Delete] Top-level error:', _err.message || _err)
       }
+  })
+
+  // ── Anti-Delete: also catch deletions via protocolMessage.type === 0 ─────
+  // Newer WhatsApp delivers deletes as a protocolMessage (type=REVOKE) inside
+  // messages.upsert instead of (or in addition to) messages.update stub type.
+  X.ev.on('messages.upsert', async ({ messages: _protoMsgs }) => {
+      const _adEnabled2 = global.adState ? (global.adState.gc?.enabled || global.adState.pm?.enabled) : global.antiDelete
+      if (!_adEnabled2) return
+      try {
+          const _botJid2  = X.decodeJid(X.user.id)
+          const _selfJid2 = _botJid2.replace(/:.*@/, '@')
+          const _botPhone2 = _selfJid2.split('@')[0].replace(/\D/g, '')
+          for (const _pm of (_protoMsgs || [])) {
+              const _pMsg = _pm.message?.protocolMessage
+              if (!_pMsg || _pMsg.type !== 0) continue  // 0 = REVOKE/DELETE
+              const _delKey  = _pMsg.key
+              if (!_delKey?.id) continue
+              const _chatJid2 = _pm.key.remoteJid
+              if (!_chatJid2 || _chatJid2 === 'status@broadcast') continue
+              // Prevent double-fire if messages.update also fires for same ID
+              const _dedupeKey = '_adProto_' + _delKey.id
+              if (global[_dedupeKey]) continue
+              global[_dedupeKey] = true
+              setTimeout(() => { delete global[_dedupeKey] }, 10000)
+              const _rawDeleter2 = _pm.key.participant || _pm.key.remoteJid
+              const _delPhone2   = _rawDeleter2.replace(/:.*@/, '@').split('@')[0].replace(/\D/g, '')
+              if (_delPhone2 === _botPhone2) continue
+              const _targets2 = _adGetTargets(_chatJid2)
+              if (!_targets2.length) continue
+              const _isProto2 = (m) => !!(m?.message?.protocolMessage || m?.message?.senderKeyDistributionMessage)
+              let _entry2 = global._adCache?.get(_delKey.id)
+              if (_entry2 && _isProto2(_entry2.msg)) {
+                  const _rId = _entry2.msg.message?.protocolMessage?.key?.id
+                  if (_rId) { const _r = global._adCache?.get(_rId); if (_r && !_isProto2(_r.msg)) _entry2 = _r }
+              }
+              if (!_entry2 || !_entry2.msg?.message) {
+                  let _best2 = null
+                  const _win2 = 10 * 60 * 1000
+                  for (const [, _e2] of (global._adCache || new Map())) {
+                      if (_e2._adConsumed || !_e2.msg?.message || _isProto2(_e2.msg)) continue
+                      if (Date.now() - _e2.ts > _win2) continue
+                      const _ec2 = _e2.chatJid || _e2.msg?.key?.remoteJid || ''
+                      if (_ec2.split('@')[0] !== _chatJid2.split('@')[0]) continue
+                      if (!_best2 || _e2.ts > _best2.ts) _best2 = _e2
+                  }
+                  if (_best2) _entry2 = _best2
+              }
+              if (_entry2) _entry2._adConsumed = true
+              const _orig2   = _entry2?.msg
+              const _msg2    = _orig2?.message || {}
+              const _body2   = _msg2.conversation || _msg2.extendedTextMessage?.text ||
+                               _msg2.imageMessage?.caption || _msg2.videoMessage?.caption || ''
+              const _mType2  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage'].find(k => _msg2[k])
+              const _fmtTs2  = (ms) => new Date(ms).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+              const _ts2     = _orig2?.messageTimestamp ? _fmtTs2(Number(_orig2.messageTimestamp) * 1000) : _fmtTs2(Date.now())
+              const _notif2  =
+                  `╔═════════╗\n║  🗑️ *ANTI-DELETE*\n╚═════════╝\n\n` +
+                  `  ├ 🗑️ *Deleted by* › +${_delPhone2}\n` +
+                  `  └ 🕐 *Time*       › ${_ts2}\n\n` +
+                  `  *DELETED MESSAGE:*\n` +
+                  (_body2 ? `  ${_body2}` : _mType2 ? `  [${_mType2.replace('Message','')}]` : `  [no content]`)
+              for (const _dst2 of _targets2) await X.sendMessage(_dst2, { text: _notif2 }).catch(() => {})
+              if (_mType2 && _orig2) {
+                  const _mObj2 = _msg2[_mType2]; const _mKey2 = _mType2.replace('Message',''); const _mime2 = _mObj2?.mimetype || ''
+                  const _cachedPath2 = _entry2?._mediaPath
+                  let _sent2 = false
+                  if (_cachedPath2 && fs.existsSync(_cachedPath2)) {
+                      try {
+                          const _buf2 = fs.readFileSync(_cachedPath2)
+                          const _so2 =
+                              _mType2 === 'imageMessage'    ? { image: _buf2, caption: _body2 || '', mimetype: _mime2 || 'image/jpeg' } :
+                              _mType2 === 'videoMessage'    ? { video: _buf2, caption: _body2 || '', mimetype: _mime2 || 'video/mp4'  } :
+                              _mType2 === 'audioMessage'    ? { audio: _buf2, mimetype: _mime2 || 'audio/ogg; codecs=opus', ptt: !!_msg2.audioMessage?.ptt } :
+                              _mType2 === 'stickerMessage'  ? { sticker: _buf2 } :
+                              _mType2 === 'documentMessage' ? { document: _buf2, mimetype: _mime2, fileName: _mObj2.fileName || 'file' } : null
+                          if (_so2) { for (const _dst2 of _targets2) await X.sendMessage(_dst2, _so2).catch(() => {}); _sent2 = true }
+                          fs.unlinkSync(_cachedPath2)
+                      } catch {}
+                  }
+                  if (!_sent2) { try { for (const _dst2 of _targets2) await X.sendMessage(_dst2, { forward: _orig2 }).catch(() => {}); _sent2 = true } catch {} }
+              }
+              global._adCache?.delete(_delKey.id)
+          }
+      } catch (_perr) { console.log('[Anti-Delete] proto handler error:', _perr.message || _perr) }
   })
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
