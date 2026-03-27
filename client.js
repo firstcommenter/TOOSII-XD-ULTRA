@@ -2943,7 +2943,22 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
     try {
         let freshMeta = await X.groupMetadata(from).catch(() => null)
         let freshParts = (freshMeta?.participants?.length ? freshMeta.participants : participants)
-        let groupParticipants = freshParts.map(p => p.id).filter(id => id && (id.endsWith('@s.whatsapp.net') || id.endsWith('@lid')))
+        const _normTGS = (j) => (j || '').split(':')[0].split('@')[0]
+        let groupParticipants = [...new Set(freshParts.map(p => {
+            if (!p.id) return null
+            if (p.id.endsWith('@s.whatsapp.net')) return p.id
+            if (p.id.endsWith('@lid')) {
+                const lidKey = _normTGS(p.id)
+                const match = freshParts.find(x => x.id && !x.id.endsWith('@lid') && x.lid && _normTGS(x.lid) === lidKey)
+                if (match) return match.id
+                if (store?.contacts) {
+                    for (const [jid, c] of Object.entries(store.contacts)) {
+                        if (jid.endsWith('@s.whatsapp.net') && c?.lid && _normTGS(c.lid) === lidKey) return jid
+                    }
+                }
+            }
+            return null
+        }).filter(Boolean))]
         if (!groupParticipants.length) return reply('Could not fetch group participants. Try again.')
 
         if (m.quoted) {
