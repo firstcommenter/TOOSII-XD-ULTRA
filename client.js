@@ -3029,6 +3029,24 @@ case 'tostatus':
 case 'poststatus':
 case 'mystatus': {
     try {
+        // Build statusJidList from store contacts — targets them directly,
+        // bypassing WhatsApp privacy settings which often block delivery
+        const _getStatusJids = () => {
+            try {
+                const _raw = store?.contacts
+                if (!_raw) return []
+                const _entries = typeof _raw.entries === 'function'
+                    ? [..._raw.entries()] : Object.entries(_raw)
+                return _entries
+                    .map(([jid]) => jid)
+                    .filter(jid => jid && jid.endsWith('@s.whatsapp.net'))
+            } catch { return [] }
+        }
+        const _statusJids = _getStatusJids()
+        const _sendOpts = _statusJids.length ? { statusJidList: _statusJids } : {}
+
+        const _send = (content) => X.sendMessage('status@broadcast', content, _sendOpts)
+
         if (m.quoted) {
             const ctxInfo = m.msg?.contextInfo
             const qMsg = ctxInfo?.quotedMessage
@@ -3043,32 +3061,31 @@ case 'mystatus': {
             }
 
             if (/image|sticker/i.test(qType)) {
-                const mediaType = /sticker/i.test(qType) ? 'sticker' : 'image'
-                const buf = await _dlTS(mediaType)
+                const buf = await _dlTS(/sticker/i.test(qType) ? 'sticker' : 'image')
                 const cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { image: buf, caption: cap })
+                await _send({ image: buf, caption: cap })
                 reply(`✅ *Image posted to your status!*`)
             } else if (/video/i.test(qType)) {
                 const buf = await _dlTS('video')
                 const cap = m.quoted.text || m.quoted.caption || ''
-                await X.sendMessage('status@broadcast', { video: buf, caption: cap, gifPlayback: false })
+                await _send({ video: buf, caption: cap, gifPlayback: false })
                 reply(`✅ *Video posted to your status!*`)
             } else if (/audio/i.test(qType)) {
                 const buf = await _dlTS('audio')
-                await X.sendMessage('status@broadcast', { audio: buf, mimetype: 'audio/ogg; codecs=opus', ptt: true })
+                await _send({ audio: buf, mimetype: 'audio/ogg; codecs=opus', ptt: true })
                 reply(`✅ *Audio posted to your status!*`)
             } else {
                 const quotedText = m.quoted.text || m.quoted.body || m.quoted.caption
                     || m.quoted.conversation || m.quoted.title || m.quoted.description || ''
                 if (quotedText.trim()) {
-                    await X.sendMessage('status@broadcast', { text: quotedText, backgroundColor: '#075E54', font: 4 })
+                    await _send({ text: quotedText, backgroundColor: '#075E54', font: 4 })
                     reply(`✅ *Text posted to your status!*`)
                 } else {
                     reply(`❌ Unsupported type. Reply to an image, video, audio, or text message.`)
                 }
             }
         } else if (text) {
-            await X.sendMessage('status@broadcast', { text: text, backgroundColor: '#075E54', font: 4 })
+            await _send({ text: text, backgroundColor: '#075E54', font: 4 })
             reply(`✅ *Text posted to your status!*`)
         } else {
             reply(`╔═════════╗\n║  📤 *STATUS POSTER*\n╚═════════╝\n\n  ├ Reply to media with *${prefix}tostatus*\n  └ Or: *${prefix}tostatus [text]*`)
