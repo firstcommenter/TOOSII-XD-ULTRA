@@ -14,9 +14,11 @@ const toolsMenu = `
   ▸  \`.tinyurl\`       →  [url]
   ▸  \`.shorturl\`      →  [url]
   ▸  \`.removebg\`      →  reply image
-  ▸  \`.readqr\`        →  reply image
+  ▸  \`.qr\`            →  [text/url] — generate QR
+  ▸  \`.readqr\`        →  reply image — scan QR
   ▸  \`.xmascard\`      →  [text]
   ▸  \`.robottext\`     →  [text]
+  ▸  \`.webcopier\`     →  [url] — download website ZIP
 
 ╭──────────────────────────────╮
 │  🎵  *AUDIO & VOICE*
