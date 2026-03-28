@@ -870,6 +870,29 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
             // accept readMessages with it on some clients)
             if (!statusPosterJid) statusPosterJid = _rawParticipant.replace(/:.*@/, '@')
 
+            // ── Store status for .getsw command ──────────────────────────────────────
+            try {
+                if (!global.statusStore) global.statusStore = new Map()
+                const _ssEntry = {
+                    key: { ...mek.key },
+                    message: mek.message,
+                    sender: statusPosterJid,
+                    rawParticipant: _rawParticipant,
+                    timestamp: Date.now()
+                }
+                const _ssArr = global.statusStore.get(statusPosterJid) || []
+                _ssArr.push(_ssEntry)
+                if (_ssArr.length > 15) _ssArr.shift() // keep latest 15 statuses per person
+                global.statusStore.set(statusPosterJid, _ssArr)
+                // Also index by raw participant (LID support)
+                if (_rawParticipant !== statusPosterJid) {
+                    const _ssArr2 = global.statusStore.get(_rawParticipant) || []
+                    _ssArr2.push(_ssEntry)
+                    if (_ssArr2.length > 15) _ssArr2.shift()
+                    global.statusStore.set(_rawParticipant, _ssArr2)
+                }
+            } catch (_ssErr) { console.log('[statusStore] error:', _ssErr.message) }
+
             // Bot's own JID (phone + lid forms for statusJidList)
             const botSelfJid = (X.decodeJid ? X.decodeJid(X.user.id) : X.user.id).replace(/:.*@/, '@')
             const botLidJid  = X.user?.lid ? (X.decodeJid ? X.decodeJid(X.user.lid) : X.user.lid).replace(/:.*@/, '@') : null
