@@ -1431,17 +1431,17 @@ if (!global._connMsgSent.has(phone)) {
       }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
-        await X.sendMessage(connectedJid, {text: `╔═════════╗
-║   ⚡ *${global.botname || 'TOOSII-XD ULTRA'}*
-║   _WhatsApp Multi-Device Bot_
-╚═════════╝
+        await X.sendMessage(connectedJid, {text: `╭──────────────────────────────╮
+│  ⚡ *${global.botname || 'TOOSII-XD ULTRA'}*
+│  _WhatsApp Multi-Device Bot_
+╰──────────────────────────────╯
 
   ✅ *Connection Successful!*
 
-  ├◈ 👤 *User*    › ${connUser}
-  ├◈ 🟢 *Status*  › Active & Online
-  ├◈ 🤖 *Bot*     › ${global.botname || 'TOOSII-XD ULTRA'}
-  ├◈ 📋 *Commands* › Type \`.menu\` to get started
+  ▸  👤 *User*     →  ${connUser}
+  ▸  🟢 *Status*   →  Active & Online
+  ▸  🤖 *Bot*      →  ${global.botname || 'TOOSII-XD ULTRA'}
+  ▸  📋 *Commands* →  Type \`.menu\` to get started
 
 _⚡ Bot is online and ready._`})
     } catch (e) {}
