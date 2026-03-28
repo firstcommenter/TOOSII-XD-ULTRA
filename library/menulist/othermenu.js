@@ -1,64 +1,49 @@
 const otherMenu = `
-╔═════════╗
-║  ℹ️  *BOT INFO*
-╚═════════╝
-  ├◈  \`.sc\`  ├◈  \`.script\`  ├◈  \`.source\`
-  ├◈  \`.owner\`
-  ├◈  \`.botinfo\`
-  ├◈  \`.infobot\`
-  └◈  \`.infoserver\`
+╔══════════════════════════════╗
+║  🎨  *IMAGE EFFECTS*         ║
+╚══════════════════════════════╝
+  ├◈  \`.blur\`       › reply image
+  ├◈  \`.sharpen\`    › reply image
+  ├◈  \`.greyscale\`  › reply image
+  ├◈  \`.negative\`   › reply image
+  ├◈  \`.sepia\`      › reply image
+  ├◈  \`.circle\`     › reply image
+  ├◈  \`.jail\`       › @user
+  ├◈  \`.passed\`     › @user
+  ├◈  \`.triggered\`  › @user
+  ├◈  \`.comrade\`    › @user
+  ├◈  \`.lgbt\`       › @user
+  ├◈  \`.lolice\`     › @user
+  └◈  \`.glass\`      › reply image
 
-╔═════════╗
-║  😄  *FUN & SOCIAL*
-╚═════════╝
-  ├◈  \`.advice\`    ├◈  \`.lovemsg\`
-  ├◈  \`.gratitude\` ├◈  \`.thankyou\`
-  ├◈  \`.friendship\` ├◈  \`.pickupline\`
-  ├◈  \`.compliment\` › @user
-  ├◈  \`.insult\`    › @user
-  ├◈  \`.flirt\`    ├◈  \`.shayari\`
-  ├◈  \`.goodnight\` ├◈  \`.roseday\`
-  ├◈  \`.character\` ├◈  \`.joke\`
-  ├◈  \`.quote\`    ├◈  \`.motivation\`
-  ├◈  \`.fact\`
-  ├◈  \`.wasted\`    › @user
-  ├◈  \`.namecard\`  › [name]
-  ├◈  \`.tweet\`     › [text]
-  └◈  \`.ytcomment\` › [text]
+╔══════════════════════════════╗
+║  ✨  *TEXT EFFECTS*          ║
+╚══════════════════════════════╝
+  ├◈  \`.metallic\`   ├◈  \`.ice\`
+  ├◈  \`.snow\`       ├◈  \`.neon\`
+  ├◈  \`.fire\`       ├◈  \`.glitch\`
+  ├◈  \`.thunder\`    ├◈  \`.matrix\`
+  ├◈  \`.hacker\`     ├◈  \`.devil\`
+  ├◈  \`.purple\`     ├◈  \`.blackpink\`
+  ├◈  \`.sand\`       ├◈  \`.arena\`
+  ├◈  \`.1917\`       ├◈  \`.light\`
+  └◈  all accept → [text]
 
-╔═════════╗
-║  🎌  *ANIME*
-╚═════════╝
-  ├◈  \`.anime\`      › [name]
-  ├◈  \`.animequote\` ├◈  \`.animerandom\`
-  ├◈  \`.waifu\`    ├◈  \`.neko\`
-  ├◈  \`.loli\`     ├◈  \`.nom\`
-  ├◈  \`.poke\`     › @user
-  ├◈  \`.cry\`      ├◈  \`.wink\`
-  ├◈  \`.kiss\`     › @user
-  ├◈  \`.pat\`      › @user
-  ├◈  \`.hug\`      › @user
-  └◈  \`.facepalm\`
-
-╔═════════╗
-║  🖼️  *IMAGE EDIT*
-╚═════════╝
-  ├◈  \`.heart\`     › @user
-  ├◈  \`.circle\`    › reply img
-  ├◈  \`.jail\`      › @user
-  ├◈  \`.passed\`    › @user
-  ├◈  \`.triggered\` › @user
-  ├◈  \`.comrade\`   › @user
-  ├◈  \`.lgbt\`      › @user
-  ├◈  \`.lolice\`    › @user
-  └◈  \`.glass\`     › reply img
-
-╔═════════╗
-║  🐙  *GITHUB*
-╚═════════╝
-  ├◈  \`.github\` › [username]
-  ├◈  \`.git\`    › [username]
-  ├◈  \`.repo\`   › [user/repo]
-  └◈  \`.clone\`  › [github url]`
+╔══════════════════════════════╗
+║  🔤  *FONT CONVERTER*        ║
+╚══════════════════════════════╝
+  ├◈  \`.fonts\`        › show all
+  ├◈  \`.allfonts\`     › [text]
+  ├◈  \`.bold\`         ├◈  \`.italic\`
+  ├◈  \`.bolditalic\`   ├◈  \`.mono\`
+  ├◈  \`.serif\`        ├◈  \`.serifbold\`
+  ├◈  \`.serifitalic\`  ├◈  \`.scriptfont\`
+  ├◈  \`.scriptbold\`   ├◈  \`.fraktur\`
+  ├◈  \`.frakturbold\`  ├◈  \`.doublestruck\`
+  ├◈  \`.smallcaps\`    ├◈  \`.bubble\`
+  ├◈  \`.bubblebold\`   ├◈  \`.square\`
+  ├◈  \`.squarebold\`   ├◈  \`.wide\`
+  ├◈  \`.upsidedown\`   ├◈  \`.strikethrough\`
+  └◈  \`.underline\`    › all accept [text]`
 
 module.exports = otherMenu
