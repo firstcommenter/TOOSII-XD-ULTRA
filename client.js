@@ -10031,8 +10031,7 @@ case 'listmods': {
     reply(`🛡️ *Sudo / Mod Users:*\n\n${_slList.map((u, i) => `${i+1}. @${u.split('@')[0]}`).join('\n')}`)
 } break
 
-case 'setbotname':
-case 'botname': {
+case 'setbotname': {
     await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
     if (!isOwner) return reply(mess.OnlyOwner)
     if (!text) return reply(`Usage: ${prefix}setbotname <new name>`)
@@ -10228,8 +10227,7 @@ case 'antivideo': {
     reply(`🎬 *Anti Video* is now *${_avArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_avArg === 'on' ? '🗑️ Videos will be deleted.' : ''}`)
 } break
 
-case 'antimention':
-case 'antitag': {
+case 'antimention': {
     await X.sendMessage(m.chat, { react: { text: '📣', key: m.key } })
     if (!m.isGroup) return reply(mess.OnlyGrup)
     if (!isAdmins && !isOwner) return reply(mess.admin)
