@@ -1,52 +1,52 @@
 const footballMenu = `
-  ╔═════════╗
-  ║  ⚽  *FOOTBALL*
-  ╚═════════╝
-    ├◈  \`.livescore\`      › live scores
-    ├◈  \`.predictions\`    › today's tips
-    ├◈  \`.tips\`           › match predictions
-    └◈  \`.footnews\`       › latest news
+╔══════════════════════════════╗
+║  ⚽  *FOOTBALL SCORES*       ║
+╚══════════════════════════════╝
+  ├◈  \`.livescore\`    › live scores
+  ├◈  \`.predictions\`  › today's tips
+  ├◈  \`.tips\`         › match predictions
+  ├◈  \`.fixtures\`     › upcoming matches
+  └◈  \`.footnews\`     › latest news
 
-  ╔═════════╗
-  ║  🏴󠁧󠁢󠁥󠁮󠁧󠁿  *PREMIER LEAGUE*
-  ╚═════════╝
-    ├◈  \`.epl\`            › standings
-    ├◈  \`.eplscorers\`     › top scorers
-    └◈  \`.eplmatches\`     › fixtures
+╔══════════════════════════════╗
+║  🏴󠁧󠁢󠁥󠁮󠁧󠁿  *PREMIER LEAGUE*      ║
+╚══════════════════════════════╝
+  ├◈  \`.epl\`          › standings
+  ├◈  \`.eplscorers\`   › top scorers
+  └◈  \`.eplmatches\`   › fixtures
 
-  ╔═════════╗
-  ║  🇪🇸  *LA LIGA*
-  ╚═════════╝
-    ├◈  \`.laliga\`         › standings
-    ├◈  \`.laligascorers\`  › top scorers
-    └◈  \`.laligamatches\`  › fixtures
+╔══════════════════════════════╗
+║  🇪🇸  *LA LIGA*              ║
+╚══════════════════════════════╝
+  ├◈  \`.laliga\`        › standings
+  ├◈  \`.laligascorers\` › top scorers
+  └◈  \`.laligamatches\` › fixtures
 
-  ╔═════════╗
-  ║  🏆  *CHAMPIONS LEAGUE*
-  ╚═════════╝
-    └◈  \`.ucl\`            › UCL standings
+╔══════════════════════════════╗
+║  🏆  *CHAMPIONS LEAGUE*      ║
+╚══════════════════════════════╝
+  └◈  \`.ucl\`           › UCL standings
 
-  ╔═════════╗
-  ║  🇩🇪  *BUNDESLIGA*
-  ╚═════════╝
-    ├◈  \`.bundesliga\`        › standings
-    └◈  \`.bundesligascorers\` › top scorers
+╔══════════════════════════════╗
+║  🇩🇪  *BUNDESLIGA*           ║
+╚══════════════════════════════╝
+  ├◈  \`.bundesliga\`        › standings
+  └◈  \`.bundesligascorers\` › top scorers
 
-  ╔═════════╗
-  ║  🇮🇹  *SERIE A*
-  ╚═════════╝
-    └◈  \`.seriea\`          › standings
+╔══════════════════════════════╗
+║  🇮🇹  *SERIE A*              ║
+╚══════════════════════════════╝
+  └◈  \`.seriea\`        › standings
 
-  ╔═════════╗
-  ║  🏅  *SPORTS*
-  ╚═════════╝
-    ├◈  \`.sportscategories\` › all categories
-    ├◈  \`.livesports [cat]\`  › live events
-    ├◈  \`.allsports  [cat]\`  › all events
-    └◈  \`.watchsport [id]\`   › stream link
+╔══════════════════════════════╗
+║  🏅  *MULTI-SPORT*           ║
+╚══════════════════════════════╝
+  ├◈  \`.sportscategories\`  › all categories
+  ├◈  \`.livesports [cat]\`  › live events
+  ├◈  \`.allsports  [cat]\`  › all events
+  └◈  \`.watchsport [id]\`   › stream link
 
   _Categories: football, basketball, tennis,_
   _cricket, rugby, hockey, volleyball, boxing_`
 
-  module.exports = footballMenu
-  
+module.exports = footballMenu
