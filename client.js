@@ -787,6 +787,34 @@ if (m.isGroup && !isAdmins && !isOwner) {
         await X.sendMessage(m.chat, { delete: m.key })
         return
     }
+    if (global.antiImageGroups?.[m.chat] && m.mtype === 'imageMessage' && isBotAdmins) {
+        await X.sendMessage(m.chat, { delete: m.key })
+        await X.sendMessage(from, { text: `@${sender.split('@')[0]} images are not allowed in this group!`, mentions: [sender] })
+        return
+    }
+    if (global.antiVideoGroups?.[m.chat] && m.mtype === 'videoMessage' && isBotAdmins) {
+        await X.sendMessage(m.chat, { delete: m.key })
+        await X.sendMessage(from, { text: `@${sender.split('@')[0]} videos are not allowed in this group!`, mentions: [sender] })
+        return
+    }
+    if (global.antiMentionGroups?.[m.chat] && m.mentionedJid && m.mentionedJid.length > 0 && isBotAdmins) {
+        await X.sendMessage(m.chat, { delete: m.key })
+        await X.sendMessage(from, { text: `@${sender.split('@')[0]} mentioning members is not allowed in this group!`, mentions: [sender] })
+        return
+    }
+    if (global.antilinkGcGroups?.[m.chat] && budy && /chat\.whatsapp\.com\/[A-Za-z0-9]+/i.test(budy) && isBotAdmins) {
+        await X.sendMessage(m.chat, { delete: m.key })
+        await X.sendMessage(from, { text: `@${sender.split('@')[0]} group links are not allowed here!`, mentions: [sender] })
+        return
+    }
+    if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
+        const _isViewOnce = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
+        const _isFwdStatus = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
+        if (_isViewOnce || _isFwdStatus) {
+            await X.sendMessage(m.chat, { delete: m.key })
+            return
+        }
+    }
 }
 
 // ── Anti Status Mention enforcement ──────────────────────────────────────
@@ -9880,6 +9908,562 @@ case 'sportsstream': {
     } catch(e) { reply(`❌ Could not get stream for match *${text}*. Try again later.`) }
 } break
 
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// NEW COMMANDS FROM PLUGIN ZIP
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ─── AI aliases ─────────────────────────────────────────────────────
+case 'gpt4': {
+    await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+    if (!text) return reply(`Example: ${prefix}gpt4 Hello, how are you?`)
+    try {
+        const result = await _runAI('You are GPT-4, a highly intelligent AI assistant by OpenAI. Be helpful, clear and concise.', text)
+        reply(result)
+    } catch (e) {
+        reply('❌ GPT-4 is currently unavailable. Please try again.')
+    }
+} break
+
+case 'claude': {
+    await X.sendMessage(m.chat, { react: { text: '💎', key: m.key } })
+    if (!text) return reply(`Example: ${prefix}claude Hello, how are you?`)
+    try {
+        const result = await _runAI('You are Claude AI, an AI assistant made by Anthropic. You are helpful, harmless, and honest. Provide thoughtful and detailed responses.', text)
+        reply(result)
+    } catch (e) {
+        reply('❌ Claude AI is currently unavailable. Please try again.')
+    }
+} break
+
+// ─── Fun aliases ─────────────────────────────────────────────────────
+case 'eightball':
+case 'magicball': {
+    await X.sendMessage(m.chat, { react: { text: '🎱', key: m.key } })
+    if (!text) return reply(`Example: ${prefix}${command} Will I pass my exam?`)
+    const _8bAnswers = ['It is certain.','It is decidedly so.','Without a doubt.','Yes definitely.','You may rely on it.','As I see it, yes.','Most likely.','Outlook good.','Yes.','Signs point to yes.','Reply hazy, try again.','Ask again later.','Better not tell you now.','Cannot predict now.','Concentrate and ask again.',"Don't count on it.",'My reply is no.','My sources say no.','Outlook not so good.','Very doubtful.']
+    reply(`🎱 *Magic 8 Ball*\n\n❓ *${text}*\n\n💬 ${_8bAnswers[Math.floor(Math.random() * _8bAnswers.length)]}`)
+} break
+
+// ─── Sports aliases ──────────────────────────────────────────────────
+case 'fixtures':
+case 'matches': {
+    await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
+    try {
+        await reply('📅 _Fetching upcoming EPL fixtures..._')
+        const _gKey = typeof _giftedKey === 'function' ? _giftedKey() : (global._giftedApiKey || '')
+        let _fxMatches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_gKey}`)
+        if (!_fxMatches?.length) throw new Error('No fixtures found')
+        let _fxMsg = `╔═════════╗\n║  📅 *UPCOMING EPL FIXTURES*\n╚═════════╝\n`
+        for (let _fm of _fxMatches) {
+            _fxMsg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
+            _fxMsg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
+            if (_fm.venue || _fm.stadium) _fxMsg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
+        }
+        await reply(_fxMsg)
+    } catch(e) { reply('❌ Could not fetch EPL fixtures. Try again later.') }
+} break
+
+// ─── Owner commands ──────────────────────────────────────────────────
+case 'broadcast':
+case 'bc': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    if (!text) return reply(`Usage: ${prefix}broadcast <your message>`)
+    await reply('📢 Sending broadcast...')
+    try {
+        const _bcGroups = await X.groupFetchAllParticipating()
+        const _bcIds = Object.keys(_bcGroups)
+        let _bcSent = 0
+        for (const _bcId of _bcIds) {
+            try {
+                await X.sendMessage(_bcId, { text: `📢 *BROADCAST*\n\n${text}` })
+                _bcSent++
+                await new Promise(r => setTimeout(r, 500))
+            } catch (_) {}
+        }
+        reply(`✅ Broadcast sent to *${_bcSent}/${_bcIds.length}* groups!`)
+    } catch (e) { reply('❌ Broadcast failed: ' + e.message) }
+} break
+
+case 'addsudo':
+case 'addmod': {
+    await X.sendMessage(m.chat, { react: { text: '🛡️', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    let _sudoTarget = (m.mentionedJid && m.mentionedJid[0]) || (m.quoted && m.quoted.sender) || (args[0] && args[0].replace(/\D/g,'') + '@s.whatsapp.net')
+    if (!_sudoTarget) return reply(`Usage: ${prefix}addsudo @user or reply to a message`)
+    const _sudoPath = path.join(__dirname, 'database', 'sudoUsers.json')
+    let _sudoList = []
+    try { _sudoList = JSON.parse(fs.readFileSync(_sudoPath, 'utf-8')) } catch { _sudoList = [] }
+    if (_sudoList.includes(_sudoTarget)) return reply(`⚠️ @${_sudoTarget.split('@')[0]} is already a sudo user.`)
+    _sudoList.push(_sudoTarget)
+    fs.mkdirSync(path.join(__dirname, 'database'), { recursive: true })
+    fs.writeFileSync(_sudoPath, JSON.stringify(_sudoList, null, 2))
+    await X.sendMessage(m.chat, { text: `✅ @${_sudoTarget.split('@')[0]} added as *sudo/mod*!`, mentions: [_sudoTarget] }, { quoted: m })
+} break
+
+case 'delsudo':
+case 'removesudo':
+case 'removemod': {
+    await X.sendMessage(m.chat, { react: { text: '🔓', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    let _dsuTarget = (m.mentionedJid && m.mentionedJid[0]) || (m.quoted && m.quoted.sender) || (args[0] && args[0].replace(/\D/g,'') + '@s.whatsapp.net')
+    if (!_dsuTarget) return reply(`Usage: ${prefix}delsudo @user or reply to a message`)
+    const _dsuPath = path.join(__dirname, 'database', 'sudoUsers.json')
+    let _dsuList = []
+    try { _dsuList = JSON.parse(fs.readFileSync(_dsuPath, 'utf-8')) } catch { _dsuList = [] }
+    const _dsuIdx = _dsuList.indexOf(_dsuTarget)
+    if (_dsuIdx === -1) return reply(`⚠️ @${_dsuTarget.split('@')[0]} is not a sudo user.`)
+    _dsuList.splice(_dsuIdx, 1)
+    fs.writeFileSync(_dsuPath, JSON.stringify(_dsuList, null, 2))
+    await X.sendMessage(m.chat, { text: `✅ @${_dsuTarget.split('@')[0]} removed from *sudo*!`, mentions: [_dsuTarget] }, { quoted: m })
+} break
+
+case 'sudolist':
+case 'mods':
+case 'listmods': {
+    await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _slPath = path.join(__dirname, 'database', 'sudoUsers.json')
+    let _slList = []
+    try { _slList = JSON.parse(fs.readFileSync(_slPath, 'utf-8')) } catch { _slList = [] }
+    if (!_slList.length) return reply('📋 No sudo users set.')
+    reply(`🛡️ *Sudo / Mod Users:*\n\n${_slList.map((u, i) => `${i+1}. @${u.split('@')[0]}`).join('\n')}`)
+} break
+
+case 'setbotname':
+case 'botname': {
+    await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    if (!text) return reply(`Usage: ${prefix}setbotname <new name>`)
+    try {
+        await X.updateProfileName(text)
+        reply(`✅ Bot name updated to: *${text}*`)
+    } catch (e) { reply('❌ Failed to update name: ' + e.message) }
+} break
+
+case 'sysinfo':
+case 'system':
+case 'serverinfo': {
+    await X.sendMessage(m.chat, { react: { text: '🖥️', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _siMem = process.memoryUsage()
+    const _siTot = os.totalmem(), _siFree = os.freemem()
+    const _siUsed = ((_siTot - _siFree) / 1024 / 1024).toFixed(1)
+    const _siTotMb = (_siTot / 1024 / 1024).toFixed(1)
+    const _siCpus = os.cpus()
+    const _siUp = process.uptime()
+    const _siD = Math.floor(_siUp / 86400), _siH = Math.floor((_siUp % 86400) / 3600)
+    const _siMn = Math.floor((_siUp % 3600) / 60), _siS = Math.floor(_siUp % 60)
+    reply(
+        `🖥️ *System Information*\n` +
+        `─────────────────\n` +
+        `💾 RAM: *${_siUsed} MB / ${_siTotMb} MB*\n` +
+        `🧠 Heap: *${(_siMem.heapUsed / 1024 / 1024).toFixed(1)} MB*\n` +
+        `⚙️ CPU: *${_siCpus[0]?.model || 'Unknown'}*\n` +
+        `🔢 Cores: *${_siCpus.length}*\n` +
+        `🖥️ OS: *${os.type()} ${os.release()}*\n` +
+        `📦 Node: *${process.version}*\n` +
+        `⏱️ Uptime: *${_siD}d ${_siH}h ${_siMn}m ${_siS}s*\n` +
+        `🏠 Host: *${os.hostname()}*`
+    )
+} break
+
+case 'onlygroup':
+case 'onlygc': {
+    await X.sendMessage(m.chat, { react: { text: '👥', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _ogArg = (args[0] || '').toLowerCase()
+    if (_ogArg === 'on') { global.onlyGroup = true; reply('✅ *Only Group mode ON* — bot will only respond in groups.') }
+    else if (_ogArg === 'off') { global.onlyGroup = false; reply('✅ *Only Group mode OFF*') }
+    else reply(`🔒 *Only Group:* ${global.onlyGroup ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}onlygroup on/off`)
+} break
+
+case 'onlypc': {
+    await X.sendMessage(m.chat, { react: { text: '💬', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _opcArg = (args[0] || '').toLowerCase()
+    if (_opcArg === 'on') { global.onlyPC = true; reply('✅ *Only Private Chat mode ON* — bot will only respond in DMs.') }
+    else if (_opcArg === 'off') { global.onlyPC = false; reply('✅ *Only Private Chat mode OFF*') }
+    else reply(`💬 *Only PC:* ${global.onlyPC ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}onlypc on/off`)
+} break
+
+case 'unavailable': {
+    await X.sendMessage(m.chat, { react: { text: '🔕', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _unavArg = (args[0] || '').toLowerCase()
+    if (_unavArg === 'on') {
+        global.botUnavailable = true
+        try { await X.sendPresenceUpdate('unavailable') } catch (_) {}
+        reply('✅ *Unavailable mode ON* — bot appears offline.')
+    } else if (_unavArg === 'off') {
+        global.botUnavailable = false
+        try { await X.sendPresenceUpdate('available') } catch (_) {}
+        reply('✅ *Unavailable mode OFF* — bot appears online.')
+    } else reply(`🔕 *Unavailable:* ${global.botUnavailable ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}unavailable on/off`)
+} break
+
+case 'idch':
+case 'cekidch': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    if (!args[0]) return reply(`Usage: ${prefix}idch https://whatsapp.com/channel/...`)
+    if (!args[0].includes('https://whatsapp.com/channel/')) return reply('❌ Must be a valid WhatsApp channel link.')
+    try {
+        const _chCode = args[0].split('https://whatsapp.com/channel/')[1]
+        const _chRes = await X.newsletterMetadata('invite', _chCode)
+        reply(
+            `📢 *Channel Info*\n\n` +
+            `• *ID*        : ${_chRes.id}\n` +
+            `• *Name*      : ${_chRes.name}\n` +
+            `• *Followers* : ${_chRes.subscribers}\n` +
+            `• *Status*    : ${_chRes.state}\n` +
+            `• *Verified*  : ${_chRes.verification === 'VERIFIED' ? '✅ Yes' : '❌ No'}`
+        )
+    } catch (e) { reply('❌ Failed to fetch channel info. Check the link.') }
+} break
+
+case 'alwaysonline':
+case 'onlineon': {
+    await X.sendMessage(m.chat, { react: { text: '🟢', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _aoArg = (args[0] || '').toLowerCase()
+    if (_aoArg === 'on') {
+        if (global._alwaysOnlineInterval) clearInterval(global._alwaysOnlineInterval)
+        global._alwaysOnlineInterval = setInterval(async () => {
+            try { await X.sendPresenceUpdate('available') } catch (_) {}
+        }, 10000)
+        reply('✅ *Always Online ON* — bot will appear online continuously.')
+    } else if (_aoArg === 'off') {
+        if (global._alwaysOnlineInterval) { clearInterval(global._alwaysOnlineInterval); global._alwaysOnlineInterval = null }
+        try { await X.sendPresenceUpdate('unavailable') } catch (_) {}
+        reply('✅ *Always Online OFF* — bot presence is now normal.')
+    } else reply(`🟢 *Always Online:* ${global._alwaysOnlineInterval ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}alwaysonline on/off`)
+} break
+
+case 'lastseen':
+case 'ls': {
+    await X.sendMessage(m.chat, { react: { text: '👁️', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _lsArg = (args[0] || '').toLowerCase()
+    if (_lsArg !== 'on' && _lsArg !== 'off') return reply(`Usage: ${prefix}lastseen on/off\non = hide, off = show`)
+    try {
+        await X.updateLastSeenPrivacy(_lsArg === 'on' ? 'none' : 'all')
+        reply(`✅ Last seen is now *${_lsArg === 'on' ? 'HIDDEN' : 'VISIBLE'}*`)
+    } catch (e) { reply('❌ Failed to update last seen: ' + e.message) }
+} break
+
+case 'creategroup':
+case 'newgroup':
+case 'mkgroup': {
+    await X.sendMessage(m.chat, { react: { text: '👥', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    if (!text) return reply(`Usage: ${prefix}creategroup <group name>`)
+    try {
+        const _cgResult = await X.groupCreate(text, [sender])
+        reply(`✅ Group *${text}* created!\n🆔 ${_cgResult?.id || _cgResult?.gid || 'Done'}`)
+    } catch (e) { reply('❌ Failed to create group: ' + e.message) }
+} break
+
+// ─── Group protection toggles ────────────────────────────────────────
+case 'antigroupstatus':
+case 'antigrpstatus':
+case 'antigstt': {
+    await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _agsArg = (args[0] || '').toLowerCase()
+    if (!_agsArg) {
+        const _agsState = global.antiGroupStatusGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
+        return reply(`🚫 *Anti Group Status*\n\nStatus: ${_agsState}\n\nUsage: ${prefix}antigroupstatus on/off\n_When ON, view-once & forwarded status messages will be deleted._`)
+    }
+    if (!['on','off'].includes(_agsArg)) return reply(`Usage: ${prefix}antigroupstatus on/off`)
+    if (!global.antiGroupStatusGroups) global.antiGroupStatusGroups = {}
+    global.antiGroupStatusGroups[m.chat] = _agsArg === 'on'
+    reply(`🚫 *Anti Group Status* is now *${_agsArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_agsArg === 'on' ? '_View-once & forwarded status messages will be auto-deleted._' : '_Status messages will no longer be deleted._'}`)
+} break
+
+case 'antilinkgc': {
+    await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _alcArg = (args[0] || '').toLowerCase()
+    if (!_alcArg) {
+        const _alcState = global.antilinkGcGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
+        return reply(`🔗 *Anti GC Link*\n\nStatus: ${_alcState}\n\nUsage: ${prefix}antilinkgc on/off`)
+    }
+    if (!['on','off'].includes(_alcArg)) return reply(`Usage: ${prefix}antilinkgc on/off`)
+    if (!global.antilinkGcGroups) global.antilinkGcGroups = {}
+    global.antilinkGcGroups[m.chat] = _alcArg === 'on'
+    reply(`🔗 *Anti GC Link* is now *${_alcArg === 'on' ? 'ON ✅' : 'OFF ❌'}*`)
+} break
+
+case 'antiimage':
+case 'antipic': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _aiArg = (args[0] || '').toLowerCase()
+    if (!_aiArg) {
+        const _aiState = global.antiImageGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
+        return reply(`🖼️ *Anti Image*\n\nStatus: ${_aiState}\n\nUsage: ${prefix}antiimage on/off`)
+    }
+    if (!['on','off'].includes(_aiArg)) return reply(`Usage: ${prefix}antiimage on/off`)
+    if (!global.antiImageGroups) global.antiImageGroups = {}
+    global.antiImageGroups[m.chat] = _aiArg === 'on'
+    reply(`🖼️ *Anti Image* is now *${_aiArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_aiArg === 'on' ? '🗑️ Images will be deleted.' : ''}`)
+} break
+
+case 'antivideo': {
+    await X.sendMessage(m.chat, { react: { text: '🎬', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _avArg = (args[0] || '').toLowerCase()
+    if (!_avArg) {
+        const _avState = global.antiVideoGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
+        return reply(`🎬 *Anti Video*\n\nStatus: ${_avState}\n\nUsage: ${prefix}antivideo on/off`)
+    }
+    if (!['on','off'].includes(_avArg)) return reply(`Usage: ${prefix}antivideo on/off`)
+    if (!global.antiVideoGroups) global.antiVideoGroups = {}
+    global.antiVideoGroups[m.chat] = _avArg === 'on'
+    reply(`🎬 *Anti Video* is now *${_avArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_avArg === 'on' ? '🗑️ Videos will be deleted.' : ''}`)
+} break
+
+case 'antimention':
+case 'antitag': {
+    await X.sendMessage(m.chat, { react: { text: '📣', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _amArg = (args[0] || '').toLowerCase()
+    if (!_amArg) {
+        const _amState = global.antiMentionGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
+        return reply(`📣 *Anti Mention*\n\nStatus: ${_amState}\n\nUsage: ${prefix}antimention on/off`)
+    }
+    if (!['on','off'].includes(_amArg)) return reply(`Usage: ${prefix}antimention on/off`)
+    if (!global.antiMentionGroups) global.antiMentionGroups = {}
+    global.antiMentionGroups[m.chat] = _amArg === 'on'
+    reply(`📣 *Anti Mention* is now *${_amArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_amArg === 'on' ? '🚫 Mass mentions will be removed.' : ''}`)
+} break
+
+case 'clearwarn':
+case 'resetwarn': {
+    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    const _cwUser = (m.mentionedJid && m.mentionedJid[0]) || (m.quoted && m.quoted.sender) || (text && text.replace(/\D/g,'') + '@s.whatsapp.net')
+    if (!_cwUser) return reply(`⚠️ Tag or reply to a user.\nUsage: ${prefix}clearwarn @user`)
+    const _cwDbPath = path.join(__dirname, 'database', 'warnings.json')
+    let _cwDb = {}
+    try { _cwDb = JSON.parse(fs.readFileSync(_cwDbPath, 'utf-8')) } catch { _cwDb = {} }
+    if (_cwDb[m.chat]) { _cwDb[m.chat][_cwUser] = []; fs.writeFileSync(_cwDbPath, JSON.stringify(_cwDb, null, 2)) }
+    await X.sendMessage(from, { text: `✅ *Warnings cleared for @${_cwUser.split('@')[0]}.*`, mentions: [_cwUser] }, { quoted: m })
+} break
+
+// ─── Disappearing messages ───────────────────────────────────────────
+case 'disp-1':
+case 'disp-7':
+case 'disp-90':
+case 'disp-off': {
+    await X.sendMessage(m.chat, { react: { text: '⏳', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _dispMap = { 'disp-1': 86400, 'disp-7': 7 * 86400, 'disp-90': 90 * 86400, 'disp-off': 0 }
+    const _dispSec = _dispMap[command]
+    try {
+        await X.groupToggleEphemeral(m.chat, _dispSec)
+        reply(_dispSec === 0
+            ? '✅ Disappearing messages turned *OFF*.'
+            : `✅ Disappearing messages set to *${command.replace('disp-','')} day(s)*.`
+        )
+    } catch (e) { reply('❌ Failed: ' + e.message) }
+} break
+
+// ─── Kickall ─────────────────────────────────────────────────────────
+case 'kickall':
+case 'kill': {
+    await X.sendMessage(m.chat, { react: { text: '💀', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isOwner) return reply(mess.OnlyOwner)
+    if (!isBotAdmins) return reply(mess.botAdmin)
+    try {
+        const _kaMeta = await X.groupMetadata(m.chat)
+        const _kaMembers = _kaMeta.participants.filter(p => p.id !== X.user?.id && p.id !== sender).map(p => p.id)
+        reply(`💀 Removing ${_kaMembers.length} member(s)... Stand by.`)
+        await X.groupUpdateSubject(m.chat, 'Xxx Videos Hub').catch(() => {})
+        await X.groupUpdateDescription(m.chat, 'This group is no longer available 🥹!').catch(() => {})
+        await new Promise(r => setTimeout(r, 1500))
+        await X.sendMessage(m.chat, { text: `⚠️ Removing ${_kaMembers.length} member(s) now. Goodbye everyone 👋` })
+        await X.groupParticipantsUpdate(m.chat, _kaMembers, 'remove')
+        setTimeout(() => X.groupLeave(m.chat).catch(() => {}), 1500)
+    } catch (e) { reply('❌ Failed: ' + e.message) }
+} break
+
+// ─── Trash group ─────────────────────────────────────────────────────
+case 'trash-group': {
+    await X.sendMessage(m.chat, { react: { text: '🆘', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _tgSleep = ms => new Promise(r => setTimeout(r, ms))
+    for (let _tgi = 0; _tgi < 5; _tgi++) {
+        for (let _tgj = 0; _tgj < 4; _tgj++) {
+            await X.groupUpdateSubject(m.chat, `⚠️${Math.random().toString(36).slice(2)}`).catch(() => {})
+        }
+        await _tgSleep(500)
+    }
+    reply('[ 🔥 ] Done.\n> Pause for a few minutes to avoid ban.')
+} break
+
+// ─── getsw ───────────────────────────────────────────────────────────
+case 'getsw': {
+    await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!m.quoted) return reply(
+        `❌ *REPLY TO NOTIFICATION MESSAGE!*\n\n📋 *How to Use:*\n1. Wait for someone to tag the group in their status\n2. WhatsApp will send a notification to the group\n3. Reply to that notification with .getsw\n\n💡 Example:\n[Notification: "Status from user @ Group name"]\n└─ Reply: .getsw`
+    )
+    try {
+        const _gsRawSender = m.quoted?.sender || m.message?.extendedTextMessage?.contextInfo?.participant
+        if (!_gsRawSender) return reply('❌ Cannot detect status sender!')
+        const _gsSenderNum = _gsRawSender.replace(/[^0-9]/g, '')
+        if (!global.statusStore) return reply('❌ *STATUS STORE NOT ACTIVE!*\n\n💡 Make sure index.js has been updated with status@broadcast listener.')
+        let _gsStatuses = global.statusStore.get(_gsRawSender) || []
+        if (!_gsStatuses.length) {
+            for (const [_gsKey, _gsVal] of global.statusStore.entries()) {
+                if (_gsKey.replace(/[^0-9]/g,'') === _gsSenderNum) { _gsStatuses = _gsVal; break }
+            }
+        }
+        if (!_gsStatuses.length) return reply(`❌ *STATUS NOT FOUND!*\n\n👤 User: @${_gsSenderNum}\n\n💡 Bot may have just restarted or status was deleted.`)
+        const _gsLatest = _gsStatuses[_gsStatuses.length - 1]
+        let _gsContent = _gsLatest?.message || {}
+        for (let _gsi = 0; _gsi < 10; _gsi++) {
+            if (_gsContent?.ephemeralMessage?.message) { _gsContent = _gsContent.ephemeralMessage.message; continue }
+            if (_gsContent?.viewOnceMessage?.message) { _gsContent = _gsContent.viewOnceMessage.message; continue }
+            if (_gsContent?.viewOnceMessageV2?.message) { _gsContent = _gsContent.viewOnceMessageV2.message; continue }
+            break
+        }
+        const _gsSupportedTypes = ['imageMessage','videoMessage','audioMessage','extendedTextMessage','conversation']
+        const _gsType = Object.keys(_gsContent).find(k => _gsSupportedTypes.includes(k))
+        if (!_gsType) return reply(`❌ Status type not supported: ${Object.keys(_gsContent).join(', ')}`)
+        const _gsNode = _gsContent[_gsType]
+        const _gsCaption = _gsNode?.caption || _gsContent?.extendedTextMessage?.text || (typeof _gsContent?.conversation === 'string' ? _gsContent.conversation : '') || ''
+        if (_gsType === 'imageMessage') {
+            const _gsBuf = await (async () => { const _s = await downloadContentFromMessage(_gsNode, 'image'); let b = Buffer.from([]); for await (const c of _s) b = Buffer.concat([b,c]); return b })()
+            await X.sendMessage(m.chat, { image: _gsBuf, caption: `✅ *STATUS RETRIEVED!*\n\n👤 From: @${_gsSenderNum}\n📷 Type: Image${_gsCaption ? `\n📝 Caption: ${_gsCaption}` : ''}`, mentions: [_gsRawSender] }, { quoted: m })
+        } else if (_gsType === 'videoMessage') {
+            const _gsBuf = await (async () => { const _s = await downloadContentFromMessage(_gsNode, 'video'); let b = Buffer.from([]); for await (const c of _s) b = Buffer.concat([b,c]); return b })()
+            await X.sendMessage(m.chat, { video: _gsBuf, caption: `✅ *STATUS RETRIEVED!*\n\n👤 From: @${_gsSenderNum}\n🎥 Type: Video${_gsCaption ? `\n📝 Caption: ${_gsCaption}` : ''}`, mentions: [_gsRawSender], mimetype: 'video/mp4' }, { quoted: m })
+        } else if (_gsType === 'audioMessage') {
+            const _gsBuf = await (async () => { const _s = await downloadContentFromMessage(_gsNode, 'audio'); let b = Buffer.from([]); for await (const c of _s) b = Buffer.concat([b,c]); return b })()
+            await X.sendMessage(m.chat, { audio: _gsBuf, mimetype: _gsNode.mimetype || 'audio/mp4', ptt: _gsNode.ptt || false }, { quoted: m })
+            await reply(`✅ *STATUS RETRIEVED!*\n\n👤 From: @${_gsSenderNum}\n🎤 Type: ${_gsNode.ptt ? 'Voice Note' : 'Audio'}`)
+        } else {
+            reply(`✅ *STATUS RETRIEVED!*\n\n👤 From: @${_gsSenderNum}\n📝 Type: Text\n\n💬 Status:\n${_gsCaption || 'No text'}`)
+        }
+    } catch (e) {
+        console.error('[GETSW ERROR]', e)
+        reply('❌ *FAILED TO RETRIEVE STATUS!*\n\n🔧 Error: ' + e.message)
+    }
+} break
+
+// ─── swgc / upswgc ───────────────────────────────────────────────────
+case 'swgc':
+case 'upswgc': {
+    await X.sendMessage(m.chat, { react: { text: '📤', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isOwner) return reply(mess.OnlyOwner)
+    try {
+        const _swCrypto = require('crypto')
+        const _swDownload = async (node, type) => {
+            const stream = await downloadContentFromMessage(node, type.replace('Message',''))
+            let buf = Buffer.from([])
+            for await (const chunk of stream) buf = Buffer.concat([buf, chunk])
+            return buf
+        }
+        const _swUnwrap = raw => {
+            let msg = raw || {}
+            for (let i = 0; i < 10; i++) {
+                if (msg?.ephemeralMessage?.message) { msg = msg.ephemeralMessage.message; continue }
+                if (msg?.viewOnceMessage?.message) { msg = msg.viewOnceMessage.message; continue }
+                if (msg?.viewOnceMessageV2?.message) { msg = msg.viewOnceMessageV2.message; continue }
+                if (msg?.documentWithCaptionMessage?.message) { msg = msg.documentWithCaptionMessage.message; continue }
+                break
+            }
+            return msg
+        }
+        const _swMediaTypes = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
+        const _swTextTypes  = ['extendedTextMessage','conversation']
+        const _swPickNode = raw => {
+            if (!raw) return null
+            const u = _swUnwrap(raw)
+            for (const t of _swMediaTypes) if (u?.[t]) return { node: u[t], type: t }
+            for (const t of _swTextTypes)  if (u?.[t]) return { node: u[t], type: t }
+            return null
+        }
+        const _swIsUrl = s => /^https?:\/\//i.test((s||'').trim())
+        const _swGetDomain = url => { try { return new URL(url).hostname.replace('www.','') } catch { return url } }
+        const _swBgColors = [0xFF8A2BE2, 0xFFFF69B4, 0xFFFFA500, 0xFF00BFFF, 0xFF32CD32]
+        const _swRandBg = () => _swBgColors[Math.floor(Math.random() * _swBgColors.length)]
+
+        let _swPicked = null
+        let _swCaption = text || ''
+        const _swQuotedRaw = m.quoted?.message || null
+        if (_swQuotedRaw) _swPicked = _swPickNode(_swQuotedRaw)
+        if (!_swPicked && m.message) {
+            const _swSelf = _swPickNode(m.message)
+            if (_swSelf && _swMediaTypes.includes(_swSelf.type)) _swPicked = _swSelf
+        }
+        if (!_swPicked) {
+            const _swRawText = _swCaption || (() => { const u = _swUnwrap(m.message); return u?.extendedTextMessage?.text || u?.conversation || '' })()
+            if (!_swRawText) return reply(`❌ *NO CONTENT!*\n\n📋 *How to Use:*\n1️⃣ Image/Video: Send/reply media → .swgc\n2️⃣ Text: .swgc Hello everyone!\n3️⃣ Link: .swgc https://youtu.be/xxx`)
+            _swPicked = { node: _swRawText, type: 'text' }
+            _swCaption = ''
+        }
+
+        let _swPayload = {}, _swTypeLabel = ''
+        if (_swPicked.type === 'imageMessage') {
+            const buf = await _swDownload(_swPicked.node, 'imageMessage')
+            _swPayload = { image: buf, caption: _swCaption || _swPicked.node?.caption || '' }
+            _swTypeLabel = '📷 Image'
+        } else if (_swPicked.type === 'videoMessage') {
+            const buf = await _swDownload(_swPicked.node, 'videoMessage')
+            _swPayload = { video: buf, caption: _swCaption || _swPicked.node?.caption || '', gifPlayback: false }
+            _swTypeLabel = '🎥 Video'
+        } else if (_swPicked.type === 'audioMessage') {
+            const buf = await _swDownload(_swPicked.node, 'audioMessage')
+            const isPtt = _swPicked.node?.ptt === true
+            _swPayload = { audio: buf, mimetype: isPtt ? 'audio/ogg; codecs=opus' : 'audio/mp4', ptt: isPtt }
+            _swTypeLabel = isPtt ? '🎤 Voice Note' : '🎵 Audio'
+        } else {
+            const rawText = typeof _swPicked.node === 'string' ? _swPicked.node : _swCaption
+            if (_swIsUrl(rawText)) {
+                _swPayload = { text: rawText, linkPreview: { url: rawText, title: _swGetDomain(rawText), description: _swCaption || rawText, thumbnail: null } }
+                _swTypeLabel = `🔗 Link — ${_swGetDomain(rawText)}`
+            } else {
+                _swPayload = { text: rawText, backgroundArgb: _swRandBg(), textArgb: 0xFFFFFFFF, font: Math.floor(Math.random() * 5) + 1 }
+                _swTypeLabel = '📝 Text'
+            }
+        }
+
+        let _swWaContent
+        try {
+            _swWaContent = await generateWAMessageContent(_swPayload, { upload: X.waUploadToServer })
+        } catch (_swFbErr) {
+            const _swFallbackText = _swCaption || (typeof _swPicked.node === 'string' ? _swPicked.node : '') || _swTypeLabel || '(status)'
+            _swWaContent = await generateWAMessageContent({ text: _swFallbackText, backgroundArgb: _swRandBg(), textArgb: 0xFFFFFFFF, font: 1 }, { upload: X.waUploadToServer })
+            _swTypeLabel += ' (fallback text)'
+        }
+
+        const _swSecret = _swCrypto.randomBytes(32)
+        const _swFinalMsg = generateWAMessageFromContent(m.chat, {
+            messageContextInfo: { messageSecret: _swSecret },
+            groupStatusMessageV2: { message: { ..._swWaContent, messageContextInfo: { messageSecret: _swSecret } } }
+        }, { userJid: X.user?.id })
+
+        await X.relayMessage(m.chat, _swFinalMsg.message, { messageId: _swFinalMsg.key.id })
+        reply(`✅ *GROUP STATUS UPLOADED!*\n\n📌 Type: ${_swTypeLabel}\n💡 Status published to the group.`)
+    } catch (e) {
+        console.error('[SWGC ERROR]', e)
+        reply('❌ *Upload Status Failed*\n\n🔧 Error: ' + e.message)
+    }
+} break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 default:
