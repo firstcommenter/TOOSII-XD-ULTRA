@@ -7533,8 +7533,48 @@ reply(`╭───────────────────────�
 
 case 'transcribe': {
     await X.sendMessage(m.chat, { react: { text: '🎙️', key: m.key } })
-if (!m.quoted || !/audio/.test(m.quoted.mimetype || '')) return reply(`Reply to an audio with ${prefix}transcribe`)
-reply('*Transcribe:* Audio transcription requires a paid API. Use AI commands with audio description instead.')
+if (!m.quoted || !/audio|video/.test(m.quoted.mimetype || ''))
+    return reply(`╭──────────────────────────────╮\n│  🎙️ *VOICE TRANSCRIBER*\n╰──────────────────────────────╯\n\n  ▸  Reply to a voice note or audio with\n     *${prefix}transcribe*\n  _Converts speech to text automatically._`)
+try {
+    await reply('🎙️ _Transcribing audio, please wait..._')
+    const _tcBuf = await m.quoted.download()
+    if (!_tcBuf || _tcBuf.length < 100) throw new Error('Failed to download audio')
+    const _tcPath = require('path').join(__dirname, 'tmp', `tc_${Date.now()}.mp3`)
+    fs.writeFileSync(_tcPath, _tcBuf)
+    const _tcUrl = await CatBox(_tcPath)
+    fs.unlinkSync(_tcPath)
+    if (!_tcUrl || !_tcUrl.startsWith('http')) throw new Error('Audio upload failed')
+    let _tcText = null
+    // Method 1: HuggingFace Whisper public inference (free, no key required)
+    try {
+        const _hfRes = await fetch('https://api-inference.huggingface.co/models/openai/whisper-small', {
+            method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+            body: _tcBuf, signal: AbortSignal.timeout(45000)
+        })
+        const _hfData = await _hfRes.json()
+        if (_hfData?.text && _hfData.text.trim().length > 2) _tcText = _hfData.text.trim()
+    } catch {}
+    // Method 2: GiftedTech totext (tries the URL against their API)
+    if (!_tcText) try {
+        const _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/totext?apikey=${_giftedKey()}&url=${encodeURIComponent(_tcUrl)}`, { signal: AbortSignal.timeout(30000) })
+        const _gtData = await _gtRes.json()
+        if (_gtData?.success && typeof _gtData.result === 'string' && _gtData.result.trim().length > 2) _tcText = _gtData.result.trim()
+    } catch {}
+    // Method 3: Whisper large-v3 via HuggingFace (better accuracy)
+    if (!_tcText) try {
+        const _hf2Res = await fetch('https://api-inference.huggingface.co/models/openai/whisper-large-v3', {
+            method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+            body: _tcBuf, signal: AbortSignal.timeout(60000)
+        })
+        const _hf2Data = await _hf2Res.json()
+        if (_hf2Data?.text && _hf2Data.text.trim().length > 2) _tcText = _hf2Data.text.trim()
+    } catch {}
+    if (_tcText) {
+        reply(`╭──────────────────────────────╮\n│  🎙️ *TRANSCRIPTION*\n╰──────────────────────────────╯\n\n${_tcText}`)
+    } else {
+        reply(`╭──────────────────────────────╮\n│  🎙️ *TRANSCRIPTION*\n╰──────────────────────────────╯\n\n  ⚠️ _Could not auto-transcribe this audio._\n\n  Try these alternatives:\n  ▸  *${prefix}shazam* → identify music\n  ▸  *${prefix}ai* [describe what you heard]`)
+    }
+} catch (e) { reply('❌ Transcription failed: ' + e.message) }
 } break
 
 case 'locate':
