@@ -3976,6 +3976,13 @@ let settingsText = `╭───────────────────
   ▸  👋 Welcome  →  ${global.welcome ? on : off}
   ▸  📣 Admin Events  →  ${global.adminevent ? on : off}
 
+  🛡️  *Per-Group Protections* _(current group)_
+  ▸  🖼️  Anti Image  →  ${m.isGroup ? (global.antiImageGroups?.[m.chat] ? on : off) : '—'}
+  ▸  🎬 Anti Video  →  ${m.isGroup ? (global.antiVideoGroups?.[m.chat] ? on : off) : '—'}
+  ▸  📣 Anti Mention  →  ${m.isGroup ? (global.antiMentionGroups?.[m.chat] ? on : off) : '—'}
+  ▸  🔗 Anti Link GC  →  ${m.isGroup ? (global.antilinkGcGroups?.[m.chat] ? on : off) : '—'}
+  ▸  📢 Anti Status Msg  →  ${m.isGroup ? (global.antiGroupStatusGroups?.[m.chat] ? on : off) : '—'}
+
 _⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
 reply(settingsText)
 }
