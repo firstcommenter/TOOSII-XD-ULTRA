@@ -18,56 +18,39 @@ const groupMenu = `
   ▸  \`.delete\`      →  reply msg
   ▸  \`.mute\`     ▸  \`.unmute\`
   ▸  \`.open\`     ▸  \`.close\`
+  ▸  \`.kickall\`     →  remove all members
 
 ╭──────────────────────────────╮
 │  ⚙️  *GROUP SETTINGS*
 ╰──────────────────────────────╯
   ▸  \`.setgname\`     →  [name]
   ▸  \`.setgdesc\`     →  [description]
-  ▸  \`.setgpp\`       →  reply image
-  ▸  \`.link\`        ▸  \`.resetlink\`
-  ▸  \`.revoke\`
-  ▸  \`.welcome\`      →  on/off
-  ▸  \`.goodbye\`      →  on/off
-  ▸  \`.greet\`        →  on/off
-  ▸  \`.left\`         →  on/off
-  ▸  \`.events\`       →  on/off
-  ▸  \`.disp-1\`       →  disappear 24h
-  ▸  \`.disp-7\`       →  disappear 7d
-  ▸  \`.disp-90\`      →  disappear 90d
-  ▸  \`.disp-off\`     →  disappear off
+  ▸  \`.setgpic\`      →  reply image
+  ▸  \`.link\`         →  group invite link
+  ▸  \`.revoke\`       →  reset invite link
+  ▸  \`.hidetag\`      →  silent mention all
+  ▸  \`.tagall\`       →  mention all members
+  ▸  \`.creategroup\`  →  [name] @users
+  ▸  \`.swgc\`         →  post group status
+  ▸  \`.getsw\`        →  save member status
+  ▸  \`.disp-1\`       →  disappear 1 day
+  ▸  \`.disp-7\`       →  disappear 7 days
+  ▸  \`.disp-90\`      →  disappear 90 days
+  ▸  \`.disp-off\`     →  disable disappearing
 
 ╭──────────────────────────────╮
 │  🛡️  *GROUP PROTECTION*
 ╰──────────────────────────────╯
-  ▸  \`.antilink\`           →  on/off
-  ▸  \`.antilinkgc\`         →  on/off
-  ▸  \`.antibadword\`        →  on/off
-  ▸  \`.antimention\`        →  on/off
-  ▸  \`.antiimage\`          →  on/off
-  ▸  \`.antivideo\`          →  on/off
-  ▸  \`.antigroupstatus\`    →  on/off
-  ▸  \`.antisticker\`        →  on/off
-  ▸  \`.antidemote\`         →  on/off
-  ▸  \`.antibot\`            →  on/off/scan/add/list
-
-╭──────────────────────────────╮
-│  🔧  *GROUP TOOLS*
-╰──────────────────────────────╯
-  ▸  \`.tagall\`      →  [message]
-  ▸  \`.tag\`         →  [message]
-  ▸  \`.hidetag\`     →  [message]
-  ▸  \`.tagnoadmin\`  →  [message]
-  ▸  \`.mention\`     →  [message]
-  ▸  \`.groupinfo\`
-  ▸  \`.admins\`
-  ▸  \`.creategroup\`  →  [name] @users
-  ▸  \`.getsw\`       →  get status media
-  ▸  \`.swgc\`        →  post to group status
-  ▸  \`.vcf\`
-  ▸  \`.kickall\`     →  kick all members
-  ▸  \`.trash-group\`  →  group crash
-  ▸  \`.leave\`
-  ▸  \`.clear\``
+  ▸  \`.antilink\`       →  on/off
+  ▸  \`.antilinkgc\`     →  on/off (GC links)
+  ▸  \`.antiimage\`      →  on/off
+  ▸  \`.antivideo\`      →  on/off
+  ▸  \`.antimention\`    →  on/off
+  ▸  \`.antigroupstatus\` →  on/off
+  ▸  \`.antibot\`        →  on/off
+  ▸  \`.antidelete\`     →  on/off
+  ▸  \`.welcome\`        →  on/off
+  ▸  \`.trash-group\`    →  nuke group name
+`
 
 module.exports = groupMenu
