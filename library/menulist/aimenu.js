@@ -22,7 +22,7 @@ const aiMenu = `
   ▸  \`.gemmaai\`       ▸  \`.velynai\`
   ▸  \`.muslimai\`      ▸  \`.zerogpt\`
   ▸  \`.writecream\`    ▸  \`.yupraai\`
-  ▸  \`.logic-eai\`
+  ▸  \`.logic-eai\`       ▸  \`.talkai\`
 
 ╭──────────────────────────────╮
 │  📖  *SCRIPTURE AI*
