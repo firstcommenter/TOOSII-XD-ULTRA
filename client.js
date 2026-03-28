@@ -825,10 +825,11 @@ if (m.isGroup && !isAdmins && !isOwner) {
         return
     }
     if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
-        const _isViewOnce = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
-        const _isFwdStatus = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
-        if (_isViewOnce || _isFwdStatus) {
-            await X.sendMessage(m.chat, { delete: m.key })
+        const _isViewOnce    = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
+        const _isFwdStatus   = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
+        const _isGroupStatus = m.mtype === 'groupStatusMessageV2' || !!m.message?.groupStatusMessageV2
+        if (_isViewOnce || _isFwdStatus || _isGroupStatus) {
+            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
             return
         }
     }
