@@ -10,6 +10,8 @@ const toolsMenu = `
 │  🛠️  *UTILITY TOOLS*
 ╰──────────────────────────────╯
   ▸  \`.weather\`       →  [city]
+  ▸  \`.translate\`     →  [lang] [text]
+  ▸  \`.currency\`      →  [amt] [from] [to]
   ▸  \`.tinyurl\`       →  [url]
   ▸  \`.shorturl\`      →  [url]
   ▸  \`.removebg\`      →  reply image
@@ -24,6 +26,7 @@ const toolsMenu = `
   ▸  \`.toaudio\`       →  video → audio
   ▸  \`.toppt\`         →  audio → voice note
   ▸  \`.transcript\`    →  [youtube url]
+  ▸  \`.shazam\`        →  reply audio — identify song
 
 ╭──────────────────────────────╮
 │  🤖  *AI CREATION*
@@ -33,7 +36,9 @@ const toolsMenu = `
   ▸  \`.fluximg\`       →  [prompt]
   ▸  \`.deepimg\`       →  [prompt]
   ▸  \`.aiart\`         →  [prompt]
-  ▸  \`.songgenerator\`  →  [prompt]
+  ▸  \`.genimage\`      →  [prompt]
+  ▸  \`.aisong\`        →  [prompt] — AI music
+  ▸  \`.songgenerator\` →  [prompt]
 
 ╭──────────────────────────────╮
 │  👻  *PRESENCE TOOLS*
@@ -51,6 +56,7 @@ const toolsMenu = `
   ▸  \`.autolikestatus\`     →  [emoji/off]
   ▸  \`.autoreplystatus\`    →  [msg/off]
   ▸  \`.togroupstatus\`      →  [text/on/off]
-  ▸  \`.antistatusmention\`  →  [on/warn/kick/del]`
+  ▸  \`.antistatusmention\`  →  [on/warn/kick/del]
+`
 
 module.exports = toolsMenu
