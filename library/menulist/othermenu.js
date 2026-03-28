@@ -44,6 +44,10 @@ const otherMenu = `
   ▸  \`.bubblebold\`   ▸  \`.square\`
   ▸  \`.squarebold\`   ▸  \`.wide\`
   ▸  \`.upsidedown\`   ▸  \`.strikethrough\`
-  ▸  \`.underline\`     →  all accept [text]`
+  ▸  \`.underline\`    ▸  \`.currency\`
+  ▸  \`.dotted\`       ▸  \`.oldeng\`
+  ▸  \`.aesthetic\`    ▸  \`.cursive\`
+  ▸  all accept → [text]
+`
 
 module.exports = otherMenu
