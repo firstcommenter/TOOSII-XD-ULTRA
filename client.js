@@ -9960,11 +9960,11 @@ case 'matches': {
         const _gKey = typeof _giftedKey === 'function' ? _giftedKey() : (global._giftedApiKey || '')
         let _fxMatches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_gKey}`)
         if (!_fxMatches?.length) throw new Error('No fixtures found')
-        let _fxMsg = `╔═════════╗\n║  📅 *UPCOMING EPL FIXTURES*\n╚═════════╝\n`
+        let _fxMsg = `╔══════════════════════════════╗\n║  📅  *UPCOMING EPL FIXTURES* ║\n╚══════════════════════════════╝\n`
         for (let _fm of _fxMatches) {
-            _fxMsg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
+            _fxMsg += `\n📆 *${_fm.date || ''}*${_fm.time ? '  ⏰ ' + _fm.time : ''}\n`
             _fxMsg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
-            if (_fm.venue || _fm.stadium) _fxMsg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
+            if (_fm.venue || _fm.stadium) _fxMsg += `  🏟️ _${_fm.venue || _fm.stadium}_\n`
         }
         await reply(_fxMsg)
     } catch(e) { reply('❌ Could not fetch EPL fixtures. Try again later.') }
@@ -10033,8 +10033,12 @@ case 'listmods': {
     const _slPath = path.join(__dirname, 'database', 'sudoUsers.json')
     let _slList = []
     try { _slList = JSON.parse(fs.readFileSync(_slPath, 'utf-8')) } catch { _slList = [] }
-    if (!_slList.length) return reply('📋 No sudo users set.')
-    reply(`🛡️ *Sudo / Mod Users:*\n\n${_slList.map((u, i) => `${i+1}. @${u.split('@')[0]}`).join('\n')}`)
+    if (!_slList.length) return reply('╔══════════════════════════════╗\n║  🛡️  *SUDO / MOD USERS*      ║\n╚══════════════════════════════╝\n\n  _No sudo users set yet._\n\n  Use `.addsudo @user` to add one.')
+    const _slMentions = _slList.map(u => u)
+    await X.sendMessage(m.chat, {
+        text: `╔══════════════════════════════╗\n║  🛡️  *SUDO / MOD USERS*      ║\n╚══════════════════════════════╝\n\n${_slList.map((u, i) => `  ${i+1}. @${u.split('@')[0]}`).join('\n')}\n\n  _Total: ${_slList.length} user(s)_`,
+        mentions: _slMentions
+    }, { quoted: m })
 } break
 
 case 'setbotname': {
@@ -10061,16 +10065,17 @@ case 'serverinfo': {
     const _siD = Math.floor(_siUp / 86400), _siH = Math.floor((_siUp % 86400) / 3600)
     const _siMn = Math.floor((_siUp % 3600) / 60), _siS = Math.floor(_siUp % 60)
     reply(
-        `🖥️ *System Information*\n` +
-        `─────────────────\n` +
-        `💾 RAM: *${_siUsed} MB / ${_siTotMb} MB*\n` +
-        `🧠 Heap: *${(_siMem.heapUsed / 1024 / 1024).toFixed(1)} MB*\n` +
-        `⚙️ CPU: *${_siCpus[0]?.model || 'Unknown'}*\n` +
-        `🔢 Cores: *${_siCpus.length}*\n` +
-        `🖥️ OS: *${os.type()} ${os.release()}*\n` +
-        `📦 Node: *${process.version}*\n` +
-        `⏱️ Uptime: *${_siD}d ${_siH}h ${_siMn}m ${_siS}s*\n` +
-        `🏠 Host: *${os.hostname()}*`
+        `╔══════════════════════════════╗\n` +
+        `║  🖥️  *SYSTEM INFORMATION*    ║\n` +
+        `╚══════════════════════════════╝\n\n` +
+        `  ├◈ 💾 *RAM*    › ${_siUsed} MB / ${_siTotMb} MB\n` +
+        `  ├◈ 🧠 *Heap*   › ${(_siMem.heapUsed / 1024 / 1024).toFixed(1)} MB\n` +
+        `  ├◈ ⚙️  *CPU*    › ${_siCpus[0]?.model?.trim() || 'Unknown'}\n` +
+        `  ├◈ 🔢 *Cores*  › ${_siCpus.length}\n` +
+        `  ├◈ 🖥️  *OS*     › ${os.type()} ${os.release()}\n` +
+        `  ├◈ 📦 *Node*   › ${process.version}\n` +
+        `  ├◈ ⏱️  *Uptime* › ${_siD}d ${_siH}h ${_siMn}m ${_siS}s\n` +
+        `  └◈ 🏠 *Host*   › ${os.hostname()}`
     )
 } break
 
@@ -10117,12 +10122,14 @@ case 'cekidch': {
         const _chCode = args[0].split('https://whatsapp.com/channel/')[1]
         const _chRes = await X.newsletterMetadata('invite', _chCode)
         reply(
-            `📢 *Channel Info*\n\n` +
-            `• *ID*        : ${_chRes.id}\n` +
-            `• *Name*      : ${_chRes.name}\n` +
-            `• *Followers* : ${_chRes.subscribers}\n` +
-            `• *Status*    : ${_chRes.state}\n` +
-            `• *Verified*  : ${_chRes.verification === 'VERIFIED' ? '✅ Yes' : '❌ No'}`
+            `╔══════════════════════════════╗\n` +
+            `║  📢  *CHANNEL INFO*          ║\n` +
+            `╚══════════════════════════════╝\n\n` +
+            `  ├◈ 🆔 *ID*         › ${_chRes.id}\n` +
+            `  ├◈ 📛 *Name*       › ${_chRes.name}\n` +
+            `  ├◈ 👥 *Followers*  › ${_chRes.subscribers?.toLocaleString?.() ?? _chRes.subscribers}\n` +
+            `  ├◈ 📊 *Status*     › ${_chRes.state}\n` +
+            `  └◈ ✅ *Verified*   › ${_chRes.verification === 'VERIFIED' ? 'Yes ✅' : 'No ❌'}`
         )
     } catch (e) { reply('❌ Failed to fetch channel info. Check the link.') }
 } break
@@ -10179,12 +10186,12 @@ case 'antigstt': {
     const _agsArg = (args[0] || '').toLowerCase()
     if (!_agsArg) {
         const _agsState = global.antiGroupStatusGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`🚫 *Anti Group Status*\n\nStatus: ${_agsState}\n\nUsage: ${prefix}antigroupstatus on/off\n_When ON, view-once & forwarded status messages will be deleted._`)
+        return reply(`╔══════════════════════════════╗\n║  🚫  *ANTI GROUP STATUS*     ║\n╚══════════════════════════════╝\n\n  ├◈ Status   › ${_agsState}\n  └◈ Usage    › ${prefix}antigroupstatus on/off\n\n_When ON, view-once & forwarded status messages will be auto-deleted._`)
     }
     if (!['on','off'].includes(_agsArg)) return reply(`Usage: ${prefix}antigroupstatus on/off`)
     if (!global.antiGroupStatusGroups) global.antiGroupStatusGroups = {}
     global.antiGroupStatusGroups[m.chat] = _agsArg === 'on'
-    reply(`🚫 *Anti Group Status* is now *${_agsArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_agsArg === 'on' ? '_View-once & forwarded status messages will be auto-deleted._' : '_Status messages will no longer be deleted._'}`)
+    reply(`╔══════════════════════════════╗\n║  🚫  *ANTI GROUP STATUS*     ║\n╚══════════════════════════════╝\n\n  └◈ ${_agsArg === 'on' ? '✅ *ENABLED* — status shares will be removed.' : '❌ *DISABLED* — status shares are allowed.'}`)
 } break
 
 case 'antilinkgc': {
@@ -10194,12 +10201,12 @@ case 'antilinkgc': {
     const _alcArg = (args[0] || '').toLowerCase()
     if (!_alcArg) {
         const _alcState = global.antilinkGcGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`🔗 *Anti GC Link*\n\nStatus: ${_alcState}\n\nUsage: ${prefix}antilinkgc on/off`)
+        return reply(`╔══════════════════════════════╗\n║  🔗  *ANTI GC LINK*          ║\n╚══════════════════════════════╝\n\n  ├◈ Status   › ${_alcState}\n  └◈ Usage    › ${prefix}antilinkgc on/off\n\n_Deletes WhatsApp group invite links posted in the group._`)
     }
     if (!['on','off'].includes(_alcArg)) return reply(`Usage: ${prefix}antilinkgc on/off`)
     if (!global.antilinkGcGroups) global.antilinkGcGroups = {}
     global.antilinkGcGroups[m.chat] = _alcArg === 'on'
-    reply(`🔗 *Anti GC Link* is now *${_alcArg === 'on' ? 'ON ✅' : 'OFF ❌'}*`)
+    reply(`╔══════════════════════════════╗\n║  🔗  *ANTI GC LINK*          ║\n╚══════════════════════════════╝\n\n  └◈ ${_alcArg === 'on' ? '✅ *ENABLED* — group links will be removed.' : '❌ *DISABLED* — group links are allowed.'}`)
 } break
 
 case 'antiimage':
@@ -10210,12 +10217,12 @@ case 'antipic': {
     const _aiArg = (args[0] || '').toLowerCase()
     if (!_aiArg) {
         const _aiState = global.antiImageGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`🖼️ *Anti Image*\n\nStatus: ${_aiState}\n\nUsage: ${prefix}antiimage on/off`)
+        return reply(`╔══════════════════════════════╗\n║  🖼️  *ANTI IMAGE*            ║\n╚══════════════════════════════╝\n\n  ├◈ Status   › ${_aiState}\n  └◈ Usage    › ${prefix}antiimage on/off\n\n_Deletes all images sent in the group._`)
     }
     if (!['on','off'].includes(_aiArg)) return reply(`Usage: ${prefix}antiimage on/off`)
     if (!global.antiImageGroups) global.antiImageGroups = {}
     global.antiImageGroups[m.chat] = _aiArg === 'on'
-    reply(`🖼️ *Anti Image* is now *${_aiArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_aiArg === 'on' ? '🗑️ Images will be deleted.' : ''}`)
+    reply(`╔══════════════════════════════╗\n║  🖼️  *ANTI IMAGE*            ║\n╚══════════════════════════════╝\n\n  └◈ ${_aiArg === 'on' ? '✅ *ENABLED* — images will be auto-deleted.' : '❌ *DISABLED* — images are allowed.'}`)
 } break
 
 case 'antivideo': {
@@ -10225,12 +10232,12 @@ case 'antivideo': {
     const _avArg = (args[0] || '').toLowerCase()
     if (!_avArg) {
         const _avState = global.antiVideoGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`🎬 *Anti Video*\n\nStatus: ${_avState}\n\nUsage: ${prefix}antivideo on/off`)
+        return reply(`╔══════════════════════════════╗\n║  🎬  *ANTI VIDEO*            ║\n╚══════════════════════════════╝\n\n  ├◈ Status   › ${_avState}\n  └◈ Usage    › ${prefix}antivideo on/off\n\n_Deletes all videos sent in the group._`)
     }
     if (!['on','off'].includes(_avArg)) return reply(`Usage: ${prefix}antivideo on/off`)
     if (!global.antiVideoGroups) global.antiVideoGroups = {}
     global.antiVideoGroups[m.chat] = _avArg === 'on'
-    reply(`🎬 *Anti Video* is now *${_avArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_avArg === 'on' ? '🗑️ Videos will be deleted.' : ''}`)
+    reply(`╔══════════════════════════════╗\n║  🎬  *ANTI VIDEO*            ║\n╚══════════════════════════════╝\n\n  └◈ ${_avArg === 'on' ? '✅ *ENABLED* — videos will be auto-deleted.' : '❌ *DISABLED* — videos are allowed.'}`)
 } break
 
 case 'antimention': {
@@ -10240,12 +10247,12 @@ case 'antimention': {
     const _amArg = (args[0] || '').toLowerCase()
     if (!_amArg) {
         const _amState = global.antiMentionGroups?.[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`📣 *Anti Mention*\n\nStatus: ${_amState}\n\nUsage: ${prefix}antimention on/off`)
+        return reply(`╔══════════════════════════════╗\n║  📣  *ANTI MENTION*          ║\n╚══════════════════════════════╝\n\n  ├◈ Status   › ${_amState}\n  └◈ Usage    › ${prefix}antimention on/off\n\n_Deletes messages that tag/mention members._`)
     }
     if (!['on','off'].includes(_amArg)) return reply(`Usage: ${prefix}antimention on/off`)
     if (!global.antiMentionGroups) global.antiMentionGroups = {}
     global.antiMentionGroups[m.chat] = _amArg === 'on'
-    reply(`📣 *Anti Mention* is now *${_amArg === 'on' ? 'ON ✅' : 'OFF ❌'}*\n${_amArg === 'on' ? '🚫 Mass mentions will be removed.' : ''}`)
+    reply(`╔══════════════════════════════╗\n║  📣  *ANTI MENTION*          ║\n╚══════════════════════════════╝\n\n  └◈ ${_amArg === 'on' ? '✅ *ENABLED* — mass mentions will be removed.' : '❌ *DISABLED* — mentions are allowed.'}`)
 } break
 
 case 'clearwarn':
