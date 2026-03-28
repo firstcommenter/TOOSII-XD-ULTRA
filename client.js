@@ -1059,7 +1059,7 @@ X.autoshalat = X.autoshalat ? X.autoshalat : {}
         }
         for(let [sholat, waktu] of Object.entries(jadwalSholat)) {
             if(timeNow === waktu && !(id in X.autoshalat)) {
-                let caption = `╭──────────────────────────────╮\n│  🕌 *PRAYER TIME*\n╰──────────────────────────────╯\n\n  As-salamu alaykum, *${_displayName}* 🙏\n\n  ├ 🕌 *${sholat}* prayer time\n  ├ 🕐 *${waktu}*\n  └ 🌍 ${_tzInfo.region}\n\n  _Take your ablution and pray_ 🤲`
+                let caption = `╭──────────────────────────────╮\n│  🕌 *PRAYER TIME*\n╰──────────────────────────────╯\n\n  As-salamu alaykum, *${_displayName}* 🙏\n\n  ▸  🕌 *${sholat}* prayer time\n  ▸  🕐 *${waktu}*\n  ▸  🌍 ${_tzInfo.region}\n\n  _Take your ablution and pray_ 🤲`
                 X.autoshalat[id] = [reply(caption), setTimeout(() => { delete X.autoshalat[m.chat] }, 57000)]
             }
         }
@@ -1075,7 +1075,7 @@ X.autoshalat = X.autoshalat ? X.autoshalat : {}
         }
         if (_christianTimes[timeNow] && !(id in X.autoshalat)) {
             const _dev = _christianTimes[timeNow]
-            let _devCaption = `╭──────────────────────────────╮\n│  ✝️  *DEVOTION TIME*\n╰──────────────────────────────╯\n\n  God bless you, *${_displayName}* 🙏\n\n  ├ ${_dev.icon} *${_dev.name}*\n  ├ 🕐 *${timeNow}*\n  └ 🌍 ${_tzInfo.region}\n\n  _${_dev.msg}_\n\n  _📖 "Call to me and I will answer you" — Jer 33:3_`
+            let _devCaption = `╭──────────────────────────────╮\n│  ✝️  *DEVOTION TIME*\n╰──────────────────────────────╯\n\n  God bless you, *${_displayName}* 🙏\n\n  ▸  ${_dev.icon} *${_dev.name}*\n  ▸  🕐 *${timeNow}*\n  ▸  🌍 ${_tzInfo.region}\n\n  _${_dev.msg}_\n\n  _📖 "Call to me and I will answer you" — Jer 33:3_`
             X.autoshalat[id] = [reply(_devCaption), setTimeout(() => { delete X.autoshalat[m.chat] }, 57000)]
         }
     }
@@ -1258,7 +1258,7 @@ if (m.isGroup) {
  }
 // tes bot no prefix
 if ((budy.match) && ["bot",].includes(budy) && !isCmd) {
-reply(`╭──────────────────────────────╮\n│  🟢 *ONLINE & READY*\n╰──────────────────────────────╯\n\n  ├ 🤖 *${global.botname || 'TOOSII-XD ULTRA'}*\n  └ ⏱️  *Uptime*  →  ${runtime(process.uptime())}`)
+reply(`╭──────────────────────────────╮\n│  🟢 *ONLINE & READY*\n╰──────────────────────────────╯\n\n  ▸  🤖 *${global.botname || 'TOOSII-XD ULTRA'}*\n  ▸  ⏱️  *Uptime*  →  ${runtime(process.uptime())}`)
 }       
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -2327,7 +2327,7 @@ Tips:
 │  🎵 *SONG LYRICS*\n╰──────────────────────────────╯
 
   ▸  🎤 *Title*  →  ${_lyrResult.title}
-  ▸  👤 *Artist*  →  ${_lyrResult.artist}${_lyrResult.album ? `\n  ├ 💿 *Album*  →  ${_lyrResult.album}` : ''}
+  ▸  👤 *Artist*  →  ${_lyrResult.artist}${_lyrResult.album ? `\n  ▸  💿 *Album*  →  ${_lyrResult.album}` : ''}
   ▸  📡 *Source*  →  ${_lyrSource}
 
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
@@ -2760,7 +2760,7 @@ case 'fpresence': {
     await X.sendMessage(m.chat, { react: { text: '👻', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let current = global.fakePresence || 'off'
-reply(`╭──────────────────────────────╮\n│  👻 *PRESENCE STATUS*\n╰──────────────────────────────╯\n\n  ├ 📊 *Mode*  →  *${current}*\n\n  ├ ${prefix}autotyping    — toggle typing\n  ├ ${prefix}autorecording — toggle recording\n  └ ${prefix}autoonline    — toggle online\n\n  _Run again to turn off_`)
+reply(`╭──────────────────────────────╮\n│  👻 *PRESENCE STATUS*\n╰──────────────────────────────╯\n\n  ▸  📊 *Mode*  →  *${current}*\n\n  ▸  ${prefix}autotyping    — toggle typing\n  ▸  ${prefix}autorecording — toggle recording\n  ▸  ${prefix}autoonline    — toggle online\n\n  _Run again to turn off_`)
 }
 break
 
@@ -2821,7 +2821,7 @@ case 'statusreact': {
     const _arStatus = () => {
         const _vm = _ar.viewMode === 'view+react' ? '👁️ + react' : 'react only'
         const _em = _ar.mode === 'fixed' ? _ar.fixedEmoji : '🎲 random'
-        return `╭──────────────────────────────╮\n│  ❤️  *AUTO REACT STATUS*\n╰──────────────────────────────╯\n\n  ├ 📊 *Status*  →  ${_ar.enabled ? '✅ ON' : '❌ OFF'}\n  ├ 👁️  *View Mode*  →  ${_vm}\n  ├ 🎭 *Emoji*  →  ${_em}\n  ├ 📈 *Reacted*  →  ${_ar.totalReacted} statuses\n  └ 🎨 *Pool*  →  ${_ar.reactions.join(' ')}\n\n  *Commands:*\n  ├ ${prefix}als on / off\n  ├ ${prefix}als view+react / react-only\n  ├ ${prefix}als fixed / random\n  ├ ${prefix}als emoji [emoji]\n  ├ ${prefix}als add [emoji] / remove [emoji]\n  ├ ${prefix}als reset\n  └ ${prefix}als stats`
+        return `╭──────────────────────────────╮\n│  ❤️  *AUTO REACT STATUS*\n╰──────────────────────────────╯\n\n  ▸  📊 *Status*  →  ${_ar.enabled ? '✅ ON' : '❌ OFF'}\n  ▸  👁️  *View Mode*  →  ${_vm}\n  ▸  🎭 *Emoji*  →  ${_em}\n  ▸  📈 *Reacted*  →  ${_ar.totalReacted} statuses\n  ▸  🎨 *Pool*  →  ${_ar.reactions.join(' ')}\n\n  *Commands:*\n  ▸  ${prefix}als on / off\n  ▸  ${prefix}als view+react / react-only\n  ▸  ${prefix}als fixed / random\n  ▸  ${prefix}als emoji [emoji]\n  ▸  ${prefix}als add [emoji] / remove [emoji]\n  ▸  ${prefix}als reset\n  ▸  ${prefix}als stats`
     }
 
     if (!_arAction || _arAction === 'status') return reply(_arStatus())
@@ -2835,7 +2835,7 @@ case 'statusreact': {
             ? (_ar.reactions[Math.floor(Math.random() * _ar.reactions.length)] || '❤️')
             : (_ar.fixedEmoji || '❤️')
         try { if (typeof _savePhoneState === 'function') _savePhoneState(X.user?.id?.split(':')[0]?.split('@')[0] || '') } catch {}
-        return reply(`✅ *Auto React ON*\n└ Mode: ${_ar.viewMode} · ${_ar.mode === 'fixed' ? _ar.fixedEmoji : '🎲 random'}`)
+        return reply(`✅ *Auto React ON*\n  ▸  Mode: ${_ar.viewMode} · ${_ar.mode === 'fixed' ? _ar.fixedEmoji : '🎲 random'}`)
     }
 
     if (_arAction === 'off' || _arAction === 'disable') {
@@ -2898,11 +2898,11 @@ case 'statusreact': {
     }
 
     if (_arAction === 'stats') {
-        return reply(`╭──────────────────────────────╮\n│  📊 *REACT STATS*\n╰──────────────────────────────╯\n\n  ├ 📈 *Total reacted*  →  ${_ar.totalReacted}\n  ├ 🗂️  *Tracked IDs*  →  ${_ar.reactedIds.length}\n  ├ 🎭 *Mode*  →  ${_ar.mode}\n  ├ 👁️  *View Mode*  →  ${_ar.viewMode}\n  └ 🎨 *Emoji pool*  →  ${_ar.reactions.join(' ')}`)
+        return reply(`╭──────────────────────────────╮\n│  📊 *REACT STATS*\n╰──────────────────────────────╯\n\n  ▸  📈 *Total reacted*  →  ${_ar.totalReacted}\n  ▸  🗂️  *Tracked IDs*  →  ${_ar.reactedIds.length}\n  ▸  🎭 *Mode*  →  ${_ar.mode}\n  ▸  👁️  *View Mode*  →  ${_ar.viewMode}\n  ▸  🎨 *Emoji pool*  →  ${_ar.reactions.join(' ')}`)
     }
 
     if (_arAction === 'list' || _arAction === 'emojis') {
-        return reply(`🎨 *Emoji Pool (${_ar.reactions.length}):*\n\n${_ar.reactions.join(' ')}\n\n├ Fixed: ${_ar.fixedEmoji}\n└ Mode: ${_ar.mode}`)
+        return reply(`🎨 *Emoji Pool (${_ar.reactions.length}):*\n\n${_ar.reactions.join(' ')}\n\n  ▸  Fixed: ${_ar.fixedEmoji}\n  ▸  Mode: ${_ar.mode}`)
     }
 
     if (_arAction === 'post' || _arAction === 'send' || _arAction === 'status') {
@@ -2920,18 +2920,18 @@ case 'statusreact': {
                 let _chunks = []; for await (const c of _stream) _chunks.push(c)
                 const _buf = Buffer.concat(_chunks)
                 await X.sendMessage('status@broadcast', { image: _buf, caption: _postText }, { statusJidList: _jidList })
-                return reply(`✅ *Image posted to status!*\n└ Visible to ${_jidList.length} contact(s)`)
+                return reply(`✅ *Image posted to status!*\n  ▸  Visible to ${_jidList.length} contact(s)`)
             } else if (_qt === 'videoMessage') {
                 const _stream = await downloadContentFromMessage(_qm.videoMessage, 'video')
                 let _chunks = []; for await (const c of _stream) _chunks.push(c)
                 const _buf = Buffer.concat(_chunks)
                 await X.sendMessage('status@broadcast', { video: _buf, caption: _postText, mimetype: 'video/mp4' }, { statusJidList: _jidList })
-                return reply(`✅ *Video posted to status!*\n└ Visible to ${_jidList.length} contact(s)`)
+                return reply(`✅ *Video posted to status!*\n  ▸  Visible to ${_jidList.length} contact(s)`)
             }
         }
         if (!_postText) return reply(`❌ Usage:\n• *${prefix}als post [text]* — post text to status\n• Reply to an image/video with *${prefix}als post* — post that media to status`)
         await X.sendMessage('status@broadcast', { text: _postText }, { statusJidList: _jidList })
-        return reply(`✅ *Posted to status!*\n└ Visible to ${_jidList.length} contact(s)`)
+        return reply(`✅ *Posted to status!*\n  ▸  Visible to ${_jidList.length} contact(s)`)
     }
 
     reply(_arStatus())
@@ -2956,17 +2956,17 @@ try {
             const _stream = await downloadContentFromMessage(_qm.imageMessage, 'image')
             let _chunks = []; for await (const c of _stream) _chunks.push(c)
             await X.sendMessage('status@broadcast', { image: Buffer.concat(_chunks), caption: _caption }, { statusJidList: _jidList })
-            return reply(`✅ *Image posted to your status!*\n└ Shown to ${_jidList.length} contact(s)`)
+            return reply(`✅ *Image posted to your status!*\n  ▸  Shown to ${_jidList.length} contact(s)`)
         } else if (_qt === 'videoMessage') {
             const _stream = await downloadContentFromMessage(_qm.videoMessage, 'video')
             let _chunks = []; for await (const c of _stream) _chunks.push(c)
             await X.sendMessage('status@broadcast', { video: Buffer.concat(_chunks), caption: _caption, mimetype: 'video/mp4' }, { statusJidList: _jidList })
-            return reply(`✅ *Video posted to your status!*\n└ Shown to ${_jidList.length} contact(s)`)
+            return reply(`✅ *Video posted to your status!*\n  ▸  Shown to ${_jidList.length} contact(s)`)
         } else if (_qt === 'stickerMessage') {
             const _stream = await downloadContentFromMessage(_qm.stickerMessage, 'sticker')
             let _chunks = []; for await (const c of _stream) _chunks.push(c)
             await X.sendMessage('status@broadcast', { image: Buffer.concat(_chunks) }, { statusJidList: _jidList })
-            return reply(`✅ *Sticker posted as status!*\n└ Shown to ${_jidList.length} contact(s)`)
+            return reply(`✅ *Sticker posted as status!*\n  ▸  Shown to ${_jidList.length} contact(s)`)
         }
     }
     if (!_caption) return reply(
@@ -2975,10 +2975,10 @@ try {
         `  *Image:* reply to an image with ${prefix}poststatus\n` +
         `  *Video:* reply to a video with ${prefix}poststatus\n` +
         `  *Short:* ${prefix}sts [text]\n\n` +
-        `  └ Also: ${prefix}als post [text]`
+        `  ▸  Also: ${prefix}als post [text]`
     )
     await X.sendMessage('status@broadcast', { text: _caption }, { statusJidList: _jidList })
-    reply(`✅ *Posted to your status!*\n└ Shown to ${_jidList.length} contact(s)`)
+    reply(`✅ *Posted to your status!*\n  ▸  Shown to ${_jidList.length} contact(s)`)
 } catch(e) { reply('❌ Failed to post status: ' + e.message) }
 }
 break
@@ -3052,7 +3052,7 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
     }
 } else {
     // Mode 1: post quoted media/text as status visible to group members
-    if (!m.isGroup) return reply(`╭──────────────────────────────╮\n│  📤 *STATUS TOOLS*\n╰──────────────────────────────╯\n\n  *Post to group status:*\n  ├ Reply to media/text with *${prefix}togroupstatus*\n  └ Or: *${prefix}togroupstatus [text]*\n\n  *Auto-forward:*\n  ├ *${prefix}togroupstatus on*  — enable in group\n  ├ *${prefix}togroupstatus off* — disable\n  └ *${prefix}togroupstatus status* — check setting`)
+    if (!m.isGroup) return reply(`╭──────────────────────────────╮\n│  📤 *STATUS TOOLS*\n╰──────────────────────────────╯\n\n  *Post to group status:*\n  ▸  Reply to media/text with *${prefix}togroupstatus*\n  ▸  Or: *${prefix}togroupstatus [text]*\n\n  *Auto-forward:*\n  ▸  *${prefix}togroupstatus on*  — enable in group\n  ▸  *${prefix}togroupstatus off* — disable\n  ▸  *${prefix}togroupstatus status* — check setting`)
     try {
         // Helper: download quoted media using downloadContentFromMessage
         const _dlQuoted = async (type) => {
@@ -3126,7 +3126,7 @@ Use *${prefix}togroupstatus on* inside a group to enable.`)
             await _postGroupStatus({ text: text, backgroundColor: '#9C27B0' })
             reply(`✅ *Text posted to group status!*`)
         } else {
-            reply(`╭──────────────────────────────╮\n│  📤 *GROUP STATUS POSTER*\n╰──────────────────────────────╯\n\n  ├ Reply to media with *${prefix}togroupstatus*\n  ├ Or: *${prefix}togroupstatus [text]*\n  └ Auto-forward: *${prefix}togroupstatus on*`)
+            reply(`╭──────────────────────────────╮\n│  📤 *GROUP STATUS POSTER*\n╰──────────────────────────────╯\n\n  ▸  Reply to media with *${prefix}togroupstatus*\n  ▸  Or: *${prefix}togroupstatus [text]*\n  ▸  Auto-forward: *${prefix}togroupstatus on*`)
         }
     } catch(e) {
         reply(`❌ Failed to post group status: ${e.message}`)
@@ -3200,7 +3200,7 @@ case 'mystatus': {
             await _send({ text: text, backgroundColor: '#075E54', font: 4 })
             reply(`✅ *Text posted to your status!*`)
         } else {
-            reply(`╭──────────────────────────────╮\n│  📤 *STATUS POSTER*\n╰──────────────────────────────╯\n\n  ├ Reply to media with *${prefix}tostatus*\n  └ Or: *${prefix}tostatus [text]*`)
+            reply(`╭──────────────────────────────╮\n│  📤 *STATUS POSTER*\n╰──────────────────────────────╯\n\n  ▸  Reply to media with *${prefix}tostatus*\n  ▸  Or: *${prefix}tostatus [text]*`)
         }
     } catch(e) {
         reply(`❌ Failed to post status: ${e.message}`)
@@ -3215,7 +3215,7 @@ case 'private': {
     await X.sendMessage(m.chat, { react: { text: '🔒', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = false
-reply(`╭──────────────────────────────╮\n│  🔒 *BOT MODE: PRIVATE*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  └ Only *${botClean}* can use commands.\n  └ All other users are blocked.`)
+reply(`╭──────────────────────────────╮\n│  🔒 *BOT MODE: PRIVATE*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  ▸  Only *${botClean}* can use commands.\n  ▸  All other users are blocked.`)
 }
 break
 
@@ -3223,7 +3223,7 @@ case 'public': {
     await X.sendMessage(m.chat, { react: { text: '🔓', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = true
-reply(`╭──────────────────────────────╮\n│  🌐 *BOT MODE: PUBLIC*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  └ All users can use bot commands.\n  └ Owner-only commands still restricted.`)
+reply(`╭──────────────────────────────╮\n│  🌐 *BOT MODE: PUBLIC*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  ▸  All users can use bot commands.\n  ▸  Owner-only commands still restricted.`)
 }
 break
 
@@ -3235,7 +3235,7 @@ let linkMatch = q.match(/chat\.whatsapp\.com\/([0-9A-Za-z]{20,24})/)
 if (!linkMatch) return reply('Invalid group invite link. Please send a valid WhatsApp group link.')
 try {
     let joinResult = await X.groupAcceptInvite(linkMatch[1])
-    reply(`✅ *Joined group!*\n  └ ID: ${joinResult}`)
+    reply(`✅ *Joined group!*\n  ▸  ID: ${joinResult}`)
 } catch (e) {
     let errMsg = (e.message || '').toLowerCase()
     if (errMsg.includes('conflict')) {
@@ -3254,7 +3254,7 @@ break
 case 'prefix': {
     await X.sendMessage(m.chat, { react: { text: '⚙️', key: m.key } })
 let currentPfx = global.botPrefix || '.'
-reply(`╭──────────────────────────────╮\n│  ⚙️  *PREFIX*\n╰──────────────────────────────╯\n\n  └ 🔤 *Current prefix*  →  *${currentPfx}*\n\n_Use ${currentPfx}setprefix [char] to change_`)
+reply(`╭──────────────────────────────╮\n│  ⚙️  *PREFIX*\n╰──────────────────────────────╯\n\n  ▸  🔤 *Current prefix*  →  *${currentPfx}*\n\n_Use ${currentPfx}setprefix [char] to change_`)
 }
 break
 
@@ -3291,7 +3291,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let newPrefix = (args[0] || '').trim()
 if (!newPrefix) {
     let currentPfx = global.botPrefix || '.'
-    reply(`╭──────────────────────────────╮\n│  ⌨️  *SET PREFIX*\n╰──────────────────────────────╯\n\n  ├ 📌 *Current*  →  *${currentPfx}*\n  ├ ${prefix}setprefix [char] — set new\n  └ ${prefix}setprefix reset  — restore (.)\n\n  _Examples: . / # !_`)
+    reply(`╭──────────────────────────────╮\n│  ⌨️  *SET PREFIX*\n╰──────────────────────────────╯\n\n  ▸  📌 *Current*  →  *${currentPfx}*\n  ▸  ${prefix}setprefix [char] — set new\n  ▸  ${prefix}setprefix reset  — restore (.)\n\n  _Examples: . / # !_`)
 } else if (newPrefix.toLowerCase() === 'reset' || newPrefix.toLowerCase() === 'default') {
     global.botPrefix = '.'
     reply(`*Prefix Reset* ✅\nBot prefix restored to default: *.*`)
@@ -3393,10 +3393,10 @@ case 'settz': {
             `╭──────────────────────────────╮\n` +
             `│  🕐 *TIMEZONE*\n` +
             `╰──────────────────────────────╯\n\n` +
-            `  ├ 🌍 *Current*  →  ${_cur}\n` +
-            `  ├ 🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
-            `  ├ 📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
-            `  └ ⏰ *Offset*  →  UTC${_now.format('Z')}\n\n` +
+            `  ▸  🌍 *Current*  →  ${_cur}\n` +
+            `  ▸  🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
+            `  ▸  📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
+            `  ▸  ⏰ *Offset*  →  UTC${_now.format('Z')}\n\n` +
             `  📌 *Usage:*\n` +
             `  ${prefix}timezone Africa/Lagos\n` +
             `  ${prefix}timezone Asia/Dubai\n` +
@@ -3416,10 +3416,10 @@ case 'settz': {
             `│  🕐 *TIMEZONE*\n` +
             `╰──────────────────────────────╯\n\n` +
             `  ✅ *Updated!*\n\n` +
-            `  ├ 🌍 *Timezone*  →  ${_aliasMatch}\n` +
-            `  ├ 🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
-            `  ├ 📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
-            `  └ ⏰ *Offset*  →  UTC${_now.format('Z')}`
+            `  ▸  🌍 *Timezone*  →  ${_aliasMatch}\n` +
+            `  ▸  🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
+            `  ▸  📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
+            `  ▸  ⏰ *Offset*  →  UTC${_now.format('Z')}`
         )
     }
 
@@ -3432,10 +3432,10 @@ case 'settz': {
             `│  🕐 *TIMEZONE*\n` +
             `╰──────────────────────────────╯\n\n` +
             `  ✅ *Updated!*\n\n` +
-            `  ├ 🌍 *Timezone*  →  ${_tzArg}\n` +
-            `  ├ 🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
-            `  ├ 📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
-            `  └ ⏰ *Offset*  →  UTC${_now.format('Z')}`
+            `  ▸  🌍 *Timezone*  →  ${_tzArg}\n` +
+            `  ▸  🕐 *Time*  →  ${_now.format('HH:mm:ss')}\n` +
+            `  ▸  📅 *Date*  →  ${_now.format('DD/MM/YYYY')}\n` +
+            `  ▸  ⏰ *Offset*  →  UTC${_now.format('Z')}`
         )
     }
 
@@ -3600,7 +3600,7 @@ if (!arsArg) {
 } else {
     global.autoReplyStatusMsg = arsArg
     global.autoReplyStatus = true
-    reply(`✅ *Auto Reply Status ON*\n  └ Replying with: _"${arsArg}"_`)
+    reply(`✅ *Auto Reply Status ON*\n  ▸  Replying with: _"${arsArg}"_`)
 }
 }
 break
@@ -3615,7 +3615,7 @@ case 'antismention': {
         const _s = global.antiStatusMention ? '✅ ON' : '❌ OFF'
         const _a = (global.antiStatusMentionAction || 'warn').toUpperCase()
         const _aIcon = _a === 'WARN' ? '⚠️' : _a === 'KICK' ? '🚫' : '🗑️'
-        return `╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ├ 📊 *Status*  →  ${_s}\n  ├ ${_aIcon} *Action*  →  ${_a}\n  └ ℹ️  *Info*  →  Blocks group tags in statuses\n\n  *Commands:*\n  ├ ${prefix}antistatusmention on\n  ├ ${prefix}antistatusmention off\n  ├ ${prefix}antistatusmention warn   — 3 strikes then kick\n  ├ ${prefix}antistatusmention delete — auto-delete their msgs\n  └ ${prefix}antistatusmention kick   — instant removal\n\n  _Bot must be admin in the group._`
+        return `╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ▸  📊 *Status*  →  ${_s}\n  ▸  ${_aIcon} *Action*  →  ${_a}\n  ▸  ℹ️  *Info*  →  Blocks group tags in statuses\n\n  *Commands:*\n  ▸  ${prefix}antistatusmention on\n  ▸  ${prefix}antistatusmention off\n  ▸  ${prefix}antistatusmention warn   — 3 strikes then kick\n  ▸  ${prefix}antistatusmention delete — auto-delete their msgs\n  ▸  ${prefix}antistatusmention kick   — instant removal\n\n  _Bot must be admin in the group._`
     }
     if (!asmArg) {
         reply(_asmStatus())
@@ -3623,22 +3623,22 @@ case 'antismention': {
         global.antiStatusMention = true
         try { if (typeof _savePhoneState === 'function') _savePhoneState(X.user?.id?.split(':')[0]?.split('@')[0] || '') } catch {}
         const _a = (global.antiStatusMentionAction || 'warn').toUpperCase()
-        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  └ Action: *${_a}*\n\n  _Anyone who tags a group in their status\n  will be ${_a === 'WARN' ? 'warned (3x = kick)' : _a === 'KICK' ? 'instantly kicked' : 'have messages deleted'}._`)
+        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ✅ *Enabled*\n  ▸  Action: *${_a}*\n\n  _Anyone who tags a group in their status\n  will be ${_a === 'WARN' ? 'warned (3x = kick)' : _a === 'KICK' ? 'instantly kicked' : 'have messages deleted'}._`)
     } else if (asmArg === 'off' || asmArg === 'disable') {
         global.antiStatusMention = false
-        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ❌ *Disabled*\n  └ Group tagging in statuses no longer actioned.`)
+        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ❌ *Disabled*\n  ▸  Group tagging in statuses no longer actioned.`)
     } else if (asmArg === 'warn') {
         global.antiStatusMention = true
         global.antiStatusMentionAction = 'warn'
-        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ⚠️ *WARN MODE — Enabled*\n  └ 3 warnings → automatic kick\n\n  _Bot must be admin in the group._`)
+        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  ⚠️ *WARN MODE — Enabled*\n  ▸  3 warnings → automatic kick\n\n  _Bot must be admin in the group._`)
     } else if (asmArg === 'delete' || asmArg === 'del') {
         global.antiStatusMention = true
         global.antiStatusMentionAction = 'delete'
-        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  🗑️ *DELETE MODE — Enabled*\n  └ Their messages auto-deleted from group\n\n  _Bot must be admin in the group._`)
+        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  🗑️ *DELETE MODE — Enabled*\n  ▸  Their messages auto-deleted from group\n\n  _Bot must be admin in the group._`)
     } else if (asmArg === 'kick' || asmArg === 'remove') {
         global.antiStatusMention = true
         global.antiStatusMentionAction = 'kick'
-        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  🚫 *KICK MODE — Enabled*\n  └ Instant removal from group\n\n  _Bot must be admin in the group._`)
+        reply(`╭──────────────────────────────╮\n│  🛡️  *ANTI STATUS MENTION*\n╰──────────────────────────────╯\n\n  🚫 *KICK MODE — Enabled*\n  ▸  Instant removal from group\n\n  _Bot must be admin in the group._`)
     } else {
         reply(`❌ Unknown option. Use: *on, off, warn, delete, kick*`)
     }
@@ -3699,17 +3699,17 @@ case 'antidelete':
               `╭──────────────────────────────╮\n` +
               `│  🗑️  *ANTI-DELETE*\n` +
               `╰──────────────────────────────╯\n\n` +
-              `  ├ 👥 *Groups*  →  ${_gcSt}\n` +
-              `  ├ 💬 *PMs*  →  ${_pmSt}\n` +
-              `  ├ 📈 *Tracked*  →  ${_ad.stats.total} msgs\n` +
-              `  ├ ✅ *Retrieved*  →  ${_ad.stats.retrieved}\n` +
-              `  └ 🖼️  *Media*  →  ${_ad.stats.media} files\n\n` +
+              `  ▸  👥 *Groups*  →  ${_gcSt}\n` +
+              `  ▸  💬 *PMs*  →  ${_pmSt}\n` +
+              `  ▸  📈 *Tracked*  →  ${_ad.stats.total} msgs\n` +
+              `  ▸  ✅ *Retrieved*  →  ${_ad.stats.retrieved}\n` +
+              `  ▸  🖼️  *Media*  →  ${_ad.stats.media} files\n\n` +
               `  *Commands:*\n` +
-              `  ├ ${prefix}antidelete on/off\n` +
-              `  ├ ${prefix}antidelete private/chat/both\n` +
-              `  ├ ${prefix}antidelete gc on/off/private/chat/both\n` +
-              `  ├ ${prefix}antidelete pm on/off/private/chat/both\n` +
-              `  └ ${prefix}antidelete stats | clear`
+              `  ▸  ${prefix}antidelete on/off\n` +
+              `  ▸  ${prefix}antidelete private/chat/both\n` +
+              `  ▸  ${prefix}antidelete gc on/off/private/chat/both\n` +
+              `  ▸  ${prefix}antidelete pm on/off/private/chat/both\n` +
+              `  ▸  ${prefix}antidelete stats | clear`
           )
       }
 
@@ -3792,12 +3792,12 @@ case 'antidelete':
               `╭──────────────────────────────╮\n` +
               `│  📊 *ANTI-DELETE STATS*\n` +
               `╰──────────────────────────────╯\n\n` +
-              `  ├ 👥 *Groups*  →  ${_ad.gc.enabled ? _modeLabel(_ad.gc.mode) : '❌ OFF'}\n` +
-              `  ├ 💬 *PMs*  →  ${_ad.pm.enabled ? _modeLabel(_ad.pm.mode) : '❌ OFF'}\n` +
-              `  ├ 📈 *Tracked*  →  ${_ad.stats.total}\n` +
-              `  ├ ✅ *Retrieved*  →  ${_ad.stats.retrieved}\n` +
-              `  ├ 🖼️  *Media*  →  ${_ad.stats.media}\n` +
-              `  └ 🗂️  *Cache*  →  ${global._adCache?.size || 0} entries`
+              `  ▸  👥 *Groups*  →  ${_ad.gc.enabled ? _modeLabel(_ad.gc.mode) : '❌ OFF'}\n` +
+              `  ▸  💬 *PMs*  →  ${_ad.pm.enabled ? _modeLabel(_ad.pm.mode) : '❌ OFF'}\n` +
+              `  ▸  📈 *Tracked*  →  ${_ad.stats.total}\n` +
+              `  ▸  ✅ *Retrieved*  →  ${_ad.stats.retrieved}\n` +
+              `  ▸  🖼️  *Media*  →  ${_ad.stats.media}\n` +
+              `  ▸  🗂️  *Cache*  →  ${global._adCache?.size || 0} entries`
           )
       }
 
@@ -3851,7 +3851,7 @@ case 'setantibot': {
         const _botList = global.knownBots.length
             ? global.knownBots.map(n => `  • +${n}`).join('\n')
             : '  _None added yet_'
-        return reply(`╭──────────────────────────────╮\n│  🤖 *ANTIBOT SETTINGS*\n╰──────────────────────────────╯\n\n  ├ 📊 *This group*  →  ${_grpEnabled}\n  └ 🗂️  *Known bots*  →  ${global.knownBots.length}\n\n${_botList}\n\n  ├ ${prefix}antibot on     — enable here\n  ├ ${prefix}antibot off    — disable here\n  ├ ${prefix}antibot scan   — scan & remove bots\n  ├ ${prefix}antibot add [number] — mark as bot\n  └ ${prefix}antibot list   — list known bots`)
+        return reply(`╭──────────────────────────────╮\n│  🤖 *ANTIBOT SETTINGS*\n╰──────────────────────────────╯\n\n  ▸  📊 *This group*  →  ${_grpEnabled}\n  ▸  🗂️  *Known bots*  →  ${global.knownBots.length}\n\n${_botList}\n\n  ▸  ${prefix}antibot on     — enable here\n  ▸  ${prefix}antibot off    — disable here\n  ▸  ${prefix}antibot scan   — scan & remove bots\n  ▸  ${prefix}antibot add [number] — mark as bot\n  ▸  ${prefix}antibot list   — list known bots`)
     }
 
     // ── on ────────────────────────────────────────────────────────────
@@ -3926,7 +3926,7 @@ case 'setantibot': {
             }
 
             const _removedList = _removed.map(n => `  • ${n}`).join('\n')
-            return reply(`╭──────────────────────────────╮\n│  🤖 *ANTIBOT SCAN DONE*\n╰──────────────────────────────╯\n\n  ├ 🔍 *Scanned*  →  ${_members.length} members\n  ├ 🚫 *Removed*  →  ${_removed.length} bot(s)\n\n${_removedList}`)
+            return reply(`╭──────────────────────────────╮\n│  🤖 *ANTIBOT SCAN DONE*\n╰──────────────────────────────╯\n\n  ▸  🔍 *Scanned*  →  ${_members.length} members\n  ▸  🚫 *Removed*  →  ${_removed.length} bot(s)\n\n${_removedList}`)
 
         } catch(e) {
             return reply(`❌ Scan failed: ${e.message}`)
@@ -4026,7 +4026,7 @@ try {
             initBranch = 'master'
         }
         await run('npm install --production')
-        await reply(`╭──────────────────────────────╮\n│  ✅ *BOT INITIALIZED*\n╰──────────────────────────────╯\n\n  ├ 🌿 *Branch*  →  ${initBranch}\n  └ 🔄 Restarting now...`)
+        await reply(`╭──────────────────────────────╮\n│  ✅ *BOT INITIALIZED*\n╰──────────────────────────────╯\n\n  ▸  🌿 *Branch*  →  ${initBranch}\n  ▸  🔄 Restarting now...`)
         await sleep(3000)
         return process.exit(0)
     }
@@ -4051,7 +4051,7 @@ try {
 
     if (localCommit.stdout && remoteCommit.stdout && localCommit.stdout === remoteCommit.stdout) {
         const lastLog = await run('git log -1 --format="%s | %cr" HEAD')
-        return reply(`╭──────────────────────────────╮\n│  ✅ *ALREADY UP TO DATE*\n╰──────────────────────────────╯\n\n  ├ 🌿 *Branch*  →  ${branch}\n  ├ 🔖 *Commit*  →  ${localHash}\n  └ 📝 ${lastLog.stdout || 'N/A'}`)
+        return reply(`╭──────────────────────────────╮\n│  ✅ *ALREADY UP TO DATE*\n╰──────────────────────────────╯\n\n  ▸  🌿 *Branch*  →  ${branch}\n  ▸  🔖 *Commit*  →  ${localHash}\n  ▸  📝 ${lastLog.stdout || 'N/A'}`)
     }
 
     // ── Step 6: Get changelog ─────────────────────────────────────────
@@ -4472,7 +4472,7 @@ break
                                                 reply(`✅ *Approved @${target.split('@')[0]}*`)
                                         } else {
                                                 let list = pending.map((p, i) => `│ ${i + 1}. ${p.jid.split('@')[0]}`).join('\n')
-                                                reply(`╭──────────────────────────────╮\n│  📋 *PENDING REQUESTS*\n╰──────────────────────────────╯\n\n  └ *Total:* ${pending.length}\n\n${list}\n\n  ├ ${prefix}approve all / [number]\n  └ ${prefix}reject all / [number]`)
+                                                reply(`╭──────────────────────────────╮\n│  📋 *PENDING REQUESTS*\n╰──────────────────────────────╯\n\n  ▸  *Total:* ${pending.length}\n\n${list}\n\n  ▸  ${prefix}approve all / [number]\n  ▸  ${prefix}reject all / [number]`)
                                         }
                                 } catch (err) {
                                         let errMsg = (err?.message || '').toLowerCase()
@@ -5209,7 +5209,7 @@ case 'aliceai': {
 break
 
 case 'magicstudio':{
-if (!text) return reply(`╭──────────────────────────────╮\n│  ✨ *MAGIC STUDIO AI*\n╰──────────────────────────────╯\n\n  Generate stunning AI images instantly.\n\n  └ *Usage:* ${prefix}magicstudio [description]\n\n  _Examples:_\n  • a woman in a red dress in Paris\n  • cyberpunk warrior with glowing sword\n  • magical forest with fairy lights`)
+if (!text) return reply(`╭──────────────────────────────╮\n│  ✨ *MAGIC STUDIO AI*\n╰──────────────────────────────╯\n\n  Generate stunning AI images instantly.\n\n  ▸  *Usage:* ${prefix}magicstudio [description]\n\n  _Examples:_\n  • a woman in a red dress in Paris\n  • cyberpunk warrior with glowing sword\n  • magical forest with fairy lights`)
 try {
 await reply('✨ _Magic Studio is generating your image..._')
 // Use pollinations with artistic model parameters for magic studio style
@@ -5218,7 +5218,7 @@ let seed = Math.floor(Math.random() * 999999)
 let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?model=flux&width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`
 let imgBuffer = await getBuffer(imgUrl)
 if (!imgBuffer || imgBuffer.length < 5000) throw new Error('Generation failed')
-let caption = `╭──────────────────────────────╮\n│  ✨ *MAGIC STUDIO*\n╰──────────────────────────────╯\n\n  ├ 📝 *Prompt*  →  ${text}\n  ├ 🌟 *Style*  →  Magic Studio\n  └ 🎲 *Seed*  →  ${seed}`
+let caption = `╭──────────────────────────────╮\n│  ✨ *MAGIC STUDIO*\n╰──────────────────────────────╯\n\n  ▸  📝 *Prompt*  →  ${text}\n  ▸  🌟 *Style*  →  Magic Studio\n  ▸  🎲 *Seed*  →  ${seed}`
 await X.sendMessage(m.chat, { image: imgBuffer, caption }, { quoted: m })
 } catch(e) {
 try {
@@ -5265,7 +5265,7 @@ case 'prayermuslim': {
     const _valid = ['on', 'off', 'dm', 'group', 'all', 'status']
     if (_arg === 'status' || !_arg) {
         const _cur = global.muslimPrayer || 'off'
-        return reply(`╭──────────────────────────────╮\n│  🕌 *MUSLIM PRAYER REMINDER*\n╰──────────────────────────────╯\n\n  ├ 📊 *Status*  →  *${_cur.toUpperCase()}*\n\n  ├ ${prefix}muslimprayer on    — DM + groups\n  ├ ${prefix}muslimprayer dm    — DM only\n  ├ ${prefix}muslimprayer group — groups only\n  └ ${prefix}muslimprayer off   — disable`)
+        return reply(`╭──────────────────────────────╮\n│  🕌 *MUSLIM PRAYER REMINDER*\n╰──────────────────────────────╯\n\n  ▸  📊 *Status*  →  *${_cur.toUpperCase()}*\n\n  ▸  ${prefix}muslimprayer on    — DM + groups\n  ▸  ${prefix}muslimprayer dm    — DM only\n  ▸  ${prefix}muslimprayer group — groups only\n  ▸  ${prefix}muslimprayer off   — disable`)
     }
     if (!_valid.includes(_arg)) return reply(`❌ Invalid. Use: on · off · dm · group · all`)
     global.muslimPrayer = _arg === 'on' ? 'all' : _arg
@@ -5283,7 +5283,7 @@ case 'prayerchristian': {
     const _valid2 = ['on', 'off', 'dm', 'group', 'all', 'status']
     if (_arg2 === 'status' || !_arg2) {
         const _cur2 = global.christianDevotion || 'off'
-        return reply(`╭──────────────────────────────╮\n│  ✝️  *CHRISTIAN DEVOTION*\n╰──────────────────────────────╯\n\n  ├ 📊 *Status*  →  *${_cur2.toUpperCase()}*\n\n  ├ ${prefix}christianprayer on    — DM + groups\n  ├ ${prefix}christianprayer dm    — DM only\n  ├ ${prefix}christianprayer group — groups only\n  └ ${prefix}christianprayer off   — disable`)
+        return reply(`╭──────────────────────────────╮\n│  ✝️  *CHRISTIAN DEVOTION*\n╰──────────────────────────────╯\n\n  ▸  📊 *Status*  →  *${_cur2.toUpperCase()}*\n\n  ▸  ${prefix}christianprayer on    — DM + groups\n  ▸  ${prefix}christianprayer dm    — DM only\n  ▸  ${prefix}christianprayer group — groups only\n  ▸  ${prefix}christianprayer off   — disable`)
     }
     if (!_valid2.includes(_arg2)) return reply(`❌ Invalid. Use: on · off · dm · group · all`)
     global.christianDevotion = _arg2 === 'on' ? 'all' : _arg2
@@ -5293,7 +5293,7 @@ case 'prayerchristian': {
 break
 
 case 'writecream': {
-  if (!text) return reply(`╭──────────────────────────────╮\n│  ✍️  *WRITECREAM AI*\n╰──────────────────────────────╯\n\n  AI-powered content writer.\n\n  └ *Usage:* ${prefix}writecream [topic or instruction]\n\n  _Examples:_\n  • blog post about social media marketing\n  • product description for wireless earbuds\n  • email subject lines for a sale campaign\n  • Instagram caption for a sunset photo`)
+  if (!text) return reply(`╭──────────────────────────────╮\n│  ✍️  *WRITECREAM AI*\n╰──────────────────────────────╯\n\n  AI-powered content writer.\n\n  ▸  *Usage:* ${prefix}writecream [topic or instruction]\n\n  _Examples:_\n  • blog post about social media marketing\n  • product description for wireless earbuds\n  • email subject lines for a sale campaign\n  • Instagram caption for a sunset photo`)
   try {
     await X.sendMessage(m.chat, { react: { text: '✍️', key: m.key } })
     await reply('✍️ _WriteCream AI is writing your content..._')
@@ -5345,7 +5345,7 @@ case 'verse':
 case 'bibleverse': {
     await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
     if (!text) {
-        return reply(`╭──────────────────────────────╮\n│  📖 *BIBLE SEARCH*\n╰──────────────────────────────╯\n\n  Search any verse or topic.\n\n  *By reference:*\n  ├ ${prefix}bible John 3:16\n  ├ ${prefix}bible Romans 8:28\n  └ ${prefix}bible Psalm 23:1\n\n  *By topic/keyword:*\n  ├ ${prefix}bible love\n  ├ ${prefix}bible faith\n  └ ${prefix}bible strength`)
+        return reply(`╭──────────────────────────────╮\n│  📖 *BIBLE SEARCH*\n╰──────────────────────────────╯\n\n  Search any verse or topic.\n\n  *By reference:*\n  ▸  ${prefix}bible John 3:16\n  ▸  ${prefix}bible Romans 8:28\n  ▸  ${prefix}bible Psalm 23:1\n\n  *By topic/keyword:*\n  ▸  ${prefix}bible love\n  ▸  ${prefix}bible faith\n  ▸  ${prefix}bible strength`)
     }
     try {
         const isRef = /^[1-3]?\s?[a-zA-Z]+\s+\d+:\d+/i.test(text.trim())
@@ -5384,7 +5384,7 @@ case 'bibleverse': {
 
         if (!verseText) return reply(`❌ Could not find a verse for: _${text}_`)
 
-        reply(`╭──────────────────────────────╮\n│  📖 *BIBLE VERSE*\n╰──────────────────────────────╯\n\n  _❝ ${verseText} ❞_\n\n  ├ 📌 *${reference}*\n  └ 📚 *Translation*  →  ${translation}\n\n_⚡ TOOSII-XD ULTRA_`)
+        reply(`╭──────────────────────────────╮\n│  📖 *BIBLE VERSE*\n╰──────────────────────────────╯\n\n  _❝ ${verseText} ❞_\n\n  ▸  📌 *${reference}*\n  ▸  📚 *Translation*  →  ${translation}\n\n_⚡ TOOSII-XD ULTRA_`)
 
     } catch(e) {
         reply(`❌ *Bible search failed.*\n_${e.message || 'Please try again.'}_`)
@@ -5398,7 +5398,7 @@ case 'ayah':
 case 'quranverse': {
     await X.sendMessage(m.chat, { react: { text: '📿', key: m.key } })
     if (!text) {
-        return reply(`╭──────────────────────────────╮\n│  📿 *QURAN SEARCH*\n╰──────────────────────────────╯\n\n  Search any ayah or topic.\n\n  *By reference (Surah:Ayah):*\n  ├ ${prefix}quran 2:255    (Ayatul Kursi)\n  ├ ${prefix}quran 1:1      (Al-Fatiha)\n  └ ${prefix}quran 112:1    (Al-Ikhlas)\n\n  *By topic/keyword:*\n  ├ ${prefix}quran patience\n  ├ ${prefix}quran mercy\n  └ ${prefix}quran paradise`)
+        return reply(`╭──────────────────────────────╮\n│  📿 *QURAN SEARCH*\n╰──────────────────────────────╯\n\n  Search any ayah or topic.\n\n  *By reference (Surah:Ayah):*\n  ▸  ${prefix}quran 2:255    (Ayatul Kursi)\n  ▸  ${prefix}quran 1:1      (Al-Fatiha)\n  ▸  ${prefix}quran 112:1    (Al-Ikhlas)\n\n  *By topic/keyword:*\n  ▸  ${prefix}quran patience\n  ▸  ${prefix}quran mercy\n  ▸  ${prefix}quran paradise`)
     }
     try {
         const isRef = /^\d+:\d+$/.test(text.trim())
@@ -5446,8 +5446,8 @@ case 'quranverse': {
         let msg = `╭──────────────────────────────╮\n│  📿 *QURAN AYAH*\n╰──────────────────────────────╯\n\n`
         if (arabicText) msg += `  *${arabicText}*\n\n`
         if (englishText) msg += `  _❝ ${englishText} ❞_\n\n`
-        msg += `  ├ 📌 *${reference}*\n`
-        msg += `  └ 📚 *Translator*  →  ${isRef ? 'Muhammad Asad' : surahName}\n\n`
+        msg += `  ▸  📌 *${reference}*\n`
+        msg += `  ▸  📚 *Translator*  →  ${isRef ? 'Muhammad Asad' : surahName}\n\n`
         msg += `_⚡ TOOSII-XD ULTRA_`
 
         reply(msg)
@@ -5726,7 +5726,7 @@ async function getServerInfo() {
 
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 💿 *Storage*
-${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'  ├ ')}` : ''}
+${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'  ▸  ')}` : ''}
 
 _⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
     return responseText.trim()
@@ -5745,7 +5745,7 @@ if (command === 'ping' || command === 'p') {
 break           
 
 case 'totalfitur':{
-reply(`╭──────────────────────────────╮\n│  📋 *TOTAL COMMANDS*\n╰──────────────────────────────╯\n\n  └ *${totalfitur()}* commands available`)
+reply(`╭──────────────────────────────╮\n│  📋 *TOTAL COMMANDS*\n╰──────────────────────────────╯\n\n  ▸  *${totalfitur()}* commands available`)
 }
 break   
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -5782,7 +5782,7 @@ case 'block': {
               ? m.mentionedJid[0]
               : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
               : null
-      if (!_blkRaw) return reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}block @user | number`)
+      if (!_blkRaw) return reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ❌ *No target!*\n  ▸  Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}block @user | number`)
       // If LID → try resolving to real JID via contacts/participants
       if (_blkRaw.endsWith('@lid')) {
           const _lidKey = _normJ(_blkRaw)
@@ -5820,7 +5820,7 @@ case 'block': {
     let _currentBL = []
     try { _currentBL = await X.fetchBlocklist() } catch {}
     const _alreadyBlocked = _currentBL.some(j => j.includes(_blkPhone) || (_blkLid && j.includes(_blkLid.split('@')[0])))
-    if (_alreadyBlocked) return reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ⚠️ Already blocked\n  └ +${_blkPhone} is already on your block list.`)
+    if (_alreadyBlocked) return reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ⚠️ Already blocked\n  ▸  +${_blkPhone} is already on your block list.`)
     const _blkJidToUse = _blkLid || _blkJid
     let _blkOk = false, _blkLastErr = ''
     // Strategy 1: wrap item in <list> node (matches fetchBlocklist response format)
@@ -5836,7 +5836,7 @@ case 'block': {
     // Strategy 3: original updateBlockStatus
     if (!_blkOk) { try { await X.updateBlockStatus(_blkJidToUse, 'block'); _blkOk = true } catch(e) { _blkLastErr += ' | ubs:' + e.message } }
     if (_blkOk) {
-        reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ✅ *Blocked*\n  └ +${_blkPhone} has been blocked.`)
+        reply(`╭──────────────────────────────╮\n│  🚫 *BLOCK USER*\n╰──────────────────────────────╯\n\n  ✅ *Blocked*\n  ▸  +${_blkPhone} has been blocked.`)
     } else {
         reply(`❌ debug: ${_blkLastErr}`)
     }
@@ -5853,7 +5853,7 @@ case 'unblock': {
               ? m.mentionedJid[0]
               : m.quoted ? (m.quoted.sender || m.quoted.key?.participant)
               : null
-      if (!_ublkRaw) return reply(`╭──────────────────────────────╮\n│  ✅ *UNBLOCK USER*\n╰──────────────────────────────╯\n\n  ❌ *No target!*\n  └ Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}unblock @user | number`)
+      if (!_ublkRaw) return reply(`╭──────────────────────────────╮\n│  ✅ *UNBLOCK USER*\n╰──────────────────────────────╯\n\n  ❌ *No target!*\n  ▸  Tag a user, reply to their message,\n     or provide their number.\n\n  📌 *Usage:* ${prefix}unblock @user | number`)
       if (_ublkRaw.endsWith('@lid')) {
           const _lidKey = _normU(_ublkRaw)
           let _res = null
@@ -5888,7 +5888,7 @@ case 'unblock': {
       if (_ublkLid) { try { await X.updateBlockStatus(_ublkLid, 'unblock'); _ublkOk = true } catch {} }
       if (!_ublkOk) { try { await X.updateBlockStatus(_ublkJid, 'unblock'); _ublkOk = true } catch {} }
       if (_ublkOk) {
-          reply(`╭──────────────────────────────╮\n│  ✅ *UNBLOCK USER*\n╰──────────────────────────────╯\n\n  ✅ *Unblocked*\n  └ +${_ublkPhone} has been unblocked.`)
+          reply(`╭──────────────────────────────╮\n│  ✅ *UNBLOCK USER*\n╰──────────────────────────────╯\n\n  ✅ *Unblocked*\n  ▸  +${_ublkPhone} has been unblocked.`)
       } else {
           reply(`❌ Failed to unblock +${_ublkPhone}.\nTry: ${prefix}unblock 254xxxxxxxxx with their number.`)
       }
@@ -5979,7 +5979,7 @@ let ppBuf = await getBuffer(ppUrl)
 if (!ppBuf || ppBuf.length < 100) throw new Error('Failed to download picture')
 await X.sendMessage(m.chat, {
     image: ppBuf,
-    caption: `╭──────────────────────────────╮\n│  🖼️  *PROFILE PICTURE*\n╰──────────────────────────────╯\n\n  └ 👤 *User*  →  ${label}`
+    caption: `╭──────────────────────────────╮\n│  🖼️  *PROFILE PICTURE*\n╰──────────────────────────────╯\n\n  ▸  👤 *User*  →  ${label}`
 }, { quoted: m })
 } catch(e) {
 reply(`❌ *Failed to fetch profile picture.*
@@ -5990,7 +5990,7 @@ _${e.message || 'User may have privacy restrictions.'}_`)
 case 'setpp': {
     await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🖼️  *SET BOT PROFILE PIC*\n╰──────────────────────────────╯\n\n  └ Reply to an image with *${prefix}setpp*\n  _Image will be set as the bot profile picture._`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🖼️  *SET BOT PROFILE PIC*\n╰──────────────────────────────╯\n\n  ▸  Reply to an image with *${prefix}setpp*\n  _Image will be set as the bot profile picture._`)
 try {
 let imgBuf = await m.quoted.download()
 if (!imgBuf || imgBuf.length < 100) throw new Error('Failed to download image')
@@ -6098,7 +6098,7 @@ if (modeArg === 'public') {
     reply(`╭──────────────────────────────╮\n│  🔒 *BOT MODE: PRIVATE*\n╰──────────────────────────────╯\n\n  🚫 Only the owner can use commands.`)
 } else {
     let currentMode = X.public !== false ? 'PUBLIC ✅' : 'PRIVATE 🔒'
-    reply(`╭──────────────────────────────╮\n│  ⚙️  *BOT MODE*\n╰──────────────────────────────╯\n\n  ├ 📊 *Current*  →  ${currentMode}\n  ├ ${prefix}mode public  — all users\n  └ ${prefix}mode private — owner only`)
+    reply(`╭──────────────────────────────╮\n│  ⚙️  *BOT MODE*\n╰──────────────────────────────╯\n\n  ▸  📊 *Current*  →  ${currentMode}\n  ▸  ${prefix}mode public  — all users\n  ▸  ${prefix}mode private — owner only`)
 }
 } break
 
@@ -6168,7 +6168,7 @@ case 'antisgames': {
     const _asgArg = (args[0] || '').toLowerCase()
     if (!_asgArg || _asgArg === 'status') {
         const _on = global.antiSocialGames[m.chat] ? '✅ ON' : '❌ OFF'
-        return reply(`╭──────────────────────────────╮\n│  🎭 *ANTI SOCIAL GAMES*\n╰──────────────────────────────╯\n\n  ├ 📊 *Status*  →  *${_on}*\n\n  _When ON, blocks:_\n  ▸  \`.vibe\`  ▸  \`.rizz\`   ▸  \`.iq\n\`  ▸  \`.ship\`  ▸  \`.simp\`   ▸  \`.wasted\n\`  ▸  \`.truth\`   ▸  \`.dare\`   ▸  \`.lolice\n\n  _Removed offensive aliases:_\n\`  ▸  \`.gay   (now .vibe)\n\`  ▸  \`.horny (now .rizz)\n\n\`  ├ ${prefix}antisocialgames on\n  └ ${prefix}antisocialgames off`)
+        return reply(`╭──────────────────────────────╮\n│  🎭 *ANTI SOCIAL GAMES*\n╰──────────────────────────────╯\n\n  ▸  📊 *Status*  →  *${_on}*\n\n  _When ON, blocks:_\n  ▸  \`.vibe\`  ▸  \`.rizz\`   ▸  \`.iq\n\`  ▸  \`.ship\`  ▸  \`.simp\`   ▸  \`.wasted\n\`  ▸  \`.truth\`   ▸  \`.dare\`   ▸  \`.lolice\n\n  _Removed offensive aliases:_\n\`  ▸  \`.gay   (now .vibe)\n\`  ▸  \`.horny (now .rizz)\n\n\`  ▸  ${prefix}antisocialgames on\n  ▸  ${prefix}antisocialgames off`)
     }
     if (_asgArg === 'on') {
         global.antiSocialGames[m.chat] = true
@@ -6242,11 +6242,11 @@ case 'setgname': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
-if (!text) return reply(`╭──────────────────────────────╮\n│  ✏️  *SET GROUP NAME*\n╰──────────────────────────────╯\n\n  └ *Usage:* ${prefix}setgname [new name]\n  _Example: ${prefix}setgname My Awesome Group_`)
+if (!text) return reply(`╭──────────────────────────────╮\n│  ✏️  *SET GROUP NAME*\n╰──────────────────────────────╯\n\n  ▸  *Usage:* ${prefix}setgname [new name]\n  _Example: ${prefix}setgname My Awesome Group_`)
 try {
 let oldName = groupName || 'Unknown'
 await X.groupUpdateSubject(m.chat, text)
-reply(`╭──────────────────────────────╮\n│  ✏️  *GROUP NAME UPDATED*\n╰──────────────────────────────╯\n\n  ├ 📛 *Old*  →  ${oldName}\n  └ ✅ *New*  →  ${text}\n\n  _Group name successfully changed._`)
+reply(`╭──────────────────────────────╮\n│  ✏️  *GROUP NAME UPDATED*\n╰──────────────────────────────╯\n\n  ▸  📛 *Old*  →  ${oldName}\n  ▸  ✅ *New*  →  ${text}\n\n  _Group name successfully changed._`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
@@ -6259,7 +6259,7 @@ case 'setgpp': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 if (!isBotAdmins) return reply(mess.botAdmin)
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🖼️  *SET GROUP PHOTO*\n╰──────────────────────────────╯\n\n  └ Reply to an image with *${prefix}setgpp*\n  _Image will be set as group profile picture._`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🖼️  *SET GROUP PHOTO*\n╰──────────────────────────────╯\n\n  ▸  Reply to an image with *${prefix}setgpp*\n  _Image will be set as group profile picture._`)
 try {
 let media = await m.quoted.download()
 await X.updateProfilePicture(m.chat, media)
@@ -6325,7 +6325,7 @@ if (!isBotAdmins) return reply(mess.botAdmin)
 try {
 let code = await X.groupInviteCode(m.chat)
 let memberCount = participants.length
-reply(`╭──────────────────────────────╮\n│  🔗 *GROUP INVITE LINK*\n╰──────────────────────────────╯\n\n  ├ 🏘️  *Group*  →  ${groupName || 'This Group'}\n  └ 👥 *Members*  →  ${memberCount}\n\n  🔗 https://chat.whatsapp.com/${code}\n\n  _Use ${prefix}resetlink to revoke & regenerate._`)
+reply(`╭──────────────────────────────╮\n│  🔗 *GROUP INVITE LINK*\n╰──────────────────────────────╯\n\n  ▸  🏘️  *Group*  →  ${groupName || 'This Group'}\n  ▸  👥 *Members*  →  ${memberCount}\n\n  🔗 https://chat.whatsapp.com/${code}\n\n  _Use ${prefix}resetlink to revoke & regenerate._`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
@@ -6498,13 +6498,13 @@ try {
     const vcfBuf = Buffer.from(vcfData, 'utf8')
     const gname  = (freshMeta.subject || 'group').replace(/[^a-zA-Z0-9]/g, '_')
     const note   = contacts.size < totalParticipants
-        ? `\n  └ ⚠️ ${totalParticipants - contacts.size} member(s) hidden by WhatsApp privacy mode`
-        : `\n  └ Import the file into your phone contacts`
+        ? `\n  ▸  ⚠️ ${totalParticipants - contacts.size} member(s) hidden by WhatsApp privacy mode`
+        : `\n  ▸  Import the file into your phone contacts`
     await X.sendMessage(from, {
         document: vcfBuf,
         mimetype: 'text/x-vcard',
         fileName: `${gname}_contacts.vcf`,
-        caption: `📋 *${freshMeta.subject}*\n\n  ├ 👥 *${contacts.size}/${totalParticipants} contacts* exported${note}`
+        caption: `📋 *${freshMeta.subject}*\n\n  ▸  👥 *${contacts.size}/${totalParticipants} contacts* exported${note}`
     }, { quoted: m })
 } catch(e) { reply('❌ Failed to generate VCF: ' + e.message) }
 } break
@@ -6539,9 +6539,9 @@ case 'pair': {
           `╰──────────────────────────────╯\n\n` +
           `  Click the link below to get your pairing code:\n\n` +
           `  🌐 https://toosii-xd-ultra.onrender.com/pair\n\n` +
-          `  ├ Enter your WhatsApp number\n` +
-          `  ├ Copy the code shown\n` +
-          `  └ WhatsApp → Linked Devices → Link with phone number`
+          `  ▸  Enter your WhatsApp number\n` +
+          `  ▸  Copy the code shown\n` +
+          `  ▸  WhatsApp → Linked Devices → Link with phone number`
       )
   } break
 
@@ -6603,7 +6603,7 @@ break
 case 'vision':
 case 'analyse': {
     await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🔍 *IMAGE ANALYSIS*\n╰──────────────────────────────╯\n\n  └ Reply to an image with *${prefix}${command}*\n  _Optionally add a question after the command._`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🔍 *IMAGE ANALYSIS*\n╰──────────────────────────────╯\n\n  ▸  Reply to an image with *${prefix}${command}*\n  _Optionally add a question after the command._`)
 try {
 let question = text || 'Describe this image in detail. Include objects, people, colors, text, and any notable elements.'
 await reply('🔍 _Analysing image, please wait..._')
@@ -6724,7 +6724,7 @@ break
 
 case 'speechwrite': {
     await X.sendMessage(m.chat, { react: { text: '🎙️', key: m.key } })
-if (!text) return reply(`╭──────────────────────────────╮\n│  🎤 *SPEECH WRITER*\n╰──────────────────────────────╯\n\n  └ *Usage:* ${prefix}speechwrite [topic]\n\n  _Examples:_\n  • graduation ceremony about perseverance\n  • wedding toast for my best friend\n  • motivational speech for a sports team`)
+if (!text) return reply(`╭──────────────────────────────╮\n│  🎤 *SPEECH WRITER*\n╰──────────────────────────────╯\n\n  ▸  *Usage:* ${prefix}speechwrite [topic]\n\n  _Examples:_\n  • graduation ceremony about perseverance\n  • wedding toast for my best friend\n  • motivational speech for a sports team`)
 try {
 await reply('🎤 _Crafting your speech, please wait..._')
 let systemPrompt = 'You are an elite professional speechwriter with 20+ years of experience writing for world leaders, CEOs, and celebrities. Write compelling, eloquent, emotionally resonant speeches that feel authentic and human. Structure every speech with: a powerful opening hook, a clear body with 3 main points, emotional storytelling and vivid examples, a memorable inspiring conclusion, and natural transitions throughout. Keep the tone warm, confident, and conversational. The speech should feel like a real person wrote it.'
@@ -6746,7 +6746,7 @@ reply(`╭───────────────────────�
 case 'imagine':
 case 'flux': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
-if (!text) return reply(`╭──────────────────────────────╮\n│  🎨 *AI IMAGE GENERATOR*\n╰──────────────────────────────╯\n\n  └ *Usage:* ${prefix}${command} [description]\n\n  _Examples:_\n  • a futuristic city at night\n  • lion wearing a crown, digital art\n  • sunset over the ocean, photorealistic`)
+if (!text) return reply(`╭──────────────────────────────╮\n│  🎨 *AI IMAGE GENERATOR*\n╰──────────────────────────────╯\n\n  ▸  *Usage:* ${prefix}${command} [description]\n\n  _Examples:_\n  • a futuristic city at night\n  • lion wearing a crown, digital art\n  • sunset over the ocean, photorealistic`)
 try {
 await reply('🎨 _Generating your image, please wait..._')
 let model = command === 'flux' ? 'flux' : 'turbo'
@@ -6755,7 +6755,7 @@ let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?m
 // Download the image as buffer for reliable sending
 let imgBuffer = await getBuffer(imgUrl)
 if (!imgBuffer || imgBuffer.length < 5000) throw new Error('Image generation returned empty result')
-let caption = `╭──────────────────────────────╮\n│  🎨 *AI GENERATED IMAGE*\n╰──────────────────────────────╯\n\n  ├ 📝 *Prompt*  →  ${text}\n  ├ 🤖 *Model*  →  ${model.toUpperCase()}\n  └ 🎲 *Seed*  →  ${seed}`
+let caption = `╭──────────────────────────────╮\n│  🎨 *AI GENERATED IMAGE*\n╰──────────────────────────────╯\n\n  ▸  📝 *Prompt*  →  ${text}\n  ▸  🤖 *Model*  →  ${model.toUpperCase()}\n  ▸  🎲 *Seed*  →  ${seed}`
 await X.sendMessage(m.chat, { image: imgBuffer, caption }, { quoted: m })
 } catch(e) {
 // Fallback: try direct URL send
@@ -7130,10 +7130,10 @@ case 'series': {
         `│  🎬 *MOVIE / SERIES*\n` +
         `╰──────────────────────────────╯\n\n` +
         `  Search any movie or TV series and get info + stream links.\n\n` +
-        `  ├ *${prefix}movie* Inception\n` +
-        `  ├ *${prefix}movie* Breaking Bad\n` +
-        `  ├ *${prefix}movie* Avengers 2019\n` +
-        `  └ *${prefix}stream* [id] [movie|tv] — get episodes/streams directly`
+        `  ▸  *${prefix}movie* Inception\n` +
+        `  ▸  *${prefix}movie* Breaking Bad\n` +
+        `  ▸  *${prefix}movie* Avengers 2019\n` +
+        `  ▸  *${prefix}stream* [id] [movie|tv] — get episodes/streams directly`
     )
     try {
         await reply(`🎬 _Searching for_ *${text}*_..._`)
@@ -7218,15 +7218,15 @@ case 'series': {
             _cap += `│  ${_icon} *${_tStr} INFO*\n`
             _cap += `╰──────────────────────────────╯\n\n`
             _cap += `  *${_title2}*  _(${_yr2 || '?'})_\n\n`
-            _cap += `  ├ 🎭 *Genre*  →  ${_genres}\n`
-            _cap += `  ├ ⏱️  *Runtime*  →  ${_rt}\n`
-            _cap += `  ├ 🌍 *Language*  →  ${_lang}\n`
-            _cap += `  ├ ⭐ *Rating*  →  ${_score}\n`
+            _cap += `  ▸  🎭 *Genre*  →  ${_genres}\n`
+            _cap += `  ▸  ⏱️  *Runtime*  →  ${_rt}\n`
+            _cap += `  ▸  🌍 *Language*  →  ${_lang}\n`
+            _cap += `  ▸  ⭐ *Rating*  →  ${_score}\n`
         if (_isTV && _d) {
-            _cap += `  ├ 📺 *Seasons*  →  ${_na(_d.number_of_seasons)} seasons · ${_na(_d.number_of_episodes)} episodes\n`
+            _cap += `  ▸  📺 *Seasons*  →  ${_na(_d.number_of_seasons)} seasons · ${_na(_d.number_of_episodes)} episodes\n`
         }
-            _cap += `  ├ 🎬 *${_isTV ? 'Creator ' : 'Director'}*  →  ${_dir}\n`
-            _cap += `  └ 🎭 *Cast*  →  ${_cast}\n`
+            _cap += `  ▸  🎬 *${_isTV ? 'Creator ' : 'Director'}*  →  ${_dir}\n`
+            _cap += `  ▸  🎭 *Cast*  →  ${_cast}\n`
             _cap += `\n  *📝 Plot:*\n  _${_plot.slice(0, 300)}${_plot.length > 300 ? '…' : ''}_\n`
         if (_imdbId) _cap += `\n  🔗 https://www.imdb.com/title/${_imdbId}\n`
 
@@ -7335,7 +7335,7 @@ case 'episode': {
 
 case 'shazam': {
     await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
-if (!m.quoted || !/audio|video/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🎵 *SHAZAM — SONG FINDER*\n╰──────────────────────────────╯\n\n  └ Reply to an audio/video with *${prefix}shazam*\n  _Works with voice notes, music & video clips._`)
+if (!m.quoted || !/audio|video/.test(m.quoted.mimetype || '')) return reply(`╭──────────────────────────────╮\n│  🎵 *SHAZAM — SONG FINDER*\n╰──────────────────────────────╯\n\n  ▸  Reply to an audio/video with *${prefix}shazam*\n  _Works with voice notes, music & video clips._`)
 try {
 await reply('🎵 _Listening and identifying the song, please wait..._')
 // Download the media buffer
@@ -7396,9 +7396,9 @@ if (!auddData?.result) {
     })
     if (fallbackRes.data?.status === 'success' && fallbackRes.data?.result?.length) {
         let topLyric = fallbackRes.data.result[0]
-        return reply(`╭──────────────────────────────╮\n│  🎵 *SONG FOUND*\n╰──────────────────────────────╯\n\n  ├ 🎤 *Title*  →  ${topLyric.title || 'Unknown'}\n  └ 👤 *Artist*  →  ${topLyric.artist || 'Unknown'}\n\n  _Lyrics match (fingerprint unavailable)._`)
+        return reply(`╭──────────────────────────────╮\n│  🎵 *SONG FOUND*\n╰──────────────────────────────╯\n\n  ▸  🎤 *Title*  →  ${topLyric.title || 'Unknown'}\n  ▸  👤 *Artist*  →  ${topLyric.artist || 'Unknown'}\n\n  _Lyrics match (fingerprint unavailable)._`)
     }
-    return reply(`╭──────────────────────────────╮\n│  🎵 *SHAZAM*\n╰──────────────────────────────╯\n\n  ❌ Song not recognized.\n\n  ├ Use a longer clip (10–30 seconds)\n  ├ Ensure clear audio, minimal noise\n  └ Try the chorus or main melody`)
+    return reply(`╭──────────────────────────────╮\n│  🎵 *SHAZAM*\n╰──────────────────────────────╯\n\n  ❌ Song not recognized.\n\n  ▸  Use a longer clip (10–30 seconds)\n  ▸  Ensure clear audio, minimal noise\n  ▸  Try the chorus or main melody`)
 }
 let r = auddData.result
 // Build response
@@ -7520,7 +7520,7 @@ if (!inputText) return reply('No text to translate.')
 let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=auto|${targetLang}`)
 let data = await res.json()
 let translated = data.responseData?.translatedText || 'Translation failed.'
-reply(`╭──────────────────────────────╮\n│  🌐 *TRANSLATION*\n╰──────────────────────────────╯\n\n  └ 🔤 *${targetLang.toUpperCase()}*\n\n${translated}`)
+reply(`╭──────────────────────────────╮\n│  🌐 *TRANSLATION*\n╰──────────────────────────────╯\n\n  ▸  🔤 *${targetLang.toUpperCase()}*\n\n${translated}`)
 } catch(e) { reply('Error: ' + e.message) }
 } break
 
@@ -7844,7 +7844,7 @@ reply('*Game ended.*')
 case 'connect4':
 case 'c4': {
     await X.sendMessage(m.chat, { react: { text: '🔴', key: m.key } })
-reply(`╭──────────────────────────────╮\n│  🔴 *CONNECT 4*\n╰──────────────────────────────╯\n\n  🔴🟡🔴🟡🔴🟡🔴\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n\n  🎮 *Not yet available as a live game.*\n  ├ Play Tic Tac Toe instead:\n  └ *${prefix}ttt* — start a game now!`)
+reply(`╭──────────────────────────────╮\n│  🔴 *CONNECT 4*\n╰──────────────────────────────╯\n\n  🔴🟡🔴🟡🔴🟡🔴\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n  ⬜⬜⬜⬜⬜⬜⬜\n\n  🎮 *Not yet available as a live game.*\n  ▸  Play Tic Tac Toe instead:\n  ▸  *${prefix}ttt* — start a game now!`)
 } break
 
 case 'hangman': {
@@ -7855,13 +7855,13 @@ let words = ['javascript', 'python', 'programming', 'computer', 'algorithm', 'da
 let word = words[Math.floor(Math.random() * words.length)]
 global.hangmanGames[m.chat] = { word, guessed: [], lives: 6, players: [sender] }
 let display = word.split('').map(l => '_').join(' ')
-reply(`╭──────────────────────────────╮\n│  🪢 *HANGMAN*\n╰──────────────────────────────╯\n\n  ${display}\n\n  ├ ❤️  Lives  →  6\n  └ 🔡 Letters  →  ${word.length}\n\n  _Send a single letter to guess!_`)
+reply(`╭──────────────────────────────╮\n│  🪢 *HANGMAN*\n╰──────────────────────────────╯\n\n  ${display}\n\n  ▸  ❤️  Lives  →  6\n  ▸  🔡 Letters  →  ${word.length}\n\n  _Send a single letter to guess!_`)
 } break
 
 case 'hangmanend': {
     await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
 if (!global.hangmanGames || !global.hangmanGames[m.chat]) return reply('No hangman game in progress.')
-reply(`╭──────────────────────────────╮\n│  🏁 *GAME ENDED*\n╰──────────────────────────────╯\n\n  └ 🔡 *Word*  →  *${global.hangmanGames[m.chat].word}*`)
+reply(`╭──────────────────────────────╮\n│  🏁 *GAME ENDED*\n╰──────────────────────────────╯\n\n  ▸  🔡 *Word*  →  *${global.hangmanGames[m.chat].word}*`)
 delete global.hangmanGames[m.chat]
 } break
 
@@ -7942,7 +7942,7 @@ if (userChoice === 'p') userChoice = 'paper'
 if (userChoice === 's') userChoice = 'scissors'
 let botChoice = choices[Math.floor(Math.random() * 3)]
 let rpsResult = userChoice === botChoice ? 'Draw!' : (userChoice === 'rock' && botChoice === 'scissors') || (userChoice === 'paper' && botChoice === 'rock') || (userChoice === 'scissors' && botChoice === 'paper') ? 'You win! 🎉' : 'You lose! 😢'
-reply(`╭──────────────────────────────╮\n│  ✂️  *ROCK PAPER SCISSORS*\n╰──────────────────────────────╯\n\n  ├ 👤 *You*  →  ${userChoice}\n  ├ 🤖 *Bot*  →  ${botChoice}\n  └ 🏆 *${rpsResult}*`)
+reply(`╭──────────────────────────────╮\n│  ✂️  *ROCK PAPER SCISSORS*\n╰──────────────────────────────╯\n\n  ▸  👤 *You*  →  ${userChoice}\n  ▸  🤖 *Bot*  →  ${botChoice}\n  ▸  🏆 *${rpsResult}*`)
 } break
 
 case 'slot': {
@@ -9097,7 +9097,7 @@ case 'police': {
 let policeTarget = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : sender
 const policeReasons = ['Being too awesome 😂', 'Excessive good vibes ✨', 'Stealing hearts 💘', 'Being suspiciously cool 😎', 'Causing too much fun 🎉']
 const reason = policeReasons[Math.floor(Math.random() * policeReasons.length)]
-X.sendMessage(from, { text: `╭──────────────────────────────╮\n│  🚔 *POLICE ALERT!*\n╰──────────────────────────────╯\n\n  🚨 @${policeTarget.split('@')[0]} has been arrested!\n\n  ├ 📋 *Crime*  →  ${reason}\n  └ ⚖️  *Sentence*  →  Life of fun 🎉`, mentions: [policeTarget] }, { quoted: m })
+X.sendMessage(from, { text: `╭──────────────────────────────╮\n│  🚔 *POLICE ALERT!*\n╰──────────────────────────────╯\n\n  🚨 @${policeTarget.split('@')[0]} has been arrested!\n\n  ▸  📋 *Crime*  →  ${reason}\n  ▸  ⚖️  *Sentence*  →  Life of fun 🎉`, mentions: [policeTarget] }, { quoted: m })
 } break
 
 case 'namecard': {
