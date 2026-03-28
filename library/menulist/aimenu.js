@@ -39,6 +39,11 @@ const aiMenu = `
   ▸  \`.speechwrite\`   →  [topic]
   ▸  \`.imagine\`       →  [prompt]
   ▸  \`.flux\`          →  [prompt]
-  ▸  \`.magicstudio\`   →  [prompt]`
+  ▸  \`.magicstudio\`   →  [prompt]
+  ▸  \`.genimage\`      →  [prompt]
+  ▸  \`.aiart\`         →  [prompt]
+  ▸  \`.aisong\`        →  [prompt] — AI music
+  ▸  \`.makesong\`      →  [prompt]
+`
 
 module.exports = aiMenu
