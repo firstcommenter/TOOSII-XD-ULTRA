@@ -1355,37 +1355,40 @@ switch(command) {
 // help command
 case 'help': {
     await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
-const helpText = `╔═════════╗
-║  📋 *QUICK HELP GUIDE*
-╚═════════╝
+const helpText = `╔══════════════════════════════╗
+║  📋  *QUICK HELP GUIDE*      ║
+╚══════════════════════════════╝
 
   ├◈  \`.menu\`            › all commands
-  ├◈  \`.menu ai\`         › AI tools
+  ├◈  \`.menu ai\`         › AI & chat
   ├◈  \`.menu tools\`      › utilities
   ├◈  \`.menu owner\`      › bot settings
   ├◈  \`.menu group\`      › group mgmt
   ├◈  \`.menu downloader\` › downloads
   ├◈  \`.menu search\`     › search
-  └◈  \`.menu sticker\`    › stickers
-┃➤ .menu games — ɢᴀᴍᴇꜱ
-┗❒
+  ├◈  \`.menu sticker\`    › stickers
+  ├◈  \`.menu games\`      › games & fun
+  ├◈  \`.menu other\`      › effects & fonts
+  └◈  \`.menu football\`   › sports & scores
 
-┏❒ *ᴘᴏᴘᴜʟᴀʀ ᴄᴏᴍᴍᴀɴᴅꜱ* ❒
-┃➤ .ai [Qᴜᴇꜱᴛɪᴏɴ]
-┃➤ .sticker ʀᴇᴘʟʏ ᴍᴇᴅɪᴀ
-┃➤ .play [ꜱᴏɴɢ]
-┃➤ .ig [ᴜʀʟ]
-┃➤ .tt [ᴜʀʟ]
-┃➤ .toimage
-┃➤ .save ʀᴇᴘʟʏ ᴍꜱɢ
-┗❒
+╔══════════════════════════════╗
+║  ⚡  *POPULAR COMMANDS*      ║
+╚══════════════════════════════╝
+  ├◈  \`.ai\`       › [question]
+  ├◈  \`.sticker\`  › reply media
+  ├◈  \`.play\`     › [song name]
+  ├◈  \`.ig\`       › [instagram url]
+  ├◈  \`.tt\`       › [tiktok url]
+  ├◈  \`.toimage\`  › sticker → image
+  └◈  \`.save\`     › reply any message
 
-┏❒ *ᴄᴏɴᴛᴀᴄᴛ* ❒
-┃➤ wa.me/254748340864
-┃➤ ᴛᴇʟᴇɢʀᴀᴍ: @toosiitech
-┗❒
+╔══════════════════════════════╗
+║  📞  *CONTACT*               ║
+╚══════════════════════════════╝
+  ├◈  wa.me/254748340864
+  └◈  Telegram: @toosiitech
 
-_ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴛᴏᴏꜱɪɪ ᴛᴇᴄʜ_`
+_Powered by Toosii Tech_`
 const helpThumb = global.botPic || global.thumb || 'https://files.catbox.moe/qbcebp.jpg'
 X.sendMessage(m.chat, { image: { url: helpThumb }, caption: helpText }, { quoted: m })
 break
@@ -1408,9 +1411,9 @@ const otherMenu = require('./library/menulist/othermenu');
 const downloaderMenu = require('./library/menulist/downloadermenu');
 const footballMenu = require('./library/menulist/footballmenu');
 const textmakerMenu = `
-╔═════════╗
-║  ✨  *TEXT EFFECTS (Local)*
-╚═════════╝
+╔══════════════════════════════╗
+║  ✨  *TEXT EFFECTS*          ║
+╚══════════════════════════════╝
   ├◈  \`.metallic\`  ├◈  \`.ice\`
   ├◈  \`.snow\`      ├◈  \`.neon\`
   ├◈  \`.fire\`      ├◈  \`.glitch\`
@@ -1420,31 +1423,31 @@ const textmakerMenu = `
   ├◈  \`.sand\`      ├◈  \`.arena\`
   ├◈  \`.1917\`      ├◈  \`.light\`
   ├◈  \`.impressive\` ├◈  \`.leaves\`
-  └◈ all accept › [text]
+  └◈  all accept → [text]
 
-╔═════════╗
-║  🔤  *FONT CONVERTER*
-╚═════════╝
-  ├◈  \`.fonts\`         › show all
-  ├◈  \`.allfonts\`      › [text]
-  ├◈  \`.bold\`          ├◈  \`.italic\`
-  ├◈  \`.bolditalic\`    ├◈  \`.mono\`
-  ├◈  \`.serif\`         ├◈  \`.serifbold\`
-  ├◈  \`.serifitalic\`   ├◈  \`.scriptfont\`
-  ├◈  \`.scriptbold\`    ├◈  \`.fraktur\`
-  ├◈  \`.frakturbold\`   ├◈  \`.doublestruck\`
-  ├◈  \`.smallcaps\`     ├◈  \`.bubble\`
-  ├◈  \`.bubblebold\`    ├◈  \`.square\`
-  ├◈  \`.squarebold\`    ├◈  \`.wide\`
-  ├◈  \`.upsidedown\`    ├◈  \`.strikethrough\`
-  └◈  \`.underline\`     › all accept [text]`
+╔══════════════════════════════╗
+║  🔤  *FONT CONVERTER*        ║
+╚══════════════════════════════╝
+  ├◈  \`.fonts\`        › show all styles
+  ├◈  \`.allfonts\`     › [text]
+  ├◈  \`.bold\`         ├◈  \`.italic\`
+  ├◈  \`.bolditalic\`   ├◈  \`.mono\`
+  ├◈  \`.serif\`        ├◈  \`.serifbold\`
+  ├◈  \`.serifitalic\`  ├◈  \`.scriptfont\`
+  ├◈  \`.scriptbold\`   ├◈  \`.fraktur\`
+  ├◈  \`.frakturbold\`  ├◈  \`.doublestruck\`
+  ├◈  \`.smallcaps\`    ├◈  \`.bubble\`
+  ├◈  \`.bubblebold\`   ├◈  \`.square\`
+  ├◈  \`.squarebold\`   ├◈  \`.wide\`
+  ├◈  \`.upsidedown\`   ├◈  \`.strikethrough\`
+  └◈  \`.underline\`    › all accept [text]`
 
   let subcmd = args[0] ? args[0].toLowerCase() : '';
 
-  let infoBot = `╔═════════╗
-║   ⚡ *TOOSII-XD ULTRA*
-║   _WhatsApp Multi-Device Bot_
-╚═════════╝
+  let infoBot = `╔══════════════════════════════╗
+║   ⚡  *TOOSII-XD ULTRA*      ║
+║   _WhatsApp Multi-Device Bot_ ║
+╚══════════════════════════════╝
 
   👋 Hey *${pushname}*! ${waktuucapan}
 
@@ -1457,21 +1460,24 @@ const textmakerMenu = `
   ├◈ ✈️  *Telegram* › t.me/toosiitech
   └◈ 🔑 *Session*  › ${global.sessionUrl}
 
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-  _Browse by category:_
-
-  ├◈  \`.menu ai\`         › AI Chat & Tools
+╔══════════════════════════════╗
+║  📂  *BROWSE BY CATEGORY*    ║
+╚══════════════════════════════╝
+  ├◈  \`.menu ai\`         › AI & Chat
   ├◈  \`.menu tools\`      › Utilities
   ├◈  \`.menu owner\`      › Bot Settings
   ├◈  \`.menu group\`      › Group Mgmt
   ├◈  \`.menu downloader\` › Downloads
   ├◈  \`.menu search\`     › Search
   ├◈  \`.menu sticker\`    › Stickers
-  ├◈  \`.menu games\`      › Games
-  ├◈  \`.menu other\`      › Other
+  ├◈  \`.menu games\`      › Games & Fun
+  ├◈  \`.menu other\`      › Effects & Fonts
+  ├◈  \`.menu football\`   › Sports & Scores
   └◈  \`.menu textmaker\`  › Text Effects
 
-  ⬇️  *COMMAND LIST*`.trim();
+╔══════════════════════════════╗
+║  📜  *FULL COMMAND LIST*     ║
+╚══════════════════════════════╝`.trim();
 
   let menu = '';
 
