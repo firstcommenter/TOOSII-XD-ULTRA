@@ -1,73 +1,88 @@
 const ownerMenu = `
-╔═════════╗
-║  👑  *OWNER TOOLS*
-╚═════════╝
-  ├◈  \`.> / .$ / .=>\`
+╔══════════════════════════════╗
+║  👑  *OWNER CONTROLS*        ║
+╚══════════════════════════════╝
+  ├◈  \`.> / .$ / .=>\`      › exec code
   ├◈  \`.self\`      ├◈  \`.public\`
+  ├◈  \`.onlygroup\` ├◈  \`.onlypc\`
+  ├◈  \`.unavailable\`        › bot offline
   ├◈  \`.restart\`
-  ├◈  \`.join\`        › [group link]
-  ├◈  \`.setprefix\`   › [char/reset]
-  ├◈  \`.addplugin\`   ├◈  \`.rmplugin\`
-  ├◈  \`.cgplugin\`    ├◈  \`.getplugin\`
-  ├◈  \`.sudo\`        › add/remove [num]
-  ├◈  \`.setowner\`    › [number]
-  ├◈  \`.clearsession\`
+  ├◈  \`.join\`      › [group link]
+  ├◈  \`.leave\`
+  ├◈  \`.broadcast\` › [message]
+  ├◈  \`.sysinfo\`             › server info
   └◈  \`.cleartmp\`
 
-╔═════════╗
-║  ⚙️  *BOT SETTINGS*
-╚═════════╝
-  ├◈  \`.botname\`    › [name]
+╔══════════════════════════════╗
+║  🛡️  *SUDO MANAGEMENT*       ║
+╚══════════════════════════════╝
+  ├◈  \`.addsudo\`   › @user / [number]
+  ├◈  \`.delsudo\`   › @user / [number]
+  └◈  \`.sudolist\`
+
+╔══════════════════════════════╗
+║  ⚙️  *BOT SETTINGS*          ║
+╚══════════════════════════════╝
+  ├◈  \`.setbotname\` › [name]
   ├◈  \`.author\`     › [name]
   ├◈  \`.packname\`   › [name]
-  ├◈  \`.timezone\`   › [tz]
-  ├◈  \`.botpic\`     › [url/reply img]
+  ├◈  \`.timezone\`   › [timezone]
+  ├◈  \`.setprefix\`  › [char/reset]
+  ├◈  \`.botpic\`     › [url / reply img]
   ├◈  \`.boturl\`     › [url]
-  ├◈  \`.pp\`         › [@user/reply]
-  ├◈  \`.setpp\`      › reply img
-  ├◈  \`.menuimage\`  › [url/reply img]
-  ├◈  \`.configimage\` ├◈  \`.setmenu\`
+  ├◈  \`.setowner\`   › [number]
+  ├◈  \`.pp\`         › [@user / reply]
+  ├◈  \`.setpp\`      › reply image
+  ├◈  \`.menuimage\`  › [url / reply img]
+  ├◈  \`.addplugin\`  ├◈  \`.rmplugin\`
+  ├◈  \`.cgplugin\`   ├◈  \`.getplugin\`
   └◈  \`.botsettings\`
 
-╔═════════╗
-║  🛡️  *PROTECTION*
-╚═════════╝
+╔══════════════════════════════╗
+║  👻  *PRESENCE & PRIVACY*    ║
+╚══════════════════════════════╝
+  ├◈  \`.alwaysonline\`         › on/off
+  ├◈  \`.lastseen\`             › hide/show
+  ├◈  \`.idch\`      › [channel url]
+  ├◈  \`.autotyping\`  ├◈  \`.autorecording\`
+  └◈  \`.autoonline\`
+
+╔══════════════════════════════╗
+║  🛡️  *PROTECTION*            ║
+╚══════════════════════════════╝
   ├◈  \`.anticall\`          › on/off
   ├◈  \`.antilink\`          › on/off
   ├◈  \`.antidelete\`        › on/off
-  ├◈  \`.antistatusmention\` › on/off
+  ├◈  \`.antistatusmention\` › on/off/warn/kick
   └◈  \`.pmblocker\`         › on/off
 
-╔═════════╗
-║  🔄  *AUTOMATION*
-╚═════════╝
-  ├◈  \`.autoread\`       › on/off
-  ├◈  \`.chatbot\`        › on/off
-  ├◈  \`.autobio\`        › on/off
-  ├◈  \`.autotyping\`     › on/off
-  ├◈  \`.autoreact\`      › [emoji/on/off]
-  ├◈  \`.autoreplystatus\` › [msg/off]
+╔══════════════════════════════╗
+║  🔄  *AUTOMATION*            ║
+╚══════════════════════════════╝
+  ├◈  \`.autoread\`          › on/off
+  ├◈  \`.chatbot\`           › on/off
+  ├◈  \`.autobio\`           › on/off
+  ├◈  \`.autoreact\`         › [emoji/on/off]
+  ├◈  \`.autoreplystatus\`   › [msg/off]
   ├◈  \`.autoviewstatus\`
-  ├◈  \`.autolikestatus\`   › [emoji/off]
-  ├◈  \`.muslimprayer\`     › [on/off/dm/group]
-  └◈  \`.christianprayer\`  › [on/off/dm/group]
+  ├◈  \`.autolikestatus\`    › [emoji/off]
+  ├◈  \`.muslimprayer\`      › on/off/dm/group
+  └◈  \`.christianprayer\`   › on/off/dm/group
 
-╔═════════╗
-║  🤖  *AI CHATBOT MODES*
-╚═════════╝
+╔══════════════════════════════╗
+║  🤖  *AI CHATBOT MODES*      ║
+╚══════════════════════════════╝
   ├◈  \`.setaimode status\`
-  ├◈  \`.setaimode global\` › on/off
-  ├◈  \`.setaimode dm\`     › on/off
-  ├◈  \`.setaimode dm add/remove [num]\`
-  ├◈  \`.setaimode group\`  › on/off
-  ├◈  \`.setaimode group\`  › add/remove/list
+  ├◈  \`.setaimode global\`  › on/off
+  ├◈  \`.setaimode dm\`      › on/off
+  ├◈  \`.setaimode group\`   › on/off
   └◈  \`.setaimode reset\`
 
-╔═════════╗
-║  🚫  *BLOCK MANAGEMENT*
-╚═════════╝
-  ├◈  \`.block\`    › @user
-  ├◈  \`.unblock\`  › @user
-  └◈  \`.listblock\`
-`
+╔══════════════════════════════╗
+║  🚫  *BLOCK MANAGEMENT*      ║
+╚══════════════════════════════╝
+  ├◈  \`.block\`     › @user
+  ├◈  \`.unblock\`   › @user
+  └◈  \`.listblock\``
+
 module.exports = ownerMenu
