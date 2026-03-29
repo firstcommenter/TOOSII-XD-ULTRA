@@ -61,7 +61,7 @@
     <img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%">
   </p>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 🤖 What is TOOSII-XD ULTRA?
 
@@ -69,7 +69,7 @@
 
   > ⚡ Instant responses &nbsp;•&nbsp; 🛡️ Built for reliability &nbsp;•&nbsp; 🎨 Fully customizable &nbsp;•&nbsp; 🔌 Plugin-ready &nbsp;•&nbsp; 🌍 Multi-language
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## ✨ Features
 
@@ -101,7 +101,7 @@
 
   </div>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 📦 Requirements
 
@@ -110,7 +110,7 @@
   - A WhatsApp account for pairing
   - Replit, Heroku, Railway, Render, or any Linux VPS
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 🚀 Installation
 
@@ -138,7 +138,7 @@
 
   > 💡 First time? Get your session ID instantly → **[Session Generator](https://toosii-xd-session-generator-woyo.onrender.com/pair)**
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 🔑 Session Setup
 
@@ -148,7 +148,7 @@
   | **Session ID** | Visit [Session Generator](https://toosii-xd-session-generator-woyo.onrender.com/pair) → paste `SESSION_ID` in `.env` |
   | **Existing Session** | Copy `sessions/<number>/` folder to new host — auto-reconnects |
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## ☁️ Deploy to Cloud
 
@@ -195,7 +195,7 @@
 
   </details>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 📋 Command Reference
 
@@ -391,7 +391,7 @@
 
   </details>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 🌟 Show Your Support
 
@@ -404,7 +404,7 @@
 
   </div>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## 📞 Contact & Community
 
@@ -416,13 +416,13 @@
 
   </div>
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   ## ⚠️ Disclaimer
 
   This project is for **educational and personal use only**. The developer is not responsible for any misuse or WhatsApp account bans. Use responsibly and in compliance with WhatsApp's [Terms of Service](https://www.whatsapp.com/legal/terms-of-service).
 
-  ---
+<p align="center"><img src="https://i.imgur.com/dBaSKWF.gif" height="20" width="100%"></p>
 
   <div align="center">
 
