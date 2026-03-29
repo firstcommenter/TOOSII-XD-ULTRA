@@ -2831,7 +2831,7 @@ if (!viewOnceContent) {
         viewOnceContent = { type: 'videoMessage', msg: quotedMsg.msg || quotedMsg }
     }
 }
-if (!viewOnceContent) return reply('This message is not a view once message. Reply to a view once image or video.')
+if (!viewOnceContent) return reply('╔══〔 ⚠️ VIEW ONCE 〕══╗\n\n║ Reply to a view-once image or video.\n╚═══════════════════════╝')
 try {
     let stream = await downloadContentFromMessage(viewOnceContent.msg, viewOnceContent.type.replace('Message', ''))
     let buffer = Buffer.from([])
@@ -3648,7 +3648,7 @@ if (m.quoted && m.quoted.mtype === 'imageMessage') {
         let media = await X.downloadAndSaveMediaMessage(m.quoted, 'botpic')
         await X.updateProfilePicture(X.user.id, { url: media })
         fs.unlinkSync(media)
-        reply('*Bot Profile Picture Updated*')
+        reply('╔══〔 🖼️ BOT PP 〕══╗\n\n║ ✅ Profile picture updated!\n╚═══════════════════════╝')
     } catch (e) {
         reply('*Failed to update profile picture.* Make sure you reply to an image.')
     }
@@ -3684,10 +3684,10 @@ if (!acArg) {
     reply(`╔══〔 📵 ANTI CALL 〕══════╗\n║ 📊 *Status* : ${acState}\n║ Rejects & warns callers automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}anticall on\n║ ${prefix}anticall off\n╚═══════════════════════╝`)
 } else if (acArg === 'on' || acArg === 'enable') {
     global.antiCall = true
-    reply('*Anti-Call ON*\nIncoming calls will be automatically rejected.')
+    reply('╔══〔 📵 ANTI-CALL 〕══╗\n\n║ Status: ✅ ON\n║ Incoming calls will be rejected.\n╚═══════════════════════╝')
 } else if (acArg === 'off' || acArg === 'disable') {
     global.antiCall = false
-    reply('*Anti-Call OFF*')
+    reply('╔══〔 📵 ANTI-CALL 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
 break
@@ -3702,10 +3702,10 @@ if (!arArg) {
     reply(`╔══〔 👁️ AUTO READ 〕══════╗\n║ 📊 *Status* : ${arState}\n║ Marks all messages as read automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoread on\n║ ${prefix}autoread off\n╚═══════════════════════╝`)
 } else if (arArg === 'on' || arArg === 'enable') {
     global.autoRead = true
-    reply('*Auto Read ON*\nAll incoming messages will be marked as read.')
+    reply('╔══〔 📖 AUTO READ 〕══╗\n\n║ Status: ✅ ON\n║ All messages will be marked as read.\n╚═══════════════════════╝')
 } else if (arArg === 'off' || arArg === 'disable') {
     global.autoRead = false
-    reply('*Auto Read OFF*')
+    reply('╔══〔 📖 AUTO READ 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
 break
@@ -3740,10 +3740,10 @@ if (!abArg) {
     reply(`╔══〔 ✍️ AUTO BIO 〕═══════╗\n║ 📊 *Status* : ${abState}\n║ Bio updates with current time every min\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autobio on\n║ ${prefix}autobio off\n╚═══════════════════════╝`)
 } else if (abArg === 'on' || abArg === 'enable') {
     global.autoBio = true
-    reply('*Auto Bio ON*\nBot bio will update with current time periodically.')
+    reply('╔══〔 ⚙️ AUTO BIO 〕══╗\n\n║ Status: ✅ ON\n║ Bio will update with current time.\n╚═══════════════════════╝')
 } else if (abArg === 'off' || abArg === 'disable') {
     global.autoBio = false
-    reply('*Auto Bio OFF*')
+    reply('╔══〔 ⚙️ AUTO BIO 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
 break
@@ -3760,7 +3760,7 @@ if (!arsArg) {
 } else if (arsArg.toLowerCase() === 'off' || arsArg.toLowerCase() === 'disable') {
     global.autoReplyStatus = false
     global.autoReplyStatusMsg = ''
-    reply('*Auto Reply Status OFF*')
+    reply('╔══〔 🔄 AUTO REPLY STATUS 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 } else {
     global.autoReplyStatusMsg = arsArg
     global.autoReplyStatus = true
@@ -3830,7 +3830,7 @@ if (!alArg) {
     reply(`╔══〔 🔗 ANTI-LINK: ON 〕══╗\n\n║ ✅ Links will be deleted.\n║ _Bot must be admin._\n╚═══════════════════════╝`)
 } else if (alArg === 'off' || alArg === 'disable') {
     global.antiLink = false
-    reply('*Anti-Link OFF*')
+    reply('╔══〔 🔗 ANTI-LINK 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
 break
@@ -5859,7 +5859,7 @@ break;
 // Info Bot             
 case 'debugrole': {
     await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    if (!isOwner) return reply('Owner only.')
+    if (!isOwner) return reply('╔══〔 👑 OWNER ONLY 〕══╗\n\n║ This command is for owner only.\n╚═══════════════════════╝')
     let dbgMsg = `*🔍 ROLE DEBUG INFO*\n\n`
     dbgMsg += `*Bot Identity:*\n`
     dbgMsg += `• X.user.id: ${X.user?.id || 'null'}\n`
@@ -6041,8 +6041,8 @@ case 'autoreact': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let arArg = (args[0] || '').toLowerCase()
 if (!arArg) { reply(`╔══〔 ❤️ AUTO REACT 〕══════╗\n║ 📊 *Status* : ${global.autoReact ? '✅ ON' : '❌ OFF'}\n║ 🎭 *Emoji* : ${global.autoReactEmoji || '👍'}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoreact on/off\n║ ${prefix}autoreact [emoji]\n╚═══════════════════════╝`) }
-else if (arArg === 'on') { global.autoReact = true; reply('*Auto React ON*') }
-else if (arArg === 'off') { global.autoReact = false; reply('*Auto React OFF*') }
+else if (arArg === 'on') { global.autoReact = true; reply('╔══〔 😊 AUTO REACT 〕══╗\n\n║ Status: ✅ ON\n╚═══════════════════════╝') }
+else if (arArg === 'off') { global.autoReact = false; reply('╔══〔 😊 AUTO REACT 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝') }
 else { global.autoReact = true; global.autoReactEmoji = arArg; reply(`✅ *Auto React ON* : emoji: ${arArg}`) }
 } break
 
@@ -6050,8 +6050,8 @@ case 'pmblocker': {
     await X.sendMessage(m.chat, { react: { text: '🚫', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let pbArg = (args[0] || '').toLowerCase()
-if (pbArg === 'on') { global.pmBlocker = true; reply('*PM Blocker ON*\nNon-owner PMs will be auto-blocked.') }
-else if (pbArg === 'off') { global.pmBlocker = false; reply('*PM Blocker OFF*') }
+if (pbArg === 'on') { global.pmBlocker = true; reply('╔══〔 🛡️ PM BLOCKER 〕══╗\n\n║ Status: ✅ ON\n║ Non-owner PMs will be blocked.\n╚═══════════════════════╝') }
+else if (pbArg === 'off') { global.pmBlocker = false; reply('╔══〔 🛡️ PM BLOCKER 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝') }
 else reply(`╔══〔 🚫 PM BLOCKER 〕═════╗\n║ 📊 *Status* : ${global.pmBlocker ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}pmblocker on/off*\n╚═══════════════════════╝`)
 } break
 
@@ -6298,7 +6298,7 @@ let files = fs.readdirSync(sessPath).filter(f => f !== 'creds.json' && !f.includ
 let count = 0
 for (let f of files) { try { fs.unlinkSync(path.join(sessPath, f)); count++ } catch {} }
 reply(`✅ *${count} session files* cleared.`)
-} else reply('No sessions directory found.')
+} else reply('╔══〔 ⚠️ SESSION 〕══╗\n\n║ No sessions directory found.\n╚═══════════════════════╝')
 } catch(e) { reply('Error: ' + e.message) }
 } break
 
@@ -6311,7 +6311,7 @@ if (fs.existsSync(tmpPath)) {
 let files = fs.readdirSync(tmpPath)
 for (let f of files) { try { fs.unlinkSync(path.join(tmpPath, f)) } catch {} }
 reply(`✅ *${files.length} temp files* cleared.`)
-} else reply('No tmp directory found.')
+} else reply('╔══〔 ⚠️ TEMP DIR 〕══╗\n\n║ No tmp directory found.\n╚═══════════════════════╝')
 } catch(e) { reply('Error: ' + e.message) }
 } break
 
@@ -6845,7 +6845,7 @@ case 'leave': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isOwner) return reply(mess.OnlyOwner)
 try {
-reply('*Leaving group...*')
+reply('╔══〔 🚪 LEAVE GROUP 〕══╗\n\n║ Bot is leaving this group...\n╚═══════════════════════╝')
 await delay(2000)
 await X.groupLeave(m.chat)
 } catch(err) { reply('Failed to leave: ' + err.message) }
@@ -6867,7 +6867,7 @@ case 'clear': {
     await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-reply('*Chat cleared.* (Note: WhatsApp does not support remote chat clearing)')
+reply('╔══〔 🗑️ CLEAR CHAT 〕══╗\n\n║ ✅ Chat cleared.\n║ Note: WhatsApp does not support\n║ remote chat clearing.\n╚═══════════════════════╝')
 } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -7911,7 +7911,7 @@ inputText = m.quoted.text || ''
 } else {
 inputText = text
 }
-if (!inputText) return reply('No text to translate.')
+if (!inputText) return reply('╔══〔 ⚠️ TRANSLATE 〕══╗\n\n║ Please provide text to translate.\n╚═══════════════════════╝')
 let res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(inputText)}&langpair=auto|${targetLang}`)
 let data = await res.json()
 let translated = data.responseData?.translatedText || 'Translation failed.'
@@ -7972,7 +7972,7 @@ if (!text) return reply(`╔════〔 📍 LOCATION 〕════╗\n\n
 try {
 let res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1`, { headers: { 'User-Agent': 'ToosiiBot/1.0' } })
 let data = await res.json()
-if (!data.length) return reply('Location not found.')
+if (!data.length) return reply('╔══〔 ⚠️ WEATHER 〕══╗\n\n║ Location not found.\n║ Try a different city name.\n╚═══════════════════════╝')
 let loc = data[0]
 await X.sendMessage(m.chat, { location: { degreesLatitude: parseFloat(loc.lat), degreesLongitude: parseFloat(loc.lon) }, caption: loc.display_name }, { quoted: m })
 } catch(e) { reply('Error: ' + e.message) }
@@ -8260,10 +8260,10 @@ case 'ttt': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 let tttUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : null
 if (!tttUser) return reply(`╔═══〔 ❎ TIC TAC TOE 〕═══╗\n\n║ Usage: *${prefix}ttt @opponent*\n║ Mention the user you want to play against\n╚═══════════════════════╝`)
-if (tttUser === sender) return reply('You cannot play against yourself!')
+if (tttUser === sender) return reply('╔══〔 ⚠️ GAME 〕══╗\n\n║ You cannot play against yourself!\n╚═══════════════════════╝')
 if (!global.tttGames) global.tttGames = {}
 let gameId = m.chat
-if (global.tttGames[gameId]) return reply('A game is already in progress in this chat. Use .tttend to end it.')
+if (global.tttGames[gameId]) return reply('╔══〔 ⚠️ TIC-TAC-TOE 〕══╗\n\n║ A game is already in progress.\n║ Use .tttend to end it.\n╚═══════════════════════╝')
 global.tttGames[gameId] = { board: [' ',' ',' ',' ',' ',' ',' ',' ',' '], players: { X: sender, O: tttUser }, turn: 'X' }
 let boardDisplay = (b) => `\n ${b[0]} | ${b[1]} | ${b[2]}\n---+---+---\n ${b[3]} | ${b[4]} | ${b[5]}\n---+---+---\n ${b[6]} | ${b[7]} | ${b[8]}\n`
 X.sendMessage(from, { text: `*Tic Tac Toe*\n\n@${sender.split('@')[0]} (X) vs @${tttUser.split('@')[0]} (O)\n\n${boardDisplay(global.tttGames[gameId].board)}\n\n@${sender.split('@')[0]}'s turn (X)\nReply with a number (1-9) to place your mark.`, mentions: [sender, tttUser] }, { quoted: m })
@@ -8271,9 +8271,9 @@ X.sendMessage(from, { text: `*Tic Tac Toe*\n\n@${sender.split('@')[0]} (X) vs @$
 
 case 'tttend': {
     await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
-if (!global.tttGames || !global.tttGames[m.chat]) return reply('No game in progress.')
+if (!global.tttGames || !global.tttGames[m.chat]) return reply('╔══〔 ⚠️ GAME 〕══╗\n\n║ No game in progress.\n╚═══════════════════════╝')
 delete global.tttGames[m.chat]
-reply('*Game ended.*')
+reply('╔══〔 🎮 GAME 〕══╗\n\n║ Game ended.\n╚═══════════════════════╝')
 } break
 
 case 'connect4':
@@ -8285,7 +8285,7 @@ reply(`╔═══〔 🔴 CONNECT 4 〕════╗\n\n║ 🔴🟡🔴🟡
 case 'hangman': {
     await X.sendMessage(m.chat, { react: { text: '🎯', key: m.key } })
 if (!global.hangmanGames) global.hangmanGames = {}
-if (global.hangmanGames[m.chat]) return reply('A hangman game is already in progress! Use .hangmanend to end it.')
+if (global.hangmanGames[m.chat]) return reply('╔══〔 ⚠️ HANGMAN 〕══╗\n\n║ A game is already in progress.\n║ Use .hangmanend to end it.\n╚═══════════════════════╝')
 let words = ['javascript', 'python', 'programming', 'computer', 'algorithm', 'database', 'internet', 'software', 'hardware', 'keyboard', 'function', 'variable', 'boolean', 'whatsapp', 'telegram', 'android', 'network', 'security', 'elephant', 'universe']
 let word = words[Math.floor(Math.random() * words.length)]
 global.hangmanGames[m.chat] = { word, guessed: [], lives: 6, players: [sender] }
@@ -8295,7 +8295,7 @@ reply(`╔════〔 🪢 HANGMAN 〕═════╗\n\n║ ${display}\n
 
 case 'hangmanend': {
     await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
-if (!global.hangmanGames || !global.hangmanGames[m.chat]) return reply('No hangman game in progress.')
+if (!global.hangmanGames || !global.hangmanGames[m.chat]) return reply('╔══〔 ⚠️ HANGMAN 〕══╗\n\n║ No hangman game in progress.\n╚═══════════════════════╝')
 reply(`╔═══〔 🏁 GAME ENDED 〕═══╗\n\n║ 🔡 *Word* : *${global.hangmanGames[m.chat].word}*\n╚═══════════════════════╝`)
 delete global.hangmanGames[m.chat]
 } break
@@ -8348,7 +8348,7 @@ if (global.tebakGame && global.tebakGame[m.chat]) {
   } else return reply(`❌ *Wrong!* Try again.`)
 }
 // Handle trivia
-if (!global.triviaGames || !global.triviaGames[m.chat]) return reply('No active game. Use .trivia or .tebak to start.')
+if (!global.triviaGames || !global.triviaGames[m.chat]) return reply('╔══〔 ⚠️ TRIVIA 〕══╗\n\n║ No active game.\n║ Use .trivia or .tebak to start.\n╚═══════════════════════╝')
 if (userAnswer === global.triviaGames[m.chat].answer || userAnswer === global.triviaGames[m.chat].answer.charAt(0)) {
 clearTimeout(global.triviaGames[m.chat].timeout)
 delete global.triviaGames[m.chat]
