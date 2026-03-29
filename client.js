@@ -6329,7 +6329,7 @@ case 'quranverse': {
 
         if (!englishText && !arabicText) return reply(`❌ Could not find an ayah for: _${text}_`)
 
-        let msg = `╔═══〔 📿 QURAN AYAH 〕═══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔═══〔 📿 QURAN AYAH 〕═══╗`
         if (arabicText) msg += `  *${arabicText}*\n\n`
         if (englishText) msg += `  _❝ ${englishText} ❞_\n\n`
         msg += `║ 📌 *${reference}*\n`
@@ -6364,6 +6364,7 @@ case 'surahsearch': {
         if (_srs.revelationType) msg += `🏙️ *Revealed in:* ${_srs.revelationType}\n`
         const _sray = Array.isArray(_srs.ayahs) ? _srs.ayahs.slice(0, 3) : []
         if (_sray.length) { msg += `\n*🔉 First Ayahs:*\n`; for (let a of _sray) { msg += `\n🔹 [${a.numberInSurah}] ${a.text || ''}\n`; if (a.translation) msg += `   _${a.translation}_\n` } }
+        msg += `\n╚═══════════════════════╝`
         msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply(`❌ Could not find Surah *${_srq}*. Try a number (1-114) or use .surahlist to see all.`) }
@@ -11129,7 +11130,7 @@ case 'footballscore': {
         const _lsData = await _getLiveScores()
         if (!_lsData || !_lsData.matches?.length) return reply('⚽ No live matches right now. Try again during match time.')
         let matches = _lsData.matches
-        let msg = `╔══〔 ⚽ LIVE FOOTBALL SCORES (${matches.length} matches) 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 ⚽ LIVE FOOTBALL SCORES (${matches.length} matches) 〕══╗`
         let currentLeague = ''
         for (let _lm of matches) {
             if (_lm.league !== currentLeague) {
@@ -11141,6 +11142,7 @@ case 'footballscore': {
             if (_lm.status && _lm.status !== 'Unknown') msg += ` _( ${_lm.status})_`
             msg += '\n'
         }
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch live scores. Try again later.') }
 } break
@@ -11157,7 +11159,7 @@ case 'tips': {
         await reply('🔮 _Fetching today\'s football predictions..._')
         let preds = await _getPredictions()
         if (!preds?.length) return reply('🔮 No predictions available right now. Try again later.')
-        let msg = `╔══〔 🔮 FOOTBALL PREDICTIONS (${preds.length}) 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 🔮 FOOTBALL PREDICTIONS (${preds.length}) 〕══╗`
         for (let p of preds) {
             msg += `\n🏆 *${p.league || 'Unknown League'}*\n`
             msg += `  ⚽ ${p.match}\n`
@@ -11173,7 +11175,7 @@ case 'tips': {
                 msg += `  🎯 BTTS: ${p.predictions.bothTeamToScore.yes?.toFixed(0)}%\n`
             }
         }
-        msg += `\n\n⚠️ _Predictions are for entertainment only. Bet responsibly._`
+        msg += `\n╚═══════════════════════╝\n\n⚠️ _Predictions are for entertainment only. Bet responsibly._`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch predictions. Try again later.') }
 } break
@@ -11189,7 +11191,7 @@ case 'sportnews': {
         await reply('📰 _Fetching latest football news..._')
         let articles = await _getFootballNews()
         if (!articles?.length) return reply('📰 No football news available right now. Try again later.')
-        let msg = `╔══〔 📰 FOOTBALL NEWS 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 📰 FOOTBALL NEWS 〕══╗`
         for (let a of articles) {
             msg += `\n📌 *${a.title}*\n`
             if (a.summary) msg += `  _${a.summary}_\n`
@@ -11210,7 +11212,7 @@ case 'premierleague': {
         await reply('🏆 _Fetching EPL standings..._')
         let teams = await _getStandings('epl', 'epl')
         if (!teams?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 🏆 EPL STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 🏆 EPL STANDINGS ${new Date().getFullYear()} 〕══╗`
         msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
         msg += `${'─'.repeat(50)}\n`
         for (let t of teams) {
@@ -11235,7 +11237,7 @@ case 'epltopscorers': {
         await reply('⚽ _Fetching EPL top scorers..._')
         let scorers = await _getScorers('epl', 'epl')
         if (!scorers?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 ⚽ EPL TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 ⚽ EPL TOP SCORERS 〕══╗`
         for (let s of scorers) {
             let rank = s.rank || s.position || ''
             msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
@@ -11244,6 +11246,8 @@ case 'epltopscorers': {
             if (s.played) msg += `  📅 Played: ${s.played}`
             msg += '\n'
         }
+        msg += `\n╚═══════════════════════╝`
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch EPL top scorers. Try again later.') }
 } break
@@ -11256,12 +11260,13 @@ case 'eplupcoming': {
         await reply('📅 _Fetching upcoming EPL matches..._')
         let matches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_giftedKey()}`)
         if (!matches?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 📅 EPL UPCOMING FIXTURES 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 📅 EPL UPCOMING FIXTURES 〕══╗`
         for (let _fm of matches) {
             msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
             msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
             if (_fm.venue || _fm.stadium) msg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
         }
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch EPL fixtures. Try again later.') }
 } break
@@ -11276,7 +11281,7 @@ case 'laligastandings': {
         await reply('🏆 _Fetching La Liga standings..._')
         let teams = await _getStandings('laliga', 'laliga')
         if (!teams?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 🏆 LA LIGA STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 🏆 LA LIGA STANDINGS ${new Date().getFullYear()} 〕══╗`
         msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
         msg += `${'─'.repeat(50)}\n`
         for (let t of teams) {
@@ -11301,7 +11306,7 @@ case 'laligatopscorers': {
         await reply('⚽ _Fetching La Liga top scorers..._')
         let scorers = await _getScorers('laliga', 'laliga')
         if (!scorers?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 ⚽ LA LIGA TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 ⚽ LA LIGA TOP SCORERS 〕══╗`
         for (let s of scorers) {
             let rank = s.rank || s.position || ''
             msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
@@ -11310,6 +11315,8 @@ case 'laligatopscorers': {
             if (s.played) msg += `  📅 Played: ${s.played}`
             msg += '\n'
         }
+        msg += `\n╚═══════════════════════╝`
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch La Liga top scorers. Try again later.') }
 } break
@@ -11322,13 +11329,14 @@ case 'laligaupcoming': {
         await reply('📅 _Fetching La Liga matches..._')
         let matches = await _getFixtures('laliga', `https://api.giftedtech.co.ke/api/football/laliga/upcoming?apikey=${_giftedKey()}`)
         if (!matches?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 📅 LA LIGA FIXTURES 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 📅 LA LIGA FIXTURES 〕══╗`
         for (let _fm of matches) {
             msg += `\n📆 *${_fm.date || ''}* ${_fm.time ? '⏰ ' + _fm.time : ''}\n`
             msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
             if (_fm.venue || _fm.stadium) msg += `  🏟️ ${_fm.venue || _fm.stadium}\n`
             if (_fm.status && _fm.status !== 'Unknown') msg += `  ℹ️ Status: ${_fm.status}\n`
         }
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch La Liga fixtures. Try again later.') }
 } break
@@ -11344,7 +11352,7 @@ case 'laligaupcoming': {
         await reply('🏆 _Fetching UCL standings..._')
         let teams = await _getStandings('ucl', 'ucl')
         if (!teams?.length) throw new Error('No data from any source')
-          let msg = `╔══〔 🏆 UCL STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+          let msg = `╔══〔 🏆 UCL STANDINGS ${new Date().getFullYear()} 〕══╗`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
           for (let t of teams) {
@@ -11372,7 +11380,7 @@ case 'laligaupcoming': {
         await reply('🏆 _Fetching Bundesliga standings..._')
         let teams = await _getStandings('bundesliga', 'bundesliga')
         if (!teams?.length) throw new Error('No data from any source')
-          let msg = `╔══〔 🏆 BUNDESLIGA STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+          let msg = `╔══〔 🏆 BUNDESLIGA STANDINGS ${new Date().getFullYear()} 〕══╗`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
           for (let t of teams) {
@@ -11397,7 +11405,7 @@ case 'laligaupcoming': {
         await reply('⚽ _Fetching Bundesliga top scorers..._')
         let scorers = await _getScorers('bundesliga', 'bundesliga')
         if (!scorers?.length) throw new Error('No data from any source')
-          let msg = `╔══〔 ⚽ BUNDESLIGA TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+          let msg = `╔══〔 ⚽ BUNDESLIGA TOP SCORERS 〕══╗`
           for (let s of scorers) {
               let rank = s.rank || s.position || ''
               msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
@@ -11407,6 +11415,9 @@ case 'laligaupcoming': {
               if (s.played) msg += `  📅 Played: ${s.played}`
               msg += '\n'
           }
+          msg += `\n╚═══════════════════════╝`
+          msg += `\n╚═══════════════════════╝`
+          msg += `\n╚═══════════════════════╝`
           await reply(msg)
       } catch(e) { reply('❌ Could not fetch Bundesliga top scorers. Try again later.') }
   } break
@@ -11421,7 +11432,7 @@ case 'laligaupcoming': {
         await reply('🏆 _Fetching Serie A standings..._')
         let teams = await _getStandings('seriea', 'seriea')
         if (!teams?.length) throw new Error('No data from any source')
-          let msg = `╔══〔 🏆 SERIE A STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+          let msg = `╔══〔 🏆 SERIE A STANDINGS ${new Date().getFullYear()} 〕══╗`
           msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
           msg += `${'─'.repeat(50)}\n`
           for (let t of teams) {
@@ -11449,7 +11460,7 @@ case 'laligaupcoming': {
         await reply('⚽ _Fetching Serie A top scorers..._')
         let scorers = await _getScorers('seriea', 'seriea')
         if (!scorers?.length) throw new Error('No data from any source')
-          let msg = `╔══〔 ⚽ SERIE A TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+          let msg = `╔══〔 ⚽ SERIE A TOP SCORERS 〕══╗`
           for (let s of scorers) {
               msg += `${s.rank}. *${s.player}* (${s.team})\n`
               msg += `   🥅 Goals: *${s.goals}*`
@@ -11457,6 +11468,8 @@ case 'laligaupcoming': {
               if (s.penalties && s.penalties !== 'N/A') msg += `  🎽 Pens: ${s.penalties}`
               msg += '\n'
           }
+          msg += `\n╚═══════════════════════╝`
+          msg += `\n╚═══════════════════════╝`
           await reply(msg)
       } catch(e) { reply('❌ Could not fetch Serie A top scorers. Try again later.') }
   } break
@@ -11472,7 +11485,7 @@ case 'laligaupcoming': {
             await reply('🏆 _Fetching Ligue 1 standings..._')
             let teams = await _getStandings('ligue1', 'ligue1')
             if (!teams?.length) throw new Error('No data')
-            let msg = `╔══〔 🏆 LIGUE 1 STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 🏆 LIGUE 1 STANDINGS ${new Date().getFullYear()} 〕══╗`
             msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
             msg += `${'─'.repeat(50)}\n`
             for (let t of teams) {
@@ -11492,7 +11505,7 @@ case 'laligaupcoming': {
             await reply('⚽ _Fetching Ligue 1 top scorers..._')
             let scorers = await _getScorers('ligue1', 'ligue1')
             if (!scorers?.length) throw new Error('No data')
-            let msg = `╔══〔 ⚽ LIGUE 1 TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 ⚽ LIGUE 1 TOP SCORERS 〕══╗`
             for (let s of scorers) {
                 let rank = s.rank || s.position || ''
                 msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
@@ -11501,6 +11514,8 @@ case 'laligaupcoming': {
                 if (s.penalties && s.penalties !== 'N/A') msg += `  🎽 Pens: ${s.penalties}`
                 msg += '\n'
             }
+            msg += `\n╚═══════════════════════╝`
+            msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch Ligue 1 top scorers. Try again later.') }
     } break
@@ -11512,13 +11527,14 @@ case 'laligaupcoming': {
             await reply('📅 _Fetching Ligue 1 matches..._')
             let matches = await _getFixtures('ligue1', `https://api.giftedtech.co.ke/api/football/ligue1/upcoming?apikey=${_giftedKey()}`)
             if (!matches?.length) throw new Error('No data')
-            let msg = `╔══〔 📅 LIGUE 1 FIXTURES 〕══╗\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 📅 LIGUE 1 FIXTURES 〕══╗`
             for (let _fm of matches) {
                 msg += `\n📆 *${_fm.date||_fm.matchday||''}*\n`
                 msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*`
                 if (_fm.status && _fm.status !== '') msg += ` [${_fm.status}]`
                 msg += '\n'
             }
+            msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch Ligue 1 fixtures. Try again later.') }
     } break
@@ -11534,7 +11550,7 @@ case 'laligaupcoming': {
             await reply('🏆 _Fetching Euros standings..._')
             let teams = await _getStandings('euros', 'euros')
             if (!teams?.length) throw new Error('No data')
-            let msg = `╔══〔 🏆 UEFA EUROS STANDINGS 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 🏆 UEFA EUROS STANDINGS 〕══╗`
             msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
             msg += `${'─'.repeat(50)}\n`
             for (let t of teams) {
@@ -11554,7 +11570,7 @@ case 'laligaupcoming': {
             await reply('⚽ _Fetching Euros top scorers..._')
             let scorers = await _getScorers('euros', 'euros')
             if (!scorers?.length) throw new Error('No data')
-            let msg = `╔══〔 ⚽ EUROS TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 ⚽ EUROS TOP SCORERS 〕══╗`
             for (let s of scorers) {
                 let rank = s.rank || s.position || ''
                 msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
@@ -11562,6 +11578,8 @@ case 'laligaupcoming': {
                 if (s.assists) msg += `  🎯 Assists: ${s.assists}`
                 msg += '\n'
             }
+            msg += `\n╚═══════════════════════╝`
+            msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch Euros top scorers. Try again later.') }
     } break
@@ -11577,7 +11595,7 @@ case 'laligaupcoming': {
             await reply('🌍 _Fetching FIFA standings..._')
             let teams = await _getStandings('fifa', 'fifa')
             if (!teams?.length) throw new Error('No data')
-            let msg = `╔══〔 🌍 FIFA STANDINGS 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 🌍 FIFA STANDINGS 〕══╗`
             msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
             msg += `${'─'.repeat(50)}\n`
             for (let t of teams) {
@@ -11598,7 +11616,7 @@ case 'laligaupcoming': {
             await reply('⚽ _Fetching FIFA top scorers..._')
             let scorers = await _getScorers('fifa', 'fifa')
             if (!scorers?.length) throw new Error('No data')
-            let msg = `╔══〔 ⚽ FIFA TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            let msg = `╔══〔 ⚽ FIFA TOP SCORERS 〕══╗`
             for (let s of scorers) {
                 let rank = s.rank || s.position || ''
                 msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
@@ -11606,6 +11624,8 @@ case 'laligaupcoming': {
                 if (s.assists) msg += `  🎯 Assists: ${s.assists}`
                 msg += '\n'
             }
+            msg += `\n╚═══════════════════════╝`
+            msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch FIFA top scorers. Try again later.') }
     } break
