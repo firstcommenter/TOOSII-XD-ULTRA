@@ -5557,6 +5557,7 @@ break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Ai Features
+case 'quantum':
 case 'quantum-ai':{
   if (!text) return reply(`╔══〔 ⚛️ QUANTUM AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -5581,6 +5582,7 @@ case 'chatai':{
   }
 }
 break;
+case 'veniceai':
 case 'conciseai':{
   if (!text) return reply(`╔══〔 📌 CONCISE AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -5631,6 +5633,7 @@ case 'venice': case 'veniceai':{
   }
 }
 break
+case 'logic':
 case 'logic-eai':{
   if (!text) return reply(`╔══〔 🧠 LOGIC-E AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -5694,6 +5697,7 @@ case 'eliteai': {
 }
 break
 
+case 'gpt41':
 case 'gpt41-mini':{
   if (!text) return reply(`╔══〔 ⚡ GPT 4.1 MINI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -5812,6 +5816,7 @@ case 'aoyoai':{
 }
 break
 
+case 'blackbox':
 case 'blackbox-pro':{
   if (!text) return reply(`╔══〔 ⬛ BLACKBOX PRO 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -5878,6 +5883,7 @@ case 'feloai':{
 }
 break
 
+case 'chatevery':
 case 'chatevery-where':{
   if (!text) return reply(`╔══〔 🌐 CHAT EVERYWHERE 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -6307,6 +6313,7 @@ case 'surahlist': {
 
 
 
+case 'llama':
 case 'llama-ai':{
   if (!text) return reply(`╔══〔 🦙 LLAMA AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -6387,6 +6394,7 @@ case 'gemini-ai':{
 }
 break
 
+case 'lumin':
 case 'lumin-ai':{
   if (!text) return reply(`╔══〔 💡 LUMIN AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -6400,6 +6408,7 @@ case 'lumin-ai':{
 }
 break
 
+case 'typli':
 case 'typli-ai':{
   if (!text) return reply(`╔══〔 ✍️ TYPLI AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -6413,6 +6422,7 @@ case 'typli-ai':{
 }
 break;
 
+case 'poly':
 case 'poly-ai':{
   if (!text) return reply(`╔══〔 🔷 POLY AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
@@ -11759,6 +11769,7 @@ case 'sportsstream': {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // ─── AI aliases ─────────────────────────────────────────────────────
+case 'gpt':
 case 'gpt4': {
     await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
     if (!text) return reply(`╔═════〔 🤖 GPT-4 〕══════╗\n\n║ Usage: *${prefix}gpt4 [message]*\n║ Example: ${prefix}gpt4 Hello, how are you?\n╚═══════════════════════╝`)
