@@ -9747,7 +9747,7 @@ case 'stylish': {
           const _asr = Array.isArray(_asd) ? _asd : (_asd?.arts || _asd?.result?.arts || (_asd?.art ? [_asd.art] : null))
           if (!Array.isArray(_asr) || !_asr.length) throw new Error('No art')
           const _asArt = _asr[Math.floor(Math.random() * Math.min(_asr.length, 3))]
-          await reply(`🎨 *ASCII: ${_asq.toUpperCase()}*\n```\n${_asArt}\n````)
+          await reply(`🎨 *ASCII: ${_asq.toUpperCase()}*\n\`\`\`\n${_asArt}\n\`\`\``)
       } catch(e) { reply('❌ ASCII art generation failed. Try another word.') }
   } break
 
