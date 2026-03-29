@@ -11446,19 +11446,37 @@ case 'setgpic': {
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // IMAGE EFFECT COMMANDS (jimp)
 
+// Retry download helper for image filters (handles socket hang up)
+const _dlWithRetry = async (quotedMsg, tries = 3) => {
+  let lastErr
+  for (let i = 0; i < tries; i++) {
+    try {
+      const buf = await Promise.race([
+        quotedMsg.download(),
+        new Promise((_,rej) => setTimeout(() => rej(new Error('Download timeout')), 20000))
+      ])
+      if (!buf || buf.length < 100) throw new Error('Empty buffer')
+      return buf
+    } catch (e) {
+      lastErr = e
+      if (i < tries - 1) await new Promise(r => setTimeout(r, 1200 * (i + 1)))
+    }
+  }
+  throw lastErr
+}
 case 'blur': {
   await X.sendMessage(m.chat, { react: { text: '🌫️', key: m.key } })
   const _blurMime = (m.quoted && (m.quoted.msg || m.quoted).mimetype) || ''
   if (!m.quoted || !/image/.test(_blurMime)) return reply(`╔══〔 🌫️ BLUR EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}blur*\n╚═══════════════════════╝`)
   try {
     await reply('🌫️ _Applying blur effect..._')
-    let buf = await m.quoted.download()
+    let buf = await _dlWithRetry(m.quoted)
     let Jimp = require('jimp')
     let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.blur(10)
     let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
     await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🌫️ BLUR EFFECT 〕══╗\n\n║ ✅ Blur applied!\n╚═══════════════════════╝` }, { quoted: m })
-  } catch (e) { reply('❌ Blur failed: ' + e.message) }
+  } catch (e) { reply('╔══〔 ❌ BLUR FAILED 〕══╗\n\n║ ' + (e.message.includes('hang') || e.message.includes('timeout') || e.message.includes('closed') ? 'Media download failed — please resend\n║ the image and try again.' : e.message.slice(0,120)) + '\n╚═══════════════════════╝') }
 } break
 
 case 'sharpen': {
@@ -11467,13 +11485,13 @@ case 'sharpen': {
   if (!m.quoted || !/image/.test(_sharpMime)) return reply(`╔══〔 🔪 SHARPEN EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}sharpen*\n╚═══════════════════════╝`)
   try {
     await reply('🔪 _Sharpening image..._')
-    let buf = await m.quoted.download()
+    let buf = await _dlWithRetry(m.quoted)
     let Jimp = require('jimp')
     let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.convolute([[0,-1,0],[-1,5,-1],[0,-1,0]])
     let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
     await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🔪 SHARPEN EFFECT 〕══╗\n\n║ ✅ Image sharpened!\n╚═══════════════════════╝` }, { quoted: m })
-  } catch (e) { reply('❌ Sharpen failed: ' + e.message) }
+  } catch (e) { reply('╔══〔 ❌ SHARPEN FAILED 〕══╗\n\n║ ' + (e.message.includes('hang') || e.message.includes('timeout') || e.message.includes('closed') ? 'Media download failed — please resend\n║ the image and try again.' : e.message.slice(0,120)) + '\n╚═══════════════════════╝') }
 } break
 
 case 'greyscale':
@@ -11483,13 +11501,13 @@ case 'grayscale': {
   if (!m.quoted || !/image/.test(_greyMime)) return reply(`╔══〔 ⬛ GREYSCALE 〕══╗\n\n║ Reply to an image with *${prefix}greyscale*\n╚═══════════════════════╝`)
   try {
     await reply('⬛ _Converting to greyscale..._')
-    let buf = await m.quoted.download()
+    let buf = await _dlWithRetry(m.quoted)
     let Jimp = require('jimp')
     let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.greyscale()
     let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
     await X.sendMessage(m.chat, { image: out, caption: `╔══〔 ⬛ GREYSCALE 〕══╗\n\n║ ✅ Greyscale applied!\n╚═══════════════════════╝` }, { quoted: m })
-  } catch (e) { reply('❌ Greyscale failed: ' + e.message) }
+  } catch (e) { reply('╔══〔 ❌ GREYSCALE FAILED 〕══╗\n\n║ ' + (e.message.includes('hang') || e.message.includes('timeout') || e.message.includes('closed') ? 'Media download failed — please resend\n║ the image and try again.' : e.message.slice(0,120)) + '\n╚═══════════════════════╝') }
 } break
 
 case 'sepia': {
@@ -11498,13 +11516,13 @@ case 'sepia': {
   if (!m.quoted || !/image/.test(_sepiaMime)) return reply(`╔══〔 🟫 SEPIA EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}sepia*\n╚═══════════════════════╝`)
   try {
     await reply('🟫 _Applying sepia tone..._')
-    let buf = await m.quoted.download()
+    let buf = await _dlWithRetry(m.quoted)
     let Jimp = require('jimp')
     let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.sepia()
     let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
     await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🟫 SEPIA EFFECT 〕══╗\n\n║ ✅ Sepia applied!\n╚═══════════════════════╝` }, { quoted: m })
-  } catch (e) { reply('❌ Sepia failed: ' + e.message) }
+  } catch (e) { reply('╔══〔 ❌ SEPIA FAILED 〕══╗\n\n║ ' + (e.message.includes('hang') || e.message.includes('timeout') || e.message.includes('closed') ? 'Media download failed — please resend\n║ the image and try again.' : e.message.slice(0,120)) + '\n╚═══════════════════════╝') }
 } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
