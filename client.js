@@ -6345,6 +6345,7 @@ case 'quranverse': {
         msg += `║ 📚 *Translator* : ${isRef ? 'Muhammad Asad' : surahName}\n\n`
         msg += `_⚡ TOOSII-XD ULTRA_`
 
+        msg += `\n╚═══════════════════════╝`
         reply(msg)
 
     } catch(e) {
@@ -6373,7 +6374,6 @@ case 'surahsearch': {
         if (_srs.revelationType) msg += `🏙️ *Revealed in:* ${_srs.revelationType}\n`
         const _sray = Array.isArray(_srs.ayahs) ? _srs.ayahs.slice(0, 3) : []
         if (_sray.length) { msg += `\n*🔉 First Ayahs:*\n`; for (let a of _sray) { msg += `\n🔹 [${a.numberInSurah}] ${a.text || ''}\n`; if (a.translation) msg += `   _${a.translation}_\n` } }
-        msg += `\n╚═══════════════════════╝`
         msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply(`❌ Could not find Surah *${_srq}*. Try a number (1-114) or use .surahlist to see all.`) }
@@ -11206,6 +11206,7 @@ case 'sportnews': {
             if (a.summary) msg += `  _${a.summary}_\n`
             if (a.link || a.url) msg += `  🔗 ${a.link || a.url}\n`
         }
+        msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch football news. Try again later.') }
 } break
@@ -11255,7 +11256,6 @@ case 'epltopscorers': {
             if (s.played) msg += `  📅 Played: ${s.played}`
             msg += '\n'
         }
-        msg += `\n╚═══════════════════════╝`
         msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch EPL top scorers. Try again later.') }
@@ -11324,7 +11324,6 @@ case 'laligatopscorers': {
             if (s.played) msg += `  📅 Played: ${s.played}`
             msg += '\n'
         }
-        msg += `\n╚═══════════════════════╝`
         msg += `\n╚═══════════════════════╝`
         await reply(msg)
     } catch(e) { reply('❌ Could not fetch La Liga top scorers. Try again later.') }
@@ -11425,8 +11424,6 @@ case 'laligaupcoming': {
               msg += '\n'
           }
           msg += `\n╚═══════════════════════╝`
-          msg += `\n╚═══════════════════════╝`
-          msg += `\n╚═══════════════════════╝`
           await reply(msg)
       } catch(e) { reply('❌ Could not fetch Bundesliga top scorers. Try again later.') }
   } break
@@ -11478,7 +11475,6 @@ case 'laligaupcoming': {
               msg += '\n'
           }
           msg += `\n╚═══════════════════════╝`
-          msg += `\n╚═══════════════════════╝`
           await reply(msg)
       } catch(e) { reply('❌ Could not fetch Serie A top scorers. Try again later.') }
   } break
@@ -11523,7 +11519,6 @@ case 'laligaupcoming': {
                 if (s.penalties && s.penalties !== 'N/A') msg += `  🎽 Pens: ${s.penalties}`
                 msg += '\n'
             }
-            msg += `\n╚═══════════════════════╝`
             msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch Ligue 1 top scorers. Try again later.') }
@@ -11588,7 +11583,6 @@ case 'laligaupcoming': {
                 msg += '\n'
             }
             msg += `\n╚═══════════════════════╝`
-            msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch Euros top scorers. Try again later.') }
     } break
@@ -11633,7 +11627,6 @@ case 'laligaupcoming': {
                 if (s.assists) msg += `  🎯 Assists: ${s.assists}`
                 msg += '\n'
             }
-            msg += `\n╚═══════════════════════╝`
             msg += `\n╚═══════════════════════╝`
             await reply(msg)
         } catch(e) { reply('❌ Could not fetch FIFA top scorers. Try again later.') }
