@@ -3381,12 +3381,35 @@ if (!q) return reply(`╔═══〔 🔗 JOIN GROUP 〕═══╗\n\n║ Usa
 let linkMatch = q.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{10,})/)
 if (!linkMatch) return reply(`╔══〔 ❌ INVALID LINK 〕═══╗\n\n║ That doesn't look like a valid WhatsApp\n║ group invite link.\n║\n║ ✅ Format: *https://chat.whatsapp.com/XXX*\n╚═══════════════════════╝`)
 try {
-    await reply('🔗 _Joining group, please wait..._')
+    await reply('🔗 _Checking group info..._')
+
+    // Step 1: fetch group metadata from the invite link
+    let _grpInfo = null
+    try { _grpInfo = await X.groupGetInviteInfo(linkMatch[1]) } catch (_gi) { console.log('[join] getInviteInfo:', _gi.message) }
+
+    const _grpName    = _grpInfo?.subject || 'Unknown Group'
+    const _grpSize    = _grpInfo?.size    || '?'
+    const _needsApproval = _grpInfo?.joinApprovalMode === 'on' || _grpInfo?.joinApprovalMode === true
+
+    if (_needsApproval) {
+        await reply(`╔══〔 ⏳ APPROVAL REQUIRED 〕══╗\n\n║ 👥 *Group* : ${_grpName}\n║ 👤 *Members* : ${_grpSize}\n║\n║ This group requires admin approval.\n║ Sending join request now...\n╚═══════════════════════╝`)
+    }
+
+    // Step 2: attempt to join (or submit join request)
     let joinResult = await X.groupAcceptInvite(linkMatch[1])
-    reply(`╔══〔 ✅ GROUP JOINED 〕═══╗\n\n║ 🎉 Bot successfully joined the group!\n║ 🆔 *Group ID*: ${joinResult}\n╚═══════════════════════╝`)
+
+    if (_needsApproval) {
+        reply(`╔══〔 📨 REQUEST SENT 〕════╗\n\n║ 🛎️ Join request sent to admins of\n║ *${_grpName}*.\n║\n║ The bot will join once an admin\n║ approves the request.\n╚═══════════════════════╝`)
+    } else {
+        reply(`╔══〔 ✅ GROUP JOINED 〕═══╗\n\n║ 🎉 Bot successfully joined!\n║ 👥 *Group* : ${_grpName}\n║ 👤 *Members* : ${_grpSize}\n║ 🆔 *ID* : ${joinResult}\n╚═══════════════════════╝`)
+    }
+
 } catch (e) {
     let errMsg = (e.message || '').toLowerCase()
-    if (errMsg.includes('conflict') || errMsg.includes('already')) {
+    // Baileys throws this when the request was submitted but approval is pending
+    if (errMsg.includes('membership') || errMsg.includes('approval') || errMsg.includes('pending')) {
+        reply(`╔══〔 📨 REQUEST SENT 〕════╗\n\n║ 🛎️ This group requires admin approval.\n║\n║ Join request has been submitted.\n║ The bot will be added once an admin\n║ approves it.\n╚═══════════════════════╝`)
+    } else if (errMsg.includes('conflict') || errMsg.includes('already')) {
         reply(`╔══〔 ⚠️ ALREADY JOINED 〕══╗\n\n║ The bot is already a member\n║ of that group.\n╚═══════════════════════╝`)
     } else if (errMsg.includes('gone') || errMsg.includes('not-authorized') || errMsg.includes('expired')) {
         reply(`╔══〔 ❌ LINK EXPIRED 〕════╗\n\n║ This invite link is invalid or has\n║ been revoked. Ask for a new one.\n╚═══════════════════════╝`)
