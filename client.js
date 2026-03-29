@@ -1797,14 +1797,15 @@ try {
     let data = await fg.tiktok(text)
     if (!data || !data.result) return reply('Failed to download. The link may be invalid.')
     let json = data.result
-    let caption = `[ TIKTOK DOWNLOAD ]\n\n`
-    caption += `*Username* : ${json.author?.nickname || 'Unknown'}\n`
-    caption += `*Title* : ${json.title || '-'}\n`
-    caption += `*Likes* : ${json.digg_count || 0}\n`
-    caption += `*Comments* : ${json.comment_count || 0}\n`
-    caption += `*Shares* : ${json.share_count || 0}\n`
-    caption += `*Plays* : ${json.play_count || 0}\n`
-    caption += `*Duration* : ${json.duration || '-'}`
+    let caption = `╔══〔 🎵 TIKTOK DOWNLOAD 〕══╗\n`
+    caption += `║ 👤 *Username* : ${json.author?.nickname || 'Unknown'}\n`
+    caption += `║ 📝 *Title* : ${json.title || '-'}\n`
+    caption += `║ ❤️  *Likes* : ${json.digg_count || 0}\n`
+    caption += `║ 💬 *Comments* : ${json.comment_count || 0}\n`
+    caption += `║ 🔁 *Shares* : ${json.share_count || 0}\n`
+    caption += `║ ▶️  *Plays* : ${json.play_count || 0}\n`
+    caption += `║ ⏱️  *Duration* : ${json.duration || '-'}\n`
+    caption += `╚═══════════════════════╝`
     if (json.images && json.images.length) {
         for (const k of json.images) {
             if (k) await safeSendMedia(m.chat, { image: { url: k }}, {}, { quoted: m });
@@ -7514,14 +7515,15 @@ try {
 } catch {}
 if (shazamResult) {
     let s = shazamResult
-    let caption = `╔══〔 🎵 SHAZAM RESULT 〕══╗\n\n\n╚═══════════════════════╝`
-    caption += `  🎼 *Title:* ${s.title || 'Unknown'}\n`
-    caption += `  🎤 *Artist:* ${s.artist || 'Unknown'}\n`
-    if (s.album) caption += `  💿 *Album:* ${s.album}\n`
-    if (s.genre) caption += `  🎸 *Genre:* ${s.genre}\n`
-    if (s.year) caption += `  📅 *Year:* ${s.year}\n`
-    if (s.spotify) caption += `\n║ 🟢 *Spotify:* ${s.spotify}\n`
-    if (s.apple_music) caption += `  🍎 *Apple Music:* ${s.apple_music}\n`
+    let caption = `╔══〔 🎵 SHAZAM RESULT 〕══╗\n`
+    caption += `║ 🎼 *Title* : ${s.title || 'Unknown'}\n`
+    caption += `║ 🎤 *Artist* : ${s.artist || 'Unknown'}\n`
+    if (s.album) caption += `║ 💿 *Album* : ${s.album}\n`
+    if (s.genre) caption += `║ 🎸 *Genre* : ${s.genre}\n`
+    if (s.year) caption += `║ 📅 *Year* : ${s.year}\n`
+    if (s.spotify) caption += `║ 🟢 *Spotify* : ${s.spotify}\n`
+    if (s.apple_music) caption += `║ 🍎 *Apple Music* : ${s.apple_music}\n`
+    caption += `╚═══════════════════════╝`
     if (s.coverart) {
         await X.sendMessage(m.chat, { image: { url: s.coverart }, caption }, { quoted: m })
     } else {
