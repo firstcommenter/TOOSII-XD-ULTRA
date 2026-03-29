@@ -726,17 +726,17 @@ const safeSendMedia = async (jid, mediaObj, options = {}, sendOpts = {}) => {
                 const val = mediaObj[key];
                 if (val && typeof val === 'object' && val.url) {
                     if (!val.url || val.url === 'undefined' || val.url === 'null' || val.url === undefined) {
-                        return reply('Media URL is not available. The source may be down.');
+                        return reply('╔══〔 ⚠️ MEDIA ERROR 〕══╗\n\n║ Media URL is not available.\n║ The source may be down.\n╚═══════════════════════╝');
                     }
                 } else if (val === undefined || val === null) {
-                    return reply('Media data is not available. Please try again later.');
+                    return reply('╔══〔 ⚠️ MEDIA ERROR 〕══╗\n\n║ Media data is not available.\n║ Please try again later.\n╚═══════════════════════╝');
                 }
             }
         }
         await X.sendMessage(jid, mediaObj, sendOpts);
     } catch (err) {
         console.error('Safe media send error:', err.message);
-        reply('Failed to send media: ' + (err.message || 'Unknown error'));
+        reply('╔══〔 ❌ SEND FAILED 〕══╗\n\n║ Failed to send media.\n║ ' + (err.message || 'Unknown error').slice(0,100) + '\n╚═══════════════════════╝');
     }
 };
 
@@ -1819,7 +1819,7 @@ case 'tiktok': {
 if (!text) return reply(`╔══〔 🎵 TIKTOK DOWNLOADER 〕══╗\n\n║ Usage:  *${prefix}tt [tiktok url]*\n║ Example: ${prefix}tt https://vm.tiktok.com/xxx\n╚═══════════════════════╝`)
 try {
     let data = await fg.tiktok(text)
-    if (!data || !data.result) return reply('Failed to download. The link may be invalid.')
+    if (!data || !data.result) return reply('╔══〔 ❌ DOWNLOAD FAILED 〕══╗\n\n║ Failed to download.\n║ The link may be invalid.\n╚═══════════════════════╝')
     let json = data.result
     let caption = `╔══〔 🎵 TIKTOK DOWNLOAD 〕══╗\n`
     caption += `║ 👤 *Username* : ${json.author?.nickname || 'Unknown'}\n`
@@ -1841,7 +1841,7 @@ try {
             await safeSendMedia(m.chat, { audio: { url: json.music }, mimetype: 'audio/mpeg' }, {}, { quoted: m });
         }
     } else {
-        reply('Failed to download. No media URL found.')
+        reply('╔══〔 ❌ DOWNLOAD FAILED 〕══╗\n\n║ Failed to download.\n║ No media URL found from source.\n╚═══════════════════════╝')
     }
 } catch (err1) {
     console.log('[tt] fg.tiktok failed:', err1.message)
@@ -2230,7 +2230,7 @@ case 'ytplay': {
         }
     } catch (e) {
         console.log('[play] error:', e.message)
-        reply('An error occurred while processing. Please try again.')
+        reply('╔══〔 ❌ PLAY ERROR 〕══╗\n\n║ An error occurred while processing.\n║ Please try again.\n╚═══════════════════════╝')
     } finally {
         // Always clean up tmp file
         if (_tmpFile && fs.existsSync(_tmpFile)) { try { fs.unlinkSync(_tmpFile) } catch {} }
@@ -2587,7 +2587,7 @@ case 'bratv':
 case 'bratvideo': {
     await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
   if (!text) return reply(`╔══〔 🎬 BRAT VIDEO 〕══╗\n\n║ Usage: *${prefix}${command} [pesan]*\n║ Contoh: ${prefix}${command} Hai bang, apa kabar?\n╚═══════════════════════╝`)
-  if (text.length > 250) return reply(`Character limit exceeded, max 250!`)
+  if (text.length > 250) return reply(`╔══〔 ⚠️ BRAT VIDEO 〕══╗\n\n║ Character limit exceeded!\n║ Maximum: 250 characters\n╚═══════════════════════╝`)
   const words = text.split(" ")
   const tempDir = path.join(process.cwd(), 'tmp')
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir)
@@ -2636,7 +2636,7 @@ case 'bratvideo': {
     if (fs.existsSync(outputVideoPath)) fs.unlinkSync(outputVideoPath)
   } catch (err) {
     console.error(err)
-    reply('An error occurred')
+    reply('╔══〔 ❌ ERROR 〕══╗\n\n║ An error occurred. Please try again.\n╚═══════════════════════╝')
   }
 }
 break
@@ -2667,10 +2667,10 @@ break
 
 case 'emojimix': {
     await X.sendMessage(m.chat, { react: { text: '😎', key: m.key } })
-    if (!text) return reply(`Enter two emojis to mix\n\nExample: ${prefix + command} [emoji1]+[emoji2]`);
+    if (!text) return reply(`╔══〔 😎 EMOJI MIX 〕══╗\n\n║ Usage: *${prefix + command} [emoji1]+[emoji2]*\n║ Example: ${prefix + command} 😂+😍\n╚═══════════════════════╝`);
 
     const emojis = text.split(/[\+\|]/);
-    if (emojis.length !== 2) return reply('Please enter two valid emojis, example: +  or |');
+    if (emojis.length !== 2) return reply('╔══〔 ⚠️ EMOJI MIX 〕══╗\n\n║ Please enter two valid emojis.\n║ Example: .emojimix 😂+😍\n╚═══════════════════════╝');
     const text1 = emojis[0].trim();
     const text2 = emojis[1].trim();
  
@@ -2711,7 +2711,7 @@ packname: global.packname,
 author: global.author
 })
 } else if (/video/.test(mime)) {
-if ((quoted.msg || quoted).seconds > 31) return reply('Maximum 30 seconds!')
+if ((quoted.msg || quoted).seconds > 31) return reply('╔══〔 ⚠️ STICKER 〕══╗\n\n║ Video must be 30 seconds or less!\n╚═══════════════════════╝')
 let media = await quoted.download()
 let encmedia = await X.sendVideoAsStickerAV(m.chat, media, m, {
 packname: global.packname,
@@ -2728,7 +2728,7 @@ case 'take':
 case 'steal': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
     if (!quoted) return reply(`╔══〔 🎨 TAKE STICKER 〕══╗\n\n║ Reply to a sticker with *${prefix + command}*\n║ Usage: *${prefix + command} [packname|author]*\n║ Example: ${prefix}take MyPack|MyName\n╚═══════════════════════╝`)
-    if (mime !== 'image/webp') return reply(`Reply to a *sticker* to use *${prefix + command}*`)
+    if (mime !== 'image/webp') return reply(`╔══〔 ⚠️ TAKE STICKER 〕══╗\n\n║ Please reply to a *sticker* to use\n║ *${prefix + command}*\n╚═══════════════════════╝`)
 
     let _tkPack = global.packname || 'XD Ultra'
     let _tkAuth = global.author || 'Bot'
@@ -2845,11 +2845,11 @@ try {
     } else if (viewOnceContent.type === 'audioMessage') {
         await X.sendMessage(from, { audio: buffer, mimetype: 'audio/mp4' }, { quoted: m })
     } else {
-        reply('Unsupported view once media type.')
+        reply('╔══〔 ⚠️ VIEW ONCE 〕══╗\n\n║ Unsupported view once media type.\n╚═══════════════════════╝')
     }
 } catch (err) {
     console.error('VV Error:', err)
-    reply('Failed to open view once message: ' + (err.message || 'Unknown error'))
+    reply('╔══〔 ❌ VIEW ONCE 〕══╗\n\n║ Failed to open view once message.\n║ ' + (err.message || 'Unknown error').slice(0,100) + '\n╚═══════════════════════╝')
 }
 }
 break
