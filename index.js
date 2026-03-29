@@ -13,30 +13,56 @@ by Toosii Tech • 2024 - 2026
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
 // ── Auto-restart supervisor ──────────────────────────────────────────────────
-// When the bot process exits for ANY reason (update, crash, OOM, etc.),
-// the supervisor parent automatically restarts it after 3 seconds.
-// Works WITHOUT pm2 — the supervisor stays alive as the parent process.
+// Works on Heroku, Render, Railway, VPS, bare server — no pm2 needed.
+// Parent = supervisor (watches & restarts). Child = actual bot.
+// SIGTERM (Heroku deploy/scale-down) is forwarded cleanly so the bot
+// can finish sending messages before the dyno is replaced.
 if (!process.env._BOT_CHILD) {
     const { spawn } = require('child_process')
     let _restartDelay = 3000
+    let _activeChild  = null
+    let _stopping     = false   // true = intentional shutdown, don't restart
+
     const _spawnBot = () => {
-        const _c = spawn(process.execPath, process.argv.slice(1), {
+        if (_stopping) return
+        _activeChild = spawn(process.execPath, process.argv.slice(1), {
             stdio: 'inherit',
             env: { ...process.env, _BOT_CHILD: '1' }
         })
-        _c.on('close', (code) => {
-            console.log('[AutoRestart] Process exited (code=' + code + '), restarting in ' + (_restartDelay/1000) + 's...')
+        _activeChild.on('spawn', () => {
+            console.log('[Supervisor] Bot process started (PID ' + _activeChild.pid + ')')
+            _restartDelay = 3000                // reset backoff on clean start
+        })
+        _activeChild.on('close', (code, signal) => {
+            _activeChild = null
+            if (_stopping) return               // intentional stop — don't restart
+            console.log('[Supervisor] Process exited (code=' + code + ' signal=' + signal + '), restarting in ' + (_restartDelay / 1000) + 's...')
             _restartDelay = Math.min(_restartDelay * 1.5, 30000) // backoff up to 30s
             setTimeout(_spawnBot, _restartDelay)
         })
-        _c.on('error', (err) => {
-            console.error('[AutoRestart] Spawn error:', err.message)
-            setTimeout(_spawnBot, 5000)
+        _activeChild.on('error', (err) => {
+            console.error('[Supervisor] Spawn error:', err.message)
+            if (!_stopping) setTimeout(_spawnBot, 5000)
         })
-        _c.on('spawn', () => { _restartDelay = 3000 }) // reset backoff on successful spawn
     }
+
+    // ── Clean shutdown (Heroku/Render SIGTERM, Ctrl+C SIGINT) ──────────────
+    const _shutdown = (sig) => {
+        _stopping = true
+        console.log('[Supervisor] Received ' + sig + ' — forwarding to bot and shutting down...')
+        if (_activeChild) {
+            _activeChild.kill(sig)
+            // Give child up to 8s to clean up, then hard-exit
+            setTimeout(() => process.exit(0), 8000)
+        } else {
+            process.exit(0)
+        }
+    }
+    process.once('SIGTERM', () => _shutdown('SIGTERM'))
+    process.once('SIGINT',  () => _shutdown('SIGINT'))
+
     _spawnBot()
-    return // supervisor stays alive; stop it from running bot code below
+    return  // supervisor stays alive watching the child; don't run bot code below
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
