@@ -3873,6 +3873,143 @@ if (!alArg) {
 }
 break
 
+case 'antichat':
+case 'nochat':
+case 'chatlock': {
+    await X.sendMessage(m.chat, { react: { text: '💬', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+
+    const _acPath = './database/antichat.json'
+    let _acDB = {}
+    try { _acDB = JSON.parse(fs.readFileSync(_acPath, 'utf8')) } catch {}
+    const _acSave = () => {
+        try {
+            if (!fs.existsSync('./database')) fs.mkdirSync('./database', { recursive: true })
+            fs.writeFileSync(_acPath, JSON.stringify(_acDB, null, 2))
+        } catch {}
+    }
+
+    const _acGC  = _acDB[m.chat] || { enabled: false, action: 'delete', warnings: {} }
+    const _acSub = (args[0] || '').toLowerCase()
+
+    if (!_acSub || _acSub === 'status') {
+        const _acStatus = _acGC.enabled
+            ? `✅ ON (${(_acGC.action || 'delete').toUpperCase()})`
+            : '❌ OFF'
+        return reply(
+            `╔══〔 💬 ANTI-CHAT 〕══════╗
+` +
+            `║ 📊 *Status*  : ${_acStatus}
+` +
+            `║ 🔒 Blocks non-admin messages
+` +
+            `╠══〔 📋 USAGE 〕══════════╣
+` +
+            `║ ${prefix}antichat on
+` +
+            `║ ${prefix}antichat off
+` +
+            `║ ${prefix}antichat action delete
+` +
+            `║ ${prefix}antichat action warn
+` +
+            `║ ${prefix}antichat action kick
+` +
+            `║ ${prefix}antichat resetwarns
+` +
+            `╚═══════════════════════╝`
+        )
+    }
+
+    if (_acSub === 'on' || _acSub === 'enable') {
+        _acDB[m.chat] = { ..._acGC, enabled: true }
+        _acSave()
+        return reply(
+            `╔══〔 💬 ANTI-CHAT: ON 〕══╗
+
+` +
+            `║ ✅ Non-admins cannot send messages.
+` +
+            `║ 🔧 *Action* : ${(_acDB[m.chat].action || 'delete').toUpperCase()}
+` +
+            `║ _Bot must be group admin._
+` +
+            `╚═══════════════════════╝`
+        )
+    }
+
+    if (_acSub === 'off' || _acSub === 'disable') {
+        _acDB[m.chat] = { ..._acGC, enabled: false }
+        _acSave()
+        return reply(
+            `╔══〔 💬 ANTI-CHAT: OFF 〕═╗
+
+` +
+            `║ Members can now chat freely.
+` +
+            `╚═══════════════════════╝`
+        )
+    }
+
+    if (_acSub === 'action') {
+        const _acAct = (args[1] || '').toLowerCase()
+        if (!['delete', 'warn', 'kick'].includes(_acAct)) {
+            return reply(
+                `╔══〔 ❌ INVALID ACTION 〕══╗
+
+` +
+                `║ Valid actions:
+` +
+                `║  • delete — remove message
+` +
+                `║  • warn   — warn + count
+` +
+                `║  • kick   — remove from group
+` +
+                `║
+` +
+                `║ Example: ${prefix}antichat action warn
+` +
+                `╚═══════════════════════╝`
+            )
+        }
+        _acDB[m.chat] = { ..._acGC, action: _acAct }
+        _acSave()
+        return reply(
+            `╔══〔 💬 ANTI-CHAT 〕══════╗
+
+` +
+            `║ ✅ Action set to: *${_acAct.toUpperCase()}*
+` +
+            `╚═══════════════════════╝`
+        )
+    }
+
+    if (_acSub === 'resetwarns' || _acSub === 'reset') {
+        _acDB[m.chat] = { ..._acGC, warnings: {} }
+        _acSave()
+        return reply(
+            `╔══〔 💬 ANTI-CHAT 〕══════╗
+
+` +
+            `║ ✅ All warnings have been cleared.
+` +
+            `╚═══════════════════════╝`
+        )
+    }
+
+    return reply(
+        `╔══〔 ❌ UNKNOWN OPTION 〕══╗
+
+` +
+        `║ Use *${prefix}antichat* to see commands.
+` +
+        `╚═══════════════════════╝`
+    )
+}
+break
+
 case 'antidelete':
   case 'antidel':
   case 'setantidelete': {
