@@ -6427,11 +6427,13 @@ const _ppLabel = async (jid) => {
         return 'Unknown'
     }
     const num = _ppNum(jid)
-    try {
-        const info = await X.onWhatsApp(jid.split('@')[0])
-        const name = (info && info[0] && info[0].notify) ? info[0].notify : null
-        return name ? `${name} (${num})` : num
-    } catch { return num }
+    // Use store.contacts for real push names (same source as group member commands)
+    const sc = store?.contacts?.[jid]
+    const storeName = sc?.name || sc?.notify || sc?.verifiedName
+    if (storeName) return `${storeName} (${num})`
+    // Fallback: use pushName if querying the message sender
+    if (jid === m.sender && m.pushName) return `${m.pushName} (${num})`
+    return num
 }
 // Prefer real phone JID over LID JID
 const _resolveTarget = (jid) => {
