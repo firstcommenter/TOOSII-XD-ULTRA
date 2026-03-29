@@ -46,7 +46,7 @@ if (!process.env._BOT_CHILD) {
         })
     }
 
-    // ── Clean shutdown (Heroku/Render SIGTERM, Ctrl+C SIGINT) ��─────────────
+    // ── Clean shutdown (Heroku/Render SIGTERM, Ctrl+C SIGINT) ──────────────────
     const _shutdown = (sig) => {
         _stopping = true
         console.log('[Supervisor] Received ' + sig + ' — forwarding to bot and shutting down...')
@@ -312,7 +312,7 @@ function autoLoadSessionFromEnv() {
     }
 }
 
-//━━━━━━��━━━━━━━━━━━━━━━━━//
+//━━━━━━━━━━━━━━━━━━━━━━━//
 // Console Login Interface
 
 async function handleSessionLogin(sessionId) {
@@ -1071,7 +1071,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                             }
                             if (asmAction === 'kick') {
                                 await X.groupParticipantsUpdate(gJid, [mentionerJid], 'remove')
-                                await X.sendMessage(gJid, { text: `╔══〔 🚫 REMOVED 〕══���\n\n║ @${mentioner} has been removed.\n║ Reason: Tagged group in their status.\n╚═══════════════════════╝`, mentions: [mentionerJid] })
+                                await X.sendMessage(gJid, { text: `╔══〔 🚫 REMOVED 〕══╗\n\n║ @${mentioner} has been removed.\n║ Reason: Tagged group in their status.\n╚═══════════════════════╝`, mentions: [mentionerJid] })
                             } else if (asmAction === 'warn') {
                                 if (!global.statusMentionWarns) global.statusMentionWarns = {}
                                 let warnKey = `${gJid}:${mentionerJid}`
@@ -1083,7 +1083,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                                     global.statusMentionWarns[warnKey] = 0
                                     await X.sendMessage(gJid, { text: `╔══〔 🚫 REMOVED 〕══╗\n\n║ @${mentioner} removed after ${maxW} warnings.\n║ Reason: Repeatedly tagging group in status.\n╚═══════════════════════╝`, mentions: [mentionerJid] })
                                 } else {
-                                    await X.sendMessage(gJid, { text: `╔══〔 ⚠️ WARNING ${wCount}/${maxW} ��══╗\n\n║ @${mentioner}\n║ Don't tag this group in your status.\n║ ${maxW - wCount} more warning(s) before removal.\n╚═══════════════════════╝`, mentions: [mentionerJid] })
+                                    await X.sendMessage(gJid, { text: `╔══〔 ⚠️ WARNING ${wCount}/${maxW} 〕══╗\n\n║ @${mentioner}\n║ Don't tag this group in your status.\n║ ${maxW - wCount} more warning(s) before removal.\n╚═══════════════════════╝`, mentions: [mentionerJid] })
                                 }
                             } else if (asmAction === 'delete') {
                                 if (!global.statusMentionDeleteList) global.statusMentionDeleteList = {}
@@ -1496,7 +1496,7 @@ if (connUser && !global.owner.includes(connUser)) {
     console.log(`${c.green}[${phone}]${c.r} ${c.cyan}Auto-added ${connUser} to owner list${c.r}`)
 }
 
-// ── Stability Layer 1: Watchdog ────────────────────────────────���─────────────
+// ── Stability Layer 1: Watchdog ──────────────────────────────────────
 // Checks socket health every 30s. If the WebSocket is no longer OPEN while
 // the session still shows as connected, force a clean reconnect.
 _clearStabilityTimers()
@@ -1540,7 +1540,7 @@ if (!global._connMsgSent.has(phone)) {
       }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
-        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ ��� Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(23)}╝`})
+        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(23)}╝`})
     } catch (e) {}
 }
 console.log(`[BOT_CONNECTED:${connUser}]`)
@@ -1657,7 +1657,7 @@ _Please read the group rules and enjoy your stay._ 😊`
 ┌─────────────────────────────
 │ 👥 Members  : ${totalMembers}
 │ 🤖 Bot      : ${global.botname}
-└────��────────────────────────
+└────────────────────────────
 
 _Safe travels! You're always welcome back._ 🌟`
                     await X.sendMessage(anu.id, {
@@ -1721,10 +1721,10 @@ _Use your powers wisely and responsibly!_ ⚡`
 @${numClean} has been *demoted from Admin*
 in *${groupName}*
 
-┌────────────────────────���────
+┌────────────────────────────
 │ 👤 Role     : Member
 │ 👥 Members  : ${totalMembers}
-└──────────���──────────────────
+└────────────────────────────
 
 _You are now a regular member._ 🔄`
                     await X.sendMessage(anu.id, {
