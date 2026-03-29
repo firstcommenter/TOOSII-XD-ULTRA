@@ -961,7 +961,7 @@ if (
   if (teksUser === 'nyerah' || teksUser === 'giveup') {
     clearTimeout(game.timeout);
     delete global.tebakGame[m.sender];
-    return reply(`😔 You gave up!\nThe correct answer is:\n✅ *${jawaban}*`);
+    return reply(`╔══〔 🎮 GAME OVER 〕══════╗\n║ 😔 You gave up!\n║ ✅ *Correct answer* : ${jawaban}\n╚═══════════════════════╝`);
   }
 
   const benar = Array.isArray(jawaban)
@@ -1893,9 +1893,10 @@ if (!text) return reply('Please provide the Facebook URL')
         }
 
         if (_fbUrl) {
-          let _cap = `📹 *Facebook Video*`
-          if (_fbTitle)    _cap += `\n📌 *Title:* ${_fbTitle}`
-          if (_fbDuration) _cap += `\n⏱️ *Duration:* ${_fbDuration}`
+          let _cap = `╔══〔 📹 FACEBOOK VIDEO 〕══╗\n`
+          if (_fbTitle)    _cap += `║ 📌 *Title* : ${_fbTitle}\n`
+          if (_fbDuration) _cap += `║ ⏱️ *Duration* : ${_fbDuration}\n`
+          _cap += `╚═══════════════════════╝`
           await safeSendMedia(m.chat, { video: { url: _fbUrl }, caption: _cap, mimetype: 'video/mp4' }, {}, { quoted: m })
         } else {
           reply('❌ Could not download that Facebook video. Make sure the video is public and the link is correct.')
@@ -2143,7 +2144,7 @@ case 'ytplay': {
         if (audioUrl || audioPath) {
             let thumbBuffer = null
             try { thumbBuffer = await getBuffer(firstVideo.thumbnail) } catch {}
-            let songInfo = `🎵 *Now Playing*\n\n📌 *Title:*  ${videoTitle}\n🎤 *Artist:* ${videoAuthor}\n⏱️ *Duration:* ${firstVideo.timestamp}\n👁️ *Views:* ${firstVideo.views?.toLocaleString?.() || firstVideo.views}`
+            let songInfo = `╔══〔 🎵 NOW PLAYING 〕═══╗\n║ 📌 *Title* : ${videoTitle}\n║ 🎤 *Artist* : ${videoAuthor}\n║ ⏱️ *Duration* : ${firstVideo.timestamp}\n║ 👁️ *Views* : ${firstVideo.views?.toLocaleString?.() || firstVideo.views}\n╚═══════════════════════╝`
             let msgPayload = {
                 document: audioUrl ? { url: audioUrl } : { url: `file://${audioPath}` },
                 mimetype: 'audio/mpeg',
@@ -2153,7 +2154,7 @@ case 'ytplay': {
             if (thumbBuffer) msgPayload.jpegThumbnail = thumbBuffer
             await X.sendMessage(m.chat, msgPayload, { quoted: m })
         } else {
-            reply(`🎵 *${videoTitle}*\nArtist: ${videoAuthor}\nDuration: ${firstVideo.timestamp}\n\n⚠️ Audio download failed. Please try again later.`)
+            reply(`╔══〔 🎵 SONG SEARCH 〕═══╗\n║ 📌 *Title* : ${videoTitle}\n║ 🎤 *Artist* : ${videoAuthor}\n║ ⏱️ *Duration* : ${firstVideo.timestamp}\n║\n║ ⚠️ Audio download failed — try again\n╚═══════════════════════╝`)
         }
     } catch (e) {
         console.log('[play] error:', e.message)
@@ -2930,7 +2931,7 @@ case 'statusreact': {
 
     if (_arAction === 'random') {
         _ar.mode = 'random'
-        return reply(`🎲 *Random mode* — picks random emoji from pool:\n${_ar.reactions.join(' ')}`)
+        return reply(`╔══〔 🎲 RANDOM MODE 〕════╗\n║ Picks random emoji from pool:\n║ ${_ar.reactions.join(' ')}\n╚═══════════════════════╝`)
     }
 
     if (_arAction === 'emoji') {
@@ -3549,7 +3550,7 @@ if (m.quoted && m.quoted.mtype === 'imageMessage') {
     global.thumb = picUrl
     reply(`✅ *Bot thumbnail updated*`)
 } else {
-    reply(`*Bot Picture*\nCurrent thumbnail: ${global.thumb}\n\nUsage:\n${prefix}botpic [url] - Set thumbnail URL\nReply to an image with ${prefix}botpic - Set WhatsApp profile picture`)
+    reply(`╔══〔 🖼️ BOT PICTURE 〕════╗\n║ 🔗 *Current* : ${global.thumb}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}botpic [url]   — set thumbnail URL\n║ Reply + ${prefix}botpic  — set profile picture\n╚═══════════════════════╝`)
 }
 }
 break
@@ -3573,7 +3574,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let acArg = (args[0] || '').toLowerCase()
 if (!acArg) {
     let acState = global.antiCall ? 'ON' : 'OFF'
-    reply(`*Anti-Call: ${acState}*\nWhen ON, incoming calls are automatically rejected and caller is warned.\n\nUsage:\n${prefix}anticall on\n${prefix}anticall off`)
+    reply(`╔══〔 📵 ANTI CALL 〕══════╗\n║ 📊 *Status* : ${acState}\n║ Rejects & warns callers automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}anticall on\n║ ${prefix}anticall off\n╚═══════════════════════╝`)
 } else if (acArg === 'on' || acArg === 'enable') {
     global.antiCall = true
     reply('*Anti-Call ON*\nIncoming calls will be automatically rejected.')
@@ -3591,7 +3592,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let arArg = (args[0] || '').toLowerCase()
 if (!arArg) {
     let arState = global.autoRead ? 'ON' : 'OFF'
-    reply(`*Auto Read Messages: ${arState}*\nWhen ON, all incoming messages are automatically marked as read.\n\nUsage:\n${prefix}autoread on\n${prefix}autoread off`)
+    reply(`╔══〔 👁️ AUTO READ 〕══════╗\n║ 📊 *Status* : ${arState}\n║ Marks all messages as read automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoread on\n║ ${prefix}autoread off\n╚═══════════════════════╝`)
 } else if (arArg === 'on' || arArg === 'enable') {
     global.autoRead = true
     reply('*Auto Read ON*\nAll incoming messages will be marked as read.')
@@ -3611,7 +3612,7 @@ let cbArg = (args[0] || '').toLowerCase()
 if (!cbArg) {
     let cbState = global.chatBot ? '✅ ON' : '❌ OFF'
     let cbaChats = Object.keys(global.chatBoAIChats || {}).length
-    reply(`*🤖 ChatBot Status*\n\n• Global ChatBot: *${cbState}*\n• ChatBoAI active chats: *${cbaChats}*\n\n*Commands:*\n• ${prefix}chatbot on — global auto-reply (all chats)\n• ${prefix}chatbot off — disable global auto-reply\n• ${prefix}chatboai on — enable AI replies in *this chat only*\n• ${prefix}chatboai off — disable AI replies in this chat\n• ${prefix}chatboai [question] — one-shot AI question`)
+    reply(`╔══〔 🤖 CHATBOT STATUS 〕══╗\n║ 🌐 *Global ChatBot* : ${cbState}\n║ 💬 *AI Active Chats* : ${cbaChats}\n╠══〔 📋 COMMANDS 〕══════╣\n║ ${prefix}chatbot on       — global auto-reply\n║ ${prefix}chatbot off      — disable\n║ ${prefix}chatboai on      — this chat only\n║ ${prefix}chatboai off     — disable here\n║ ${prefix}chatboai [msg]   — one-shot AI reply\n╚═══════════════════════╝`)
 } else if (cbArg === 'on' || cbArg === 'enable') {
     global.chatBot = true
     reply('*🤖 ChatBot: ✅ ON*\n_Bot will now auto-reply to all messages in English using AI._\n\n_Use_ ' + prefix + 'chatbot off _to stop._')
@@ -3629,7 +3630,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let abArg = (args[0] || '').toLowerCase()
 if (!abArg) {
     let abState = global.autoBio ? 'ON' : 'OFF'
-    reply(`*Auto Bio Update: ${abState}*\nWhen ON, bot bio is auto-updated with current time every minute.\n\nUsage:\n${prefix}autobio on\n${prefix}autobio off`)
+    reply(`╔══〔 ✍️ AUTO BIO 〕═══════╗\n║ 📊 *Status* : ${abState}\n║ Bio updates with current time every min\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autobio on\n║ ${prefix}autobio off\n╚═══════════════════════╝`)
 } else if (abArg === 'on' || abArg === 'enable') {
     global.autoBio = true
     reply('*Auto Bio ON*\nBot bio will update with current time periodically.')
@@ -3648,7 +3649,7 @@ let arsArg = args.join(' ').trim()
 if (!arsArg) {
     let arsState = global.autoReplyStatus ? 'ON' : 'OFF'
     let arsMsg = global.autoReplyStatusMsg || 'Not set'
-    reply(`*Auto Reply to Status: ${arsState}*\nReply message: ${arsMsg}\n\nUsage:\n${prefix}autoreplystatus [message] - Set message and enable\n${prefix}autoreplystatus off - Disable`)
+    reply(`╔══〔 💬 AUTO REPLY STATUS 〕╗\n║ 📊 *Status* : ${arsState}\n║ 📝 *Reply msg* : ${arsMsg}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoreplystatus [msg] — enable\n║ ${prefix}autoreplystatus off  — disable\n╚═══════════════════════╝`)
 } else if (arsArg.toLowerCase() === 'off' || arsArg.toLowerCase() === 'disable') {
     global.autoReplyStatus = false
     global.autoReplyStatusMsg = ''
@@ -3716,7 +3717,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let alArg = (args[0] || '').toLowerCase()
 if (!alArg) {
     let alState = global.antiLink ? 'ON' : 'OFF'
-    reply(`*Anti-Link: ${alState}*\nWhen ON, messages containing links are deleted and the sender is warned.\n\nUsage:\n${prefix}antilink on\n${prefix}antilink off`)
+    reply(`╔══〔 🔗 ANTI LINK 〕══════╗\n║ 📊 *Status* : ${alState}\n║ Deletes links & warns sender\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}antilink on\n║ ${prefix}antilink off\n╚═══════════════════════╝`)
 } else if (alArg === 'on' || alArg === 'enable') {
     global.antiLink = true
     reply(`╔══〔 🔗 ANTI-LINK: ON 〕══╗\n\n║ ✅ Links will be deleted.\n║ _Bot must be admin._\n╚═══════════════════════╝`)
@@ -3783,13 +3784,13 @@ case 'antidelete':
               return reply(`❌ *Anti-Delete GROUPS: OFF*`)
           } else if (['private','prvt','priv'].includes(_sub)) {
               _ad.gc.enabled = true; _ad.gc.mode = 'private'; _syncLegacy()
-              return reply(`🔒 *Anti-Delete GROUPS: PRIVATE*\nDeleted messages : Your DM only.`)
+              return reply(`╔══〔 🔒 ANTI DELETE: GROUPS 〕╗\n║ 📨 *Mode* : PRIVATE\n║ Deleted messages sent to your DM only\n╚═══════════════════════╝`)
           } else if (['chat','cht'].includes(_sub)) {
               _ad.gc.enabled = true; _ad.gc.mode = 'chat'; _syncLegacy()
-              return reply(`💬 *Anti-Delete GROUPS: CHAT*\nDeleted messages : Same group chat.`)
+              return reply(`╔══〔 💬 ANTI DELETE: GROUPS 〕╗\n║ 📨 *Mode* : CHAT\n║ Deleted messages shown in group chat\n╚═══════════════════════╝`)
           } else if (['both','all'].includes(_sub)) {
               _ad.gc.enabled = true; _ad.gc.mode = 'both'; _syncLegacy()
-              return reply(`📢 *Anti-Delete GROUPS: BOTH*\nDeleted messages : Your DM + Group.`)
+              return reply(`╔══〔 📢 ANTI DELETE: GROUPS 〕╗\n║ 📨 *Mode* : BOTH\n║ Deleted messages → DM + Group chat\n╚═══════════════════════╝`)
           } else {
               return reply(`╔══〔 🛡 ANTI DELETE — GROUPS 〕══╗\n\n║ ${prefix}antidelete gc on/off\n║ ${prefix}antidelete gc private/chat/both\n╚═══════════════════════╝`)
           }
@@ -3805,13 +3806,13 @@ case 'antidelete':
               return reply(`❌ *Anti-Delete PMs: OFF*`)
           } else if (['private','prvt','priv'].includes(_sub)) {
               _ad.pm.enabled = true; _ad.pm.mode = 'private'; _syncLegacy()
-              return reply(`🔒 *Anti-Delete PMs: PRIVATE*\nDeleted PMs : Your DM only.`)
+              return reply(`╔══〔 🔒 ANTI DELETE: PMs 〕══╗\n║ 📨 *Mode* : PRIVATE\n║ Deleted PMs sent to your DM only\n╚═══════════════════════╝`)
           } else if (['chat','cht'].includes(_sub)) {
               _ad.pm.enabled = true; _ad.pm.mode = 'chat'; _syncLegacy()
-              return reply(`💬 *Anti-Delete PMs: CHAT*\nDeleted PMs : Same chat.`)
+              return reply(`╔══〔 💬 ANTI DELETE: PMs 〕══╗\n║ 📨 *Mode* : CHAT\n║ Deleted PMs shown in same chat\n╚═══════════════════════╝`)
           } else if (['both','all'].includes(_sub)) {
               _ad.pm.enabled = true; _ad.pm.mode = 'both'; _syncLegacy()
-              return reply(`📢 *Anti-Delete PMs: BOTH*\nDeleted PMs : Your DM + Same chat.`)
+              return reply(`╔══〔 📢 ANTI DELETE: PMs 〕══╗\n║ 📨 *Mode* : BOTH\n║ Deleted PMs → DM + Same chat\n╚═══════════════════════╝`)
           } else {
               return reply(`╔══〔 🛡 ANTI DELETE — PMS 〕══╗\n\n║ ${prefix}antidelete pm on/off\n║ ${prefix}antidelete pm private/chat/both\n╚═══════════════════════╝`)
           }
@@ -3831,17 +3832,17 @@ case 'antidelete':
       if (['private','prvt','priv'].includes(_arg)) {
           _ad.gc.enabled = true; _ad.gc.mode = 'private'
           _ad.pm.enabled = true; _ad.pm.mode = 'private'; _syncLegacy()
-          return reply(`🔒 *Anti-Delete: PRIVATE*\nAll deleted messages : Your DM only.`)
+          return reply(`╔══〔 🔒 ANTI DELETE 〕════╗\n║ 📨 *Mode* : PRIVATE\n║ All deleted messages → your DM\n╚═══════════════════════╝`)
       }
       if (['chat','cht'].includes(_arg)) {
           _ad.gc.enabled = true; _ad.gc.mode = 'chat'
           _ad.pm.enabled = true; _ad.pm.mode = 'chat'; _syncLegacy()
-          return reply(`💬 *Anti-Delete: CHAT*\nAll deleted messages : Same chat.`)
+          return reply(`╔══〔 💬 ANTI DELETE 〕════╗\n║ 📨 *Mode* : CHAT\n║ All deleted messages → same chat\n╚═══════════════════════╝`)
       }
       if (['both','all'].includes(_arg)) {
           _ad.gc.enabled = true; _ad.gc.mode = 'both'
           _ad.pm.enabled = true; _ad.pm.mode = 'both'; _syncLegacy()
-          return reply(`📢 *Anti-Delete: BOTH*\nAll deleted messages : DM + Original chat.`)
+          return reply(`╔══〔 📢 ANTI DELETE 〕════╗\n║ 📨 *Mode* : BOTH\n║ All deleted messages → DM + chat\n╚═══════════════════════╝`)
       }
 
       // ── stats ──────────────────────────────────────────────────────────
@@ -3863,7 +3864,7 @@ case 'antidelete':
           global._adCache = new Map()
           global.adMediaCache = {}
           _ad.stats = { total: 0, retrieved: 0, media: 0 }
-          return reply(`🧹 *Cache cleared* — ${_sz} entries removed.\nAnti-Delete remains *${global.antiDelete ? 'ON' : 'OFF'}*.`)
+          return reply(`╔══〔 🧹 CACHE CLEARED 〕══╗\n║ 🗑️ *Removed* : ${_sz} entries\n║ 🛡️ *Anti-Delete* : ${global.antiDelete ? '✅ ON' : '❌ OFF'}\n╚═══════════════════════╝`)
       }
 
       reply(_statusMsg())
@@ -4048,7 +4049,7 @@ case 'restart':
 case 'reboot': {
     await X.sendMessage(m.chat, { react: { text: '🔄', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
-await reply(`🔄 *Restarting Bot...*\n\n⏳ _Bot will be back online shortly._\n\n_Powered by ${global.botname}_`)
+await reply(`╔══〔 🔄 RESTARTING 〕═════╗\n║ ⏳ Bot will be back shortly...\n║ _Powered by ${global.botname}_\n╚═══════════════════════╝`)
 await sleep(2000)
 process.exit(0)
 } break
@@ -4154,7 +4155,7 @@ try {
 
 case 'addplugin': case 'addplug':{
 if (!isOwner) return  reply(mess.OnlyOwner)
-if (!q.includes("|")) return reply(`${command}, *Example :* \n\n*${prefix + command} name|category|content*`)
+if (!q.includes("|")) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} name|category|content*\n╚═══════════════════════╝`)
 const [
 pluginName,
 category, ...pluginContent
@@ -4189,7 +4190,7 @@ await reply(`Plugin with command '${mypler}' not found`)
 break
 case 'rmplugin': case 'rmplug':{
 if (!isOwner) return  reply(mess.OnlyOwner)
-if (!q) return reply(`*Example :* \n\n*${prefix + command} nama plugin*`)
+if (!q) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} nama plugin*\n╚═══════════════════════╝`)
 let pluginsDirect = path.resolve(__dirname, './plugin')
 let plugins = loadPlugins(pluginsDirect)
 for (const plugin of plugins) {
@@ -4205,7 +4206,7 @@ await reply(`Plugin with command '${q}' not found.`)
 break
 case 'getplugin': case 'getplug':{
 if (!isOwner) return  reply(mess.OnlyOwner)
-if (!q) return reply(`*Example :* \n\n*${prefix + command} nama plugin`) 
+if (!q) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} nama plugin*\n╚═══════════════════════╝`) 
 let pluginsDirect = path.resolve(__dirname, './plugin')
 let plugin = loadPlugins(pluginsDirect).find(p => p.command.includes(q))
 if (!plugin) return reply(`Plugin with command '${q}' not found.`)
@@ -4566,7 +4567,8 @@ break
                                                 reply(`✅ *Rejected @${target.split('@')[0]}*`)
                                         } else {
                                                 let list = pending.map((p, i) => `${i + 1}. ${p.jid.split('@')[0]}`).join('\n')
-                                                reply(`📋 *Pending Join Requests (${pending.length}):*\n\n${list}\n\n📌 Use ${prefix}reject all or ${prefix}reject [number]`)
+                                                reply(`╔══〔 📋 PENDING REQUESTS 〕╗\n║ *${pending.length} pending requests:*\n║
+${list}\n║ ${prefix}reject all — reject all\n║ ${prefix}reject [n]  — reject specific\n╚═══════════════════════╝`)
                                         }
                                 } catch (err) {
                                         let errMsg = (err?.message || '').toLowerCase()
@@ -4580,7 +4582,7 @@ break
 // search features
                         case 'wikimedia': {
     await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
-                                if (!text) return reply(`*Example :*\n\n${prefix + command} Query`);
+                                if (!text) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} Query*\n╚═══════════════════════╝`);
                                 try {
                                         const results = await wikimedia(text);
                                         if (results.length === 0) return reply(`⚠️ No images found on Wikimedia for "${text}".`);
@@ -4596,7 +4598,7 @@ break
                         case 'mangainfo': {
     await X.sendMessage(m.chat, { react: { text: '📚', key: m.key } })
                                 const mangaName = args.join(' ');
-                                if (!mangaName) return reply(`*Example :*\n\n${prefix + command} Anime`);
+                                if (!mangaName) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} Anime*\n╚═══════════════════════╝`);
                                 try {
                                         const mangaList = await komiku("manga", mangaName);
                                         if (mangaList.length === 0) {
@@ -4620,7 +4622,7 @@ break
                         case 'mangadetail': {
     await X.sendMessage(m.chat, { react: { text: '📚', key: m.key } })
                                 const url = args[0];
-                                if (!url) return reply(`*Example :*\n\n${prefix + command} URL`);
+                                if (!url) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} URL*\n╚═══════════════════════╝`);
                                 try {
                                         const mangaDetail = await detail(url);
                                         let captionText = `📚 *Manga Details* 📚\n\n`;
@@ -4726,7 +4728,7 @@ break
                         case 'kusonimesearch':
                         case 'animesearch': {
     await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-                                if (!text) return reply(`*Example :*\n\n${prefix + command} Anime`);
+                                if (!text) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} Anime*\n╚═══════════════════════╝`);
                                 try {
                                         const searchResults = await Kusonime.search(text);
                                         if (typeof searchResults === 'string') {
@@ -4849,7 +4851,7 @@ break
                         break;
 
                         case "ipwhois": {
-                                if (!text) return reply(`*Example :*\n\n${prefix + command} 114.5.213.103`);
+                                if (!text) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} 114.5.213.103*\n╚═══════════════════════╝`);
                                 const ip = text.trim();
                                 const apiUrl = `https://ipwho.is/${ip}`;
                                 try {
@@ -4889,7 +4891,7 @@ case 'telestick': {
     await X.sendMessage(m.chat, { react: { text: '📲', key: m.key } })
   async function telestick(url) {
     let match = url.match(/https:\/\/t\.me\/addstickers\/([^\/\?#]+)/)
-    if (!match) return reply(`*Example :*\n\n${prefix + command} https://`);
+    if (!match) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} https://...*\n╚═══════════════════════╝`);
     let { data: a } = await axios.get(`https://api.telegram.org/bot7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc/getStickerSet?name=${match[1]}`)
     let stickers = await Promise.all(a.result.stickers.map(async v => {
       let { data: b } = await axios.get(`https://api.telegram.org/bot7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc/getFile?file_id=${v.file_id}`)
@@ -4918,7 +4920,7 @@ break;
 
 case 'stikerly': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
-if (!text) return reply(`*Example :*\n\n ${prefix + command} anomali `)
+if (!text) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} anomali*\n╚═══════════════════════╝`)
 try {
 throw new Error('stikerly_offline')
 } catch (e) {
@@ -4960,8 +4962,8 @@ case 'meme':
 case 'smeme': {
   const _mmIsImg = m.mtype === 'imageMessage'
   const _mmIsQuote = m.quoted && (m.quoted.mtype === 'imageMessage' || m.quoted.mtype === 'stickerMessage')
-  if (!_mmIsImg && !_mmIsQuote) return reply(`Reply to an image with:\n*${prefix}${command} top text | bottom text*\n\nOr just:\n*${prefix}${command} bottom text only*`)
-  if (!text) return reply(`Reply to an image with:\n*${prefix}${command} top text | bottom text*\n\nExample:\n*${prefix}meme When you finally fix a bug | 10 more appear*`)
+  if (!_mmIsImg && !_mmIsQuote) return reply(`╔══〔 🎭 MEME MAKER 〕═════╗\n║ Reply to an image with:\n║ *${prefix}${command} top text | bottom text*\n║\n║ Or just bottom text:\n║ *${prefix}${command} bottom text only*\n╚═══════════════════════╝`)
+  if (!text) return reply(`╔══〔 🎭 MEME MAKER 〕═════╗\n║ Reply to an image with:\n║ *${prefix}${command} top | bottom*\n║\n║ Example:\n║ *${prefix}meme Fixed a bug | 10 more appear*\n╚═══════════════════════╝`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🎭', key: m.key } })
     const _mmQuoted = m.quoted ? m.quoted : m
@@ -5708,7 +5710,7 @@ case 'tebak': {
     petunjuk: soal.petunjuk || 'No hint available',
     timeout: setTimeout(() => {
       if (global.tebakGame[m.sender]) {
-        reply(`⏰ Time is up!\nThe correct answer is:\n✅ *${global.tebakGame[m.sender].jawaban}*`);
+        reply(`╔══〔 ⏰ TIME IS UP 〕═════╗\n║ ✅ *Correct answer* : ${global.tebakGame[m.sender].jawaban}\n╚═══════════════════════╝`);
         delete global.tebakGame[m.sender];
       }
     }, 60000) // 60 detik
@@ -5804,7 +5806,7 @@ async function getServerInfo() {
   try {
     const storageInfo = await nou.drive.info()
     if (storageInfo && storageInfo.totalGb) {
-      storageText = `\n*STORAGE*\n• Total: ${storageInfo.totalGb} GB\n• Used: ${storageInfo.usedGb} GB (${storageInfo.usedPercentage}%)\n• Available: ${storageInfo.freeGb} GB (${storageInfo.freePercentage}%)`
+      storageText = `\n*STORAGE*\n║ 💾 Total: ${storageInfo.totalGb} GB\n║ 📥 Used: ${storageInfo.usedGb} GB (${storageInfo.usedPercentage}%)\n║ ✅ Free: ${storageInfo.freeGb} GB (${storageInfo.freePercentage}%)`
     }
   } catch(e) {}
 
@@ -5903,7 +5905,7 @@ case 'autoreact': {
     await X.sendMessage(m.chat, { react: { text: '👍', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let arArg = (args[0] || '').toLowerCase()
-if (!arArg) { reply(`*Auto React: ${global.autoReact ? 'ON' : 'OFF'}*\nEmoji: ${global.autoReactEmoji || '👍'}\nUsage: ${prefix}autoreact on/off\n${prefix}autoreact [emoji]`) }
+if (!arArg) { reply(`╔══〔 ❤️ AUTO REACT 〕══════╗\n║ 📊 *Status* : ${global.autoReact ? '✅ ON' : '❌ OFF'}\n║ 🎭 *Emoji* : ${global.autoReactEmoji || '👍'}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoreact on/off\n║ ${prefix}autoreact [emoji]\n╚═══════════════════════╝`) }
 else if (arArg === 'on') { global.autoReact = true; reply('*Auto React ON*') }
 else if (arArg === 'off') { global.autoReact = false; reply('*Auto React OFF*') }
 else { global.autoReact = true; global.autoReactEmoji = arArg; reply(`✅ *Auto React ON* : emoji: ${arArg}`) }
@@ -5915,7 +5917,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let pbArg = (args[0] || '').toLowerCase()
 if (pbArg === 'on') { global.pmBlocker = true; reply('*PM Blocker ON*\nNon-owner PMs will be auto-blocked.') }
 else if (pbArg === 'off') { global.pmBlocker = false; reply('*PM Blocker OFF*') }
-else reply(`*PM Blocker: ${global.pmBlocker ? 'ON' : 'OFF'}*\nUsage: ${prefix}pmblocker on/off`)
+else reply(`╔══〔 🚫 PM BLOCKER 〕═════╗\n║ 📊 *Status* : ${global.pmBlocker ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}pmblocker on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'block': {
@@ -6230,7 +6232,7 @@ reply(`✅ *Menu image URL set.*`)
 case 'configimage': {
     await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
-reply(`*Image Config:*\nMenu Thumb: ${global.menuThumb || global.thumb}\nBot Pic: ${global.botPic || 'Default'}\n\nUse ${prefix}menuimage to change menu image\nUse ${prefix}botpic to change bot picture`)
+reply(`╔══〔 🖼️ IMAGE CONFIG 〕═══╗\n║ 🖼️ *Menu Thumb* : ${global.menuThumb || global.thumb}\n║ 🤖 *Bot Pic* : ${global.botPic || 'Default'}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}menuimage — change menu image\n║ ${prefix}botpic    — change bot picture\n╚═══════════════════════╝`)
 } break
 
 case 'mode': {
@@ -6342,7 +6344,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let abwArg = (args[0] || '').toLowerCase()
 if (abwArg === 'on') { global.antiBadword = true; reply('🛡️ *Anti Badword ON* — Bad words will be detected.') }
 else if (abwArg === 'off') { global.antiBadword = false; reply('❌ *Anti Badword OFF*') }
-else reply(`🛡️ *Anti Badword: ${global.antiBadword ? '✅ ON' : '❌ OFF'}*\n\n📌 Usage: ${prefix}antibadword on/off`)
+else reply(`╔══〔 🛡️ ANTI BADWORD 〕══╗\n║ 📊 *Status* : ${global.antiBadword ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antibadword on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'antitag': {
@@ -6352,7 +6354,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let atgArg = (args[0] || '').toLowerCase()
 if (atgArg === 'on') { global.antiTag = true; reply('🛡️ *Anti Tag ON* — Mass tagging will be detected.') }
 else if (atgArg === 'off') { global.antiTag = false; reply('❌ *Anti Tag OFF*') }
-else reply(`🛡️ *Anti Tag: ${global.antiTag ? '✅ ON' : '❌ OFF'}*\n\n📌 Usage: ${prefix}antitag on/off`)
+else reply(`╔══〔 🏷️ ANTI TAG 〕══════╗\n║ 📊 *Status* : ${global.antiTag ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antitag on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'antisticker': {
@@ -6362,7 +6364,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let asArg = (args[0] || '').toLowerCase()
 if (asArg === 'on') { global.antiSticker = true; reply('🛡️ *Anti Sticker ON* — Stickers will be deleted.') }
 else if (asArg === 'off') { global.antiSticker = false; reply('❌ *Anti Sticker OFF*') }
-else reply(`🛡️ *Anti Sticker: ${global.antiSticker ? '✅ ON' : '❌ OFF'}*\n\n📌 Usage: ${prefix}antisticker on/off`)
+else reply(`╔══〔 🖼️ ANTI STICKER 〕══╗\n║ 📊 *Status* : ${global.antiSticker ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antisticker on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'antidemote': {
@@ -6372,7 +6374,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let adArg2 = (args[0] || '').toLowerCase()
 if (adArg2 === 'on') { global.antiDemote = true; reply('🛡️ *Anti Demote ON* — Demoted admins will be re-promoted.') }
 else if (adArg2 === 'off') { global.antiDemote = false; reply('❌ *Anti Demote OFF*') }
-else reply(`🛡️ *Anti Demote: ${global.antiDemote ? '✅ ON' : '❌ OFF'}*\n\n📌 Usage: ${prefix}antidemote on/off`)
+else reply(`╔══〔 ⚠️ ANTI DEMOTE 〕═══╗\n║ 📊 *Status* : ${global.antiDemote ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antidemote on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'setgdesc': {
@@ -6996,7 +6998,7 @@ if (!videoUrl && !videoPath) {
 }
 if (videoUrl || videoPath) {
     let src = videoUrl ? { url: videoUrl } : { url: `file://${videoPath}` }
-    await X.sendMessage(m.chat, { video: src, caption: `*${title}*\n\n${global.packname}`, mimetype: 'video/mp4' }, { quoted: m })
+    await X.sendMessage(m.chat, { video: src, caption: `╔══〔 📺 VIDEO DOWNLOAD 〕══╗\n║ 🎬 *${title}*\n╚═══════════════════════╝`, mimetype: 'video/mp4' }, { quoted: m })
 } else {
     reply('⚠️ Video download failed. Please try again later.')
 }
@@ -7249,7 +7251,7 @@ case 'apk': {
             _msg += '\n'
         }
         await reply(_msg)
-    } catch (e) { reply(`*APK Search:*\nSearch for "${text}" on https://apkpure.com/search?q=${encodeURIComponent(text)}`) }
+    } catch (e) { reply(`╔══〔 📲 APK SEARCH 〕═════╗\n║ 🔍 *Query* : ${text}\n║ 🔗 apkpure.com/search?q=${encodeURIComponent(text)}\n╚═══════════════════════╝`) }
 } break
 
 case 'gitclone': {
@@ -7815,7 +7817,7 @@ case 'totext': {
     await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
 // Extract text from an image using OCR via pollinations vision API
 if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
-    return reply(`📄 *Reply to an image* with *${prefix}totext* to extract all text from it\n\n_Works on screenshots, documents, signs, receipts, etc._`)
+    return reply(`╔══〔 📄 TEXT EXTRACTOR 〕══╗\n║ Reply to an image with *${prefix}totext*\n║ _Screenshots, docs, signs, receipts_\n╚═══════════════════════╝`)
 }
 try {
     await reply('🔍 _Reading text from image..._')
@@ -9623,7 +9625,7 @@ case 'shorten': {
         let r = await fetch(`https://api.giftedtech.co.ke/api/tools/tinyurl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('Failed')
-        await reply(`🔗 *URL Shortener*\n\n📎 *Original:* ${text}\n✅ *Short URL:* ${d.result}`)
+        await reply(`╔══〔 🔗 URL SHORTENER 〕══╗\n║ 📎 *Original* : ${text}\n║ ✅ *Short URL* : ${d.result}\n╚═══════════════════════╝`)
     } catch(e) { reply('❌ Failed to shorten URL. Make sure it starts with https://') }
 } break
 
@@ -9638,7 +9640,7 @@ case 'rizz': {
         let r = await fetch(`https://api.giftedtech.co.ke/api/fun/pickupline?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(15000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('No line')
-        await reply(`💘 *Pickup Line*\n\n_"${d.result}"_`)
+        await reply(`╔══〔 💘 PICKUP LINE 〕════╗\n║ _"${d.result}"_\n╚═══════════════════════╝`)
     } catch(e) { reply('❌ Could not fetch a pickup line right now. Try again!') }
 } break
 
@@ -9680,7 +9682,7 @@ case 'scanqr':
 case 'qrread': {
     await X.sendMessage(m.chat, { react: { text: '📷', key: m.key } })
     if (!m.quoted || !/image/.test(m.quoted.mimetype || m.quoted.msg?.mimetype || '')) {
-        return reply(`📷 *Read QR Code*\n\nReply to an image containing a QR code with *${prefix}readqr*`)
+        return reply(`╔══〔 📷 READ QR CODE 〕═══╗\n║ Reply to a QR image with *${prefix}readqr*\n╚═══════════════════════╝`)
     }
     try {
         await reply('📷 _Scanning QR code..._')
@@ -9695,7 +9697,7 @@ case 'qrread': {
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('Could not read QR')
         let qrData = d.result?.qrcode_data || d.result
-        await reply(`📷 *QR Code Content*\n\n${qrData}`)
+        await reply(`╔══〔 📷 QR CODE RESULT 〕══╗\n║ ${qrData}\n╚═══════════════════════╝`)
     } catch(e) { reply(`❌ Could not read the QR code. Make sure the image is clear and contains a valid QR code.`) }
 } break
 
@@ -9739,7 +9741,7 @@ case 'aisong': {
         if (audioUrl) {
             await X.sendMessage(m.chat, { audio: { url: audioUrl }, mimetype: 'audio/mpeg', fileName: 'ai_song.mp3', caption: `🎵 *AI Generated Song*\n📝 _${text}_` }, { quoted: m })
         } else {
-            await reply(`🎵 *AI Song Generated!*\n\n${JSON.stringify(res, null, 2)}`)
+            await reply(`╔══〔 🎵 AI SONG GENERATED 〕╗\n║ ${JSON.stringify(res, null, 2)}\n╚═══════════════════════╝`)
         }
     } catch(e) { reply(`❌ Song generation failed. Try a simpler prompt.`) }
 } break
@@ -10147,7 +10149,7 @@ case 'sportslive': {
         if (_lsCat) _live = _live.filter(ev => (ev.type || '').toLowerCase().includes(_lsCat))
         if (!_live.length) {
             let _label = _lsCat ? `*${_lsCat}*` : 'any sport'
-            return reply(`🔴 No live events for ${_label} right now.\n\nTry: *${prefix}allsports* to see all scheduled/finished matches\n*${prefix}sportscategories* to see available sports`)
+            return reply(`╔══〔 🔴 NO LIVE EVENTS 〕══╗\n║ No live *${_label}* events right now\n╠══〔 💡 TRY INSTEAD 〕═══╣\n║ ${prefix}allsports        — all matches\n║ ${prefix}sportscategories — all sports\n╚═══════════════════════╝`)
         }
         const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
         let _lines = [`╔══〔 🔴 LIVE SPORTS (${live.length}) 〕══╗\n\n╚═══════════════════════╝`]
@@ -10176,7 +10178,7 @@ case 'sportsall': {
         if (!_d.success || !_d.data?.matchList) throw new Error('No data')
         let _all = _d.data.matchList
         if (_asCat) _all = _all.filter(ev => (ev.type || '').toLowerCase().includes(_asCat))
-        if (!_all.length) return reply(`🏅 No *${_asCat || 'sports'}* events found.\n\nTry: *${prefix}sportscategories* to see available sports`)
+        if (!_all.length) return reply(`╔══〔 🏅 NO EVENTS FOUND 〕══╗\n║ No *${_asCat || 'sports'}* events found\n║ Try: *${prefix}sportscategories*\n╚═══════════════════════╝`)
         const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
         const _statusLabel = { living: '🔴 LIVE', matchended: '✅ Ended', matchnotstart: '🕐 Not Started' }
         let _lines = [`╔══〔 🏅 ${asCat ? asCat.toUpperCase() + ' EVENTS' : 'ALL SPORTS'} (${all.length}) 〕══╗\n\n╚═══════════════════════╝`]
@@ -10260,7 +10262,7 @@ case 'magicball': {
     await X.sendMessage(m.chat, { react: { text: '🎱', key: m.key } })
     if (!text) return reply(`╔═══〔 🤖 AI COMMAND 〕═══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Will I pass my exam?\n╚═══════════════════════╝`)
     const _8bAnswers = ['It is certain.','It is decidedly so.','Without a doubt.','Yes definitely.','You may rely on it.','As I see it, yes.','Most likely.','Outlook good.','Yes.','Signs point to yes.','Reply hazy, try again.','Ask again later.','Better not tell you now.','Cannot predict now.','Concentrate and ask again.',"Don't count on it.",'My reply is no.','My sources say no.','Outlook not so good.','Very doubtful.']
-    reply(`🎱 *Magic 8 Ball*\n\n❓ *${text}*\n\n💬 ${_8bAnswers[Math.floor(Math.random() * _8bAnswers.length)]}`)
+    reply(`╔══〔 🎱 MAGIC 8 BALL 〕═══╗\n║ ❓ *${text}*\n║\n║ 💬 ${_8bAnswers[Math.floor(Math.random() * _8bAnswers.length)]}\n╚═══════════════════════╝`)
 } break
 
 // ─── Sports aliases ──────────────────────────────────────────────────
@@ -10396,7 +10398,7 @@ case 'onlygc': {
     const _ogArg = (args[0] || '').toLowerCase()
     if (_ogArg === 'on') { global.onlyGroup = true; reply('✅ *Only Group mode ON* — bot will only respond in groups.') }
     else if (_ogArg === 'off') { global.onlyGroup = false; reply('✅ *Only Group mode OFF*') }
-    else reply(`🔒 *Only Group:* ${global.onlyGroup ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}onlygroup on/off`)
+    else reply(`╔══〔 👥 ONLY GROUP MODE 〕══╗\n║ 📊 *Status* : ${global.onlyGroup ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}onlygroup on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'onlypc': {
@@ -10405,7 +10407,7 @@ case 'onlypc': {
     const _opcArg = (args[0] || '').toLowerCase()
     if (_opcArg === 'on') { global.onlyPC = true; reply('✅ *Only Private Chat mode ON* — bot will only respond in DMs.') }
     else if (_opcArg === 'off') { global.onlyPC = false; reply('✅ *Only Private Chat mode OFF*') }
-    else reply(`💬 *Only PC:* ${global.onlyPC ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}onlypc on/off`)
+    else reply(`╔══〔 📩 ONLY DM MODE 〕═══╗\n║ 📊 *Status* : ${global.onlyPC ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}onlypc on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'unavailable': {
@@ -10420,7 +10422,7 @@ case 'unavailable': {
         global.botUnavailable = false
         try { await X.sendPresenceUpdate('available') } catch (_) {}
         reply('✅ *Unavailable mode OFF* — bot appears online.')
-    } else reply(`🔕 *Unavailable:* ${global.botUnavailable ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}unavailable on/off`)
+    } else reply(`╔══〔 🔕 UNAVAILABLE MODE 〕╗\n║ 📊 *Status* : ${global.botUnavailable ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}unavailable on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'idch':
@@ -10457,7 +10459,7 @@ case 'onlineon': {
         if (global._alwaysOnlineInterval) { clearInterval(global._alwaysOnlineInterval); global._alwaysOnlineInterval = null }
         try { await X.sendPresenceUpdate('unavailable') } catch (_) {}
         reply('✅ *Always Online OFF* — bot presence is now normal.')
-    } else reply(`🟢 *Always Online:* ${global._alwaysOnlineInterval ? '✅ ON' : '❌ OFF'}\nUsage: ${prefix}alwaysonline on/off`)
+    } else reply(`╔══〔 🟢 ALWAYS ONLINE 〕══╗\n║ 📊 *Status* : ${global._alwaysOnlineInterval ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}alwaysonline on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'lastseen':
