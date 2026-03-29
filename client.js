@@ -6403,22 +6403,23 @@ try {
 let target, label
 // Resolve JID to real phone number — handles normal JIDs and Baileys LID JIDs
 const _ppNum = (jid) => {
-    if (!jid) return 'Unknown'
+    if (!jid) return null
     const raw = jid.split('@')[0].split(':')[0]
-    // LID JIDs are very long numbers (>13 digits) — not real phone numbers
-    if (raw.length > 15) return 'Unknown'
+    if (raw.length > 15) return null  // LID — not a real phone number
     return '+' + raw
 }
 const _ppLabel = async (jid) => {
     if (!jid) return 'Unknown'
-    // If it's a LID JID (@lid), try to look up the real phone via onWhatsApp
     const isLid = jid.endsWith('@lid')
     if (isLid) {
         const lidNum = jid.split('@')[0]
-        // TIER 1: resolve via group participant list
+        // TIER 1: resolve via group participant list — match on p.lid (correct field)
         try {
             if (m.isGroup && participants) {
-                const match = participants.find(p => p.id && p.id.includes(lidNum))
+                const match = participants.find(p =>
+                    (p.lid && p.lid.split('@')[0] === lidNum) ||
+                    (p.id && !p.id.endsWith('@lid') && p.id.split('@')[0] === lidNum)
+                )
                 if (match && match.id && !match.id.endsWith('@lid')) {
                     const resolvedJid = match.id
                     const num = '+' + resolvedJid.split('@')[0]
@@ -6428,39 +6429,45 @@ const _ppLabel = async (jid) => {
                 }
             }
         } catch {}
-        // TIER 2: check store.contacts keyed by LID directly
+        // TIER 2: store.contacts keyed by LID directly
         const lidSc = store?.contacts?.[jid]
-        const lidSn = lidSc?.name || lidSc?.notify || lidSc?.verifiedName
-        if (lidSn) return lidSn
+        if (lidSc) {
+            const sn = lidSc?.name || lidSc?.notify || lidSc?.verifiedName
+            const num = _ppNum(lidSc?.id || '')
+            if (sn && num) return `${sn} (${num})`
+            if (sn) return sn
+            if (num) return num
+        }
         // TIER 3: scan store.contacts for a contact whose .lid matches
         if (store?.contacts) {
             for (const [cjid, c] of Object.entries(store.contacts)) {
-                if ((c?.lid && c.lid.includes(lidNum)) || (c?.implicitlyNotified && cjid.includes(lidNum))) {
+                if (c?.lid && c.lid.split('@')[0] === lidNum) {
                     const num = '+' + cjid.split('@')[0]
                     const sn = c?.name || c?.notify || c?.verifiedName
                     return sn ? `${sn} (${num})` : num
                 }
             }
         }
-        // TIER 4: truly unresolvable — show as Unsaved Contact instead of Unknown
+        // TIER 4: unresolvable LID — we have no phone number
         return 'Unsaved Contact'
     }
-    }
+    // Non-LID JID — phone number is always extractable
     const num = _ppNum(jid)
-    // Use store.contacts for real push names (same source as group member commands)
     const sc = store?.contacts?.[jid]
     const storeName = sc?.name || sc?.notify || sc?.verifiedName
-    if (storeName) return `${storeName} (${num})`
-    // Fallback: use pushName if querying the message sender
-    if (jid === m.sender && m.pushName) return `${m.pushName} (${num})`
-    return num
+    if (storeName) return num ? `${storeName} (${num})` : storeName
+    // Fallback: use pushName from the message if this is the sender
+    if (jid === m.sender && m.pushName) return num ? `${m.pushName} (${num})` : m.pushName
+    return num || 'Unsaved Contact'
 }
-// Prefer real phone JID over LID JID
+// Resolve LID JID to real phone JID before fetching profile picture
 const _resolveTarget = (jid) => {
     if (!jid) return null
     if (jid.endsWith('@lid') && m.isGroup && participants) {
         const lidNum = jid.split('@')[0]
-        const real = participants.find(p => p.id && !p.id.endsWith('@lid') && p.lid && p.lid.includes(lidNum))
+        const real = participants.find(p =>
+            p.id && !p.id.endsWith('@lid') && p.lid && p.lid.split('@')[0] === lidNum
+        )
         if (real) return real.id
     }
     return jid
