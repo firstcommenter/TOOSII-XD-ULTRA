@@ -186,7 +186,23 @@ const util = require('util')
   }
 
   // ── Master standings: GiftedTech → ESPN → TheSportsDB → Football-Data ───────
+  // ── Keith API (apiskeith.top) — free, no key, primary sports source ─────────
+  const _KEITH_BASE = 'https://apiskeith.top'
+  const _KEITH_LEAGUES = { epl: 'epl', laliga: 'laliga', ucl: 'ucl', bundesliga: 'bundesliga', seriea: 'seriea', ligue1: 'ligue1', euros: 'euros', fifa: 'fifa' }
+  async function _keithFetch(path) {
+      try {
+          const r = await fetch(`${_KEITH_BASE}${path}`, { signal: AbortSignal.timeout(15000) })
+          const d = await r.json()
+          if (d?.status) return d.result
+      } catch {}
+      return null
+  }
+
   async function _getStandings(league, gtPath) {
+      // Keith first — free, no key, most up-to-date data
+      const _kl = _KEITH_LEAGUES[league]
+      if (_kl) { try { const _kd = await _keithFetch(`/${_kl}/standings`); const _kt = _kd?.standings || _kd; if (Array.isArray(_kt) && _kt.length) return _kt } catch {} }
+      // GiftedTech fallback
       try {
           const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const t = d?.result?.standings || d?.result; if (Array.isArray(t) && t.length) return t
@@ -217,14 +233,16 @@ const util = require('util')
   }
 
   // ── Master scorers: GiftedTech → ESPN → Football-Data ────────────────────
+  // ── Master scorers: Keith → GiftedTech → ESPN → Football-Data ─────────────
   async function _getScorers(league, gtPath, label) {
+      const _kl = _KEITH_LEAGUES[league]
+      if (_kl) { try { const _kd = await _keithFetch(`/${_kl}/scorers`); const _ks = _kd?.topScorers || _kd?.scorers || _kd; if (Array.isArray(_ks) && _ks.length) return _ks } catch {} }
       try {
           const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const sc = d?.result?.topScorers || d?.result?.scorers || d?.result; if (Array.isArray(sc) && sc.length) return sc
       } catch {}
       return (await _espnScorers(league)) || (await _fdScorers(league))
   }
-
   // ── ESPN fixtures/scoreboard ──────────────────────────────────────────────
   async function _espnFixtures(league) {
       try {
@@ -262,22 +280,32 @@ const util = require('util')
   }
 
   // ── Master fixtures: GiftedTech → ESPN → TheSportsDB → Football-Data ─────
+  // ── Master fixtures: Keith → GiftedTech → ESPN → TheSportsDB → Football-Data
   async function _getFixtures(league, gtUrl) {
+      const _kl = _KEITH_LEAGUES[league]
+      if (_kl) { try { const _kd = await _keithFetch(`/${_kl}/upcomingmatches`); const _km = _kd?.upcomingMatches || _kd?.matches || _kd; if (Array.isArray(_km) && _km.length) return _km.map(x => ({ homeTeam: x.homeTeam||x.home_team||'', awayTeam: x.awayTeam||x.away_team||'', date: x.date||'', time: x.time||'', status: x.status||'' })) } catch {} }
       try {
           const d = await giftedFetch(gtUrl, { signal: AbortSignal.timeout(20000) })
           const m = d?.result?.upcomingMatches || d?.result?.matches || d?.result; if (Array.isArray(m) && m.length) return m
       } catch {}
       return (await _espnFixtures(league)) || (await _tsdbFixtures(league)) || (await _fdFixtures(league))
   }
-
   // ── Multi-source live scores ──────────────────────────────────────────────
   async function _getLiveScores() {
-      // Source 1: GiftedTech
+      // Source 1: Keith API (apiskeith.top)
+      try {
+          const _kld = await _keithFetch('/livescore')
+          if (_kld?.games) {
+              const _klm = Object.values(_kld.games).map(g => ({ homeTeam: g.p1||'', awayTeam: g.p2||'', homeScore: g.R?.r1||'0', awayScore: g.R?.r2||'0', status: g.R?.st||'LIVE', date: g.dt||'', time: g.tm||'' }))
+              if (_klm.length) return { source: 'Keith', matches: _klm }
+          }
+      } catch {}
+      // Source 2: GiftedTech
       try {
           const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/livescore?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const m = d?.result?.matches || d?.result; if (Array.isArray(m) && m.length) return { source: 'GiftedTech', matches: m }
       } catch {}
-      // Source 2: ESPN across top leagues (live events)
+      // Source 3: ESPN across top leagues (live events)
       try {
           const leagues = ['eng.1','esp.1','ger.1','ita.1','fra.1','uefa.champions']
           const live = []
@@ -291,7 +319,7 @@ const util = require('util')
           }))
           if (live.length) return { source: 'ESPN', matches: live }
       } catch {}
-      // Source 3: TheSportsDB live events
+      // Source 4: TheSportsDB live events
       try {
           const d = await safeJson(`https://www.thesportsdb.com/api/v1/json/3/eventslive.php`, { signal: AbortSignal.timeout(10000) })
           const events = d?.events
@@ -305,12 +333,18 @@ const util = require('util')
 
   // ── Multi-source football news (BBC/ESPN RSS + GiftedTech) ────────────────
   async function _getFootballNews() {
-      // Source 1: GiftedTech
+      // Source 1: Keith API (apiskeith.top)
+      try {
+          const _knd = await _keithFetch('/football/news')
+          const _kni = _knd?.data?.items || _knd?.items
+          if (Array.isArray(_kni) && _kni.length) return _kni.map(x => ({ title: x.title||'', summary: x.summary||'' }))
+      } catch {}
+      // Source 2: GiftedTech
       try {
           const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/news?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const a = d?.result?.items || d?.result; if (Array.isArray(a) && a.length) return a
       } catch {}
-      // Source 2: ESPN soccer RSS
+      // Source 3: ESPN soccer RSS
       try {
           const r = await fetch(`https://www.espn.com/espn/rss/soccer/news`, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'Mozilla/5.0' } })
           const xml = await r.text()
@@ -322,7 +356,7 @@ const util = require('util')
           }).filter(a => a.title)
           if (items.length) return items
       } catch {}
-      // Source 3: BBC Sport football RSS
+      // Source 4: BBC Sport football RSS
       try {
           const r = await fetch(`https://feeds.bbci.co.uk/sport/football/rss.xml`, { signal: AbortSignal.timeout(10000), headers: { 'User-Agent': 'Mozilla/5.0' } })
           const xml = await r.text()
@@ -338,12 +372,17 @@ const util = require('util')
 
   // ── Multi-source predictions (GiftedTech + ESPN form-based) ──────────────
   async function _getPredictions() {
-      // Source 1: GiftedTech
+      // Source 1: Keith API bet tips (apiskeith.top/bet)
+      try {
+          const _kpd = await _keithFetch('/bet')
+          if (Array.isArray(_kpd) && _kpd.length) return _kpd.map(x => ({ league: x.league||'', match: x.match||'', time: x.time||'', result: x.result||'', predictions: x.predictions||{} }))
+      } catch {}
+      // Source 2: GiftedTech
       try {
           const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/predictions?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const p = Array.isArray(d?.result) ? d.result : (d?.result?.items||[]); if (p.length) return p
       } catch {}
-      // Source 2: Footystats upcoming (unofficial, no key for basic access)
+      // Source 3: Footystats upcoming (unofficial, no key for basic access)
       try {
           const d = await safeJson('https://api.football-prediction-api.com/api/v2/predictions?market=classic&iso_date=' + new Date().toISOString().slice(0,10), { headers: { 'Authorization': 'Bearer free' }, signal: AbortSignal.timeout(10000) })
           if (d?.data?.length) return d.data.slice(0,10).map(m => ({ league: m.competition_name||'', match: `${m.home_team} vs ${m.away_team}`, time: m.start_date||'', predictions: { fulltime: { home: m.home_win_probability||0, draw: m.draw_probability||0, away: m.away_win_probability||0 } } }))
@@ -10554,6 +10593,259 @@ case 'laligaupcoming': {
           await reply(msg)
       } catch(e) { reply('❌ Could not fetch Serie A top scorers. Try again later.') }
   } break
+  
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🇫🇷  LIGUE 1 — STANDINGS · SCORERS · MATCHES (Keith API)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    case 'ligue1':
+    case 'ligue1standings': {
+        await X.sendMessage(m.chat, { react: { text: '🇫🇷', key: m.key } })
+        try {
+            await reply('🏆 _Fetching Ligue 1 standings..._')
+            let teams = await _getStandings('ligue1', 'ligue1')
+            if (!teams?.length) throw new Error('No data')
+            let msg = `╔══〔 🏆 LIGUE 1 STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+            msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+            msg += `${'─'.repeat(50)}\n`
+            for (let t of teams) {
+                let pos = String(t.position).padEnd(3), team = (t.team||'').substring(0,20).padEnd(22)
+                let p = String(t.played||0).padEnd(3), w = String(t.won||0).padEnd(3), dr = String(t.draw||0).padEnd(3)
+                let l = String(t.lost||0).padEnd(3), gd = String(t.goalDifference||0).padEnd(5), pts = String(t.points||0)
+                msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+            }
+            await reply('```\n' + msg + '```')
+        } catch(e) { reply('❌ Could not fetch Ligue 1 standings. Try again later.') }
+    } break
+
+    case 'ligue1scorers':
+    case 'ligue1topscorers': {
+        await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+        try {
+            await reply('⚽ _Fetching Ligue 1 top scorers..._')
+            let scorers = await _getScorers('ligue1', 'ligue1')
+            if (!scorers?.length) throw new Error('No data')
+            let msg = `╔══〔 ⚽ LIGUE 1 TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            for (let s of scorers) {
+                let rank = s.rank || s.position || ''
+                msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
+                msg += `   🥅 Goals: *${s.goals}*`
+                if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+                if (s.penalties && s.penalties !== 'N/A') msg += `  🎽 Pens: ${s.penalties}`
+                msg += '\n'
+            }
+            await reply(msg)
+        } catch(e) { reply('❌ Could not fetch Ligue 1 top scorers. Try again later.') }
+    } break
+
+    case 'ligue1matches':
+    case 'ligue1fixtures': {
+        await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
+        try {
+            await reply('📅 _Fetching Ligue 1 matches..._')
+            let matches = await _getFixtures('ligue1', `https://api.giftedtech.co.ke/api/football/ligue1/upcoming?apikey=${_giftedKey()}`)
+            if (!matches?.length) throw new Error('No data')
+            let msg = `╔══〔 📅 LIGUE 1 FIXTURES 〕══╗\n\n╚═══════════════════════╝`
+            for (let _fm of matches) {
+                msg += `\n📆 *${_fm.date||_fm.matchday||''}*\n`
+                msg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*`
+                if (_fm.status && _fm.status !== '') msg += ` [${_fm.status}]`
+                msg += '\n'
+            }
+            await reply(msg)
+        } catch(e) { reply('❌ Could not fetch Ligue 1 fixtures. Try again later.') }
+    } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🏆  UEFA EUROS — STANDINGS · SCORERS (Keith API)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    case 'euros':
+    case 'eurosstandings':
+    case 'eurostandings': {
+        await X.sendMessage(m.chat, { react: { text: '🏆', key: m.key } })
+        try {
+            await reply('🏆 _Fetching Euros standings..._')
+            let teams = await _getStandings('euros', 'euros')
+            if (!teams?.length) throw new Error('No data')
+            let msg = `╔══〔 🏆 UEFA EUROS STANDINGS 〕══╗\n\n\n╚═══════════════════════╝`
+            msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+            msg += `${'─'.repeat(50)}\n`
+            for (let t of teams) {
+                let pos = String(t.position).padEnd(3), team = (t.team||'').substring(0,20).padEnd(22)
+                let p = String(t.played||0).padEnd(3), w = String(t.won||0).padEnd(3), dr = String(t.draw||0).padEnd(3)
+                let l = String(t.lost||0).padEnd(3), gd = String(t.goalDifference||0).padEnd(5), pts = String(t.points||0)
+                msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+            }
+            await reply('```\n' + msg + '```')
+        } catch(e) { reply('❌ Could not fetch Euros standings. Try again later.') }
+    } break
+
+    case 'eurosscorers':
+    case 'eurotopscorers': {
+        await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+        try {
+            await reply('⚽ _Fetching Euros top scorers..._')
+            let scorers = await _getScorers('euros', 'euros')
+            if (!scorers?.length) throw new Error('No data')
+            let msg = `╔══〔 ⚽ EUROS TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            for (let s of scorers) {
+                let rank = s.rank || s.position || ''
+                msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
+                msg += `   🥅 Goals: *${s.goals}*`
+                if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+                msg += '\n'
+            }
+            await reply(msg)
+        } catch(e) { reply('❌ Could not fetch Euros top scorers. Try again later.') }
+    } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🌍  FIFA WORLD CUP — STANDINGS · SCORERS (Keith API)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    case 'fifa':
+    case 'fifastandings':
+    case 'worldcupstandings': {
+        await X.sendMessage(m.chat, { react: { text: '🌍', key: m.key } })
+        try {
+            await reply('🌍 _Fetching FIFA standings..._')
+            let teams = await _getStandings('fifa', 'fifa')
+            if (!teams?.length) throw new Error('No data')
+            let msg = `╔══〔 🌍 FIFA STANDINGS 〕══╗\n\n\n╚═══════════════════════╝`
+            msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
+            msg += `${'─'.repeat(50)}\n`
+            for (let t of teams) {
+                let pos = String(t.position).padEnd(3), team = (t.team||'').substring(0,20).padEnd(22)
+                let p = String(t.played||0).padEnd(3), w = String(t.won||0).padEnd(3), dr = String(t.draw||0).padEnd(3)
+                let l = String(t.lost||0).padEnd(3), gd = String(t.goalDifference||0).padEnd(5), pts = String(t.points||0)
+                msg += `${pos}${team}${p}${w}${dr}${l}${gd}${pts}\n`
+            }
+            await reply('```\n' + msg + '```')
+        } catch(e) { reply('❌ Could not fetch FIFA standings. Try again later.') }
+    } break
+
+    case 'fifascorers':
+    case 'fifatopscorers':
+    case 'worldcupscorers': {
+        await X.sendMessage(m.chat, { react: { text: '⚽', key: m.key } })
+        try {
+            await reply('⚽ _Fetching FIFA top scorers..._')
+            let scorers = await _getScorers('fifa', 'fifa')
+            if (!scorers?.length) throw new Error('No data')
+            let msg = `╔══〔 ⚽ FIFA TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+            for (let s of scorers) {
+                let rank = s.rank || s.position || ''
+                msg += `${rank}. *${s.player||s.name}* (${s.team||s.club||''})\n`
+                msg += `   🥅 Goals: *${s.goals}*`
+                if (s.assists) msg += `  🎯 Assists: ${s.assists}`
+                msg += '\n'
+            }
+            await reply(msg)
+        } catch(e) { reply('❌ Could not fetch FIFA top scorers. Try again later.') }
+    } break
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔍  PLAYER / TEAM / VENUE SEARCH + MATCH EVENTS (Keith API)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    case 'playersearch':
+    case 'searchplayer': {
+        await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+        const _psq = q?.trim()
+        if (!_psq) { reply('⚠️ Usage: *.playersearch* [player name]\nExample: .playersearch Erling Haaland'); break }
+        try {
+            await reply(`🔍 _Searching for player: ${_psq}..._`)
+            const _psd = await _keithFetch(`/sport/playersearch?q=${encodeURIComponent(_psq)}`)
+            const _psr = Array.isArray(_psd) ? _psd : (_psd?.result || [])
+            if (!_psr.length) { reply(`❌ No player found for "*${_psq}*"`); break }
+            let msg = `╔══〔 🔍 PLAYER SEARCH: ${_psq.toUpperCase()} 〕══╗\n`
+            for (let p of _psr.slice(0, 5)) {
+                msg += `\n👤 *${p.name}*\n`
+                if (p.team) msg += `  🏟️ Club: ${p.team}\n`
+                if (p.nationality) msg += `  🌍 Nationality: ${p.nationality}\n`
+                if (p.position) msg += `  ⚽ Position: ${p.position}\n`
+                if (p.birthDate) msg += `  🎂 Born: ${p.birthDate}\n`
+                if (p.status) msg += `  📋 Status: ${p.status}\n`
+            }
+            msg += `\n╚═══════════════════════╝`
+            await reply(msg)
+        } catch(e) { reply('❌ Player search failed. Try again later.') }
+    } break
+
+    case 'teamsearch':
+    case 'searchteam': {
+        await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+        const _tsq = q?.trim()
+        if (!_tsq) { reply('⚠️ Usage: *.teamsearch* [team name]\nExample: .teamsearch Arsenal'); break }
+        try {
+            await reply(`🔍 _Searching for team: ${_tsq}..._`)
+            const _tsd = await _keithFetch(`/sport/teamsearch?q=${encodeURIComponent(_tsq)}`)
+            const _tsr = Array.isArray(_tsd) ? _tsd : (_tsd?.result || [])
+            if (!_tsr.length) { reply(`❌ No team found for "*${_tsq}*"`); break }
+            let msg = `╔══〔 🔍 TEAM SEARCH: ${_tsq.toUpperCase()} 〕══╗\n`
+            for (let t of _tsr.slice(0, 3)) {
+                msg += `\n🏆 *${t.name}*`
+                if (t.shortName) msg += ` (${t.shortName})`
+                msg += '\n'
+                if (t.league) msg += `  🏟️ League: ${t.league}\n`
+                if (t.country) msg += `  🌍 Country: ${t.country}\n`
+                if (t.stadium) msg += `  🏟️ Stadium: ${t.stadium}\n`
+                if (t.stadiumCapacity) msg += `  👥 Capacity: ${t.stadiumCapacity}\n`
+                if (t.location) msg += `  📍 Location: ${t.location}\n`
+            }
+            msg += `\n╚═══════════════════════╝`
+            await reply(msg)
+        } catch(e) { reply('❌ Team search failed. Try again later.') }
+    } break
+
+    case 'venuesearch':
+    case 'searchvenue':
+    case 'stadiumsearch': {
+        await X.sendMessage(m.chat, { react: { text: '🏟️', key: m.key } })
+        const _vsq = q?.trim()
+        if (!_vsq) { reply('⚠️ Usage: *.venuesearch* [stadium name]\nExample: .venuesearch Wembley'); break }
+        try {
+            await reply(`🏟️ _Searching for venue: ${_vsq}..._`)
+            const _vsd = await _keithFetch(`/sport/venuesearch?q=${encodeURIComponent(_vsq)}`)
+            const _vsr = Array.isArray(_vsd) ? _vsd : (_vsd?.result || [])
+            if (!_vsr.length) { reply(`❌ No venue found for "*${_vsq}*"`); break }
+            let msg = `╔══〔 🏟️ VENUE SEARCH: ${_vsq.toUpperCase()} 〕══╗\n`
+            for (let v of _vsr.slice(0, 3)) {
+                msg += `\n🏟️ *${v.name}*\n`
+                if (v.sport) msg += `  ⚽ Sport: ${v.sport}\n`
+                if (v.description) msg += `  📝 ${v.description.slice(0,200)}...\n`
+            }
+            msg += `\n╚═══════════════════════╝`
+            await reply(msg)
+        } catch(e) { reply('❌ Venue search failed. Try again later.') }
+    } break
+
+    case 'gameevents':
+    case 'matchevents':
+    case 'matchhistory': {
+        await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+        const _geq = q?.trim()
+        if (!_geq) { reply('⚠️ Usage: *.gameevents* [team1 vs team2]\nExample: .gameevents Arsenal vs Chelsea'); break }
+        try {
+            await reply(`📋 _Searching match events: ${_geq}..._`)
+            const _ged = await _keithFetch(`/sport/gameevents?q=${encodeURIComponent(_geq)}`)
+            const _ger = Array.isArray(_ged) ? _ged : (_ged?.result || [])
+            if (!_ger.length) { reply(`❌ No match events found for "*${_geq}*"`); break }
+            let msg = `╔══〔 📋 MATCH EVENTS: ${_geq.toUpperCase()} 〕══╗\n`
+            for (let ev of _ger.slice(0, 5)) {
+                msg += `\n⚽ *${ev.match||ev.alternateMatchName||''}*\n`
+                if (ev.league?.name) msg += `  🏆 League: ${ev.league.name}\n`
+                if (ev.season) msg += `  📅 Season: ${ev.season}\n`
+                if (ev.dateTime?.date) msg += `  🗓️ Date: ${ev.dateTime.date} ${ev.dateTime.time||''}\n`
+                if (ev.teams?.home && ev.teams?.away) {
+                    msg += `  🔵 ${ev.teams.home.name} ${ev.teams.home.score ?? ''} – ${ev.teams.away.score ?? ''} ${ev.teams.away.name}\n`
+                }
+                if (ev.venue?.name) msg += `  🏟️ Venue: ${ev.venue.name}\n`
+                if (ev.status) msg += `  📋 Status: ${ev.status}\n`
+            }
+            msg += `\n╚═══════════════════════╝`
+            await reply(msg)
+        } catch(e) { reply('❌ Match events search failed. Try again later.') }
+    } break
+
   
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
