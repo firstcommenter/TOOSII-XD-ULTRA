@@ -1924,6 +1924,30 @@ break
       } catch(e) { reply(`❌ Package *${_npq}* not found on npm.`) }
   } break
 
+  case 'pinterestsearch':
+  case 'pinterest': {
+      await X.sendMessage(m.chat, { react: { text: '📌', key: m.key } })
+      const _piq = q?.trim() || text?.trim()
+      if (!_piq) return reply(`╌══〔 📌 PINTEREST 〕══════╌\n║ *Usage:* ${prefix}pinterest [search]\n║ Example: ${prefix}pinterest cute cats\n╚═══════════════════════╝`)
+      try {
+          await reply(`📌 _Searching Pinterest for: ${_piq}..._`)
+          const _pid = await _keithFetch(`/stalker/pinterest?q=${encodeURIComponent(_piq)}`)
+          const _pir = Array.isArray(_pid) ? _pid : (_pid?.result || _pid?.pins || [])
+          if (!_pir.length) { reply(`❌ No Pinterest results for *${_piq}*`); break }
+          const _pickpin = _pir[Math.floor(Math.random() * Math.min(_pir.length, 5))]
+          const _pinUrl = _pickpin.url || _pickpin.image || _pickpin.imageUrl
+          if (_pinUrl) {
+              await safeSendMedia(m.chat, { image: { url: _pinUrl }, caption: `📌 *Pinterest: ${_piq}*\n\n🔎 ${_pir.length} results found` }, {}, { quoted: m })
+          } else {
+              let msg = `╌══〔 📌 PINTEREST: ${_piq} 〕╌\n`
+              for (let p of _pir.slice(0, 5)) { msg += `\n📌 *${p.title || p.board || ''}* \n   🔗 ${p.link || p.url || ''}\n` }
+              msg += `\n╚═══════════════════════╝`
+              await reply(msg)
+          }
+      } catch(e) { reply('❌ Pinterest search failed. Try again later.') }
+  } break
+
+
 
   case 'firelogo':
   case 'flogo': {
@@ -8688,6 +8712,33 @@ print('ok')
     await X.sendMessage(m.chat, { image: _result, caption: '✅ *Background removed successfully!*\n_✂️ Powered by Toosii Tech_' }, { quoted: m })
 } catch(e) { reply(`❌ *removebg failed:* ${e.message}`) }
 } break
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🖼️  IMAGE ENHANCEMENT (Keith API)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'hd':
+case 'upscale': {
+    await X.sendMessage(m.chat, { react: { text: '🔭', key: m.key } })
+    const _hdMsg = m.quoted || m
+    const _hdMime = _hdMsg?.message?.imageMessage?.mimetype || ''
+    if (!_hdMime.startsWith('image/')) return reply('❌ *Reply to an image* to upscale/enhance it to HD quality.')
+    try {
+        await reply('🔭 _Enhancing image to HD... Please wait..._')
+        const _hdBuf = await X.downloadMediaMessage(_hdMsg)
+        const _hdB64 = _hdBuf.toString('base64')
+        const _hdRes = await fetch('https://apiskeith.top/images/hd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: _hdB64 }),
+            signal: AbortSignal.timeout(40000)
+        })
+        const _hdData = await _hdRes.json()
+        const _hdUrl = _hdData?.result?.url || _hdData?.url || _hdData?.imageUrl
+        if (!_hdUrl) throw new Error('No HD image returned')
+        await safeSendMedia(m.chat, { image: { url: _hdUrl }, caption: '✅ *Image enhanced to HD quality!*' }, {}, { quoted: m })
+    } catch(e) { reply(`❌ HD upscale failed: ${e.message}`) }
+} break
+
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Game Commands
