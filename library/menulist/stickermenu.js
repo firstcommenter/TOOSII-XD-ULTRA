@@ -8,6 +8,8 @@ const stickerMenu = `
   ║ .steal
   ║ .qc
   ║ .brat
+  ║ .attp
+  ║ .ttp
   ║ .bratv
   ║ .emojimix
   ║ .telestick
