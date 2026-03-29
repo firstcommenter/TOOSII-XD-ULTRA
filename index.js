@@ -1207,7 +1207,7 @@ if (global.antiLink && mek.message && !mek.key.fromMe) {
                     })
                     if (isBotAdmin) {
                         await X.sendMessage(chat, { delete: mek.key })
-                        await X.sendMessage(chat, { text: `*Anti-Link*\n@${senderNum}, links are not allowed in this group.`, mentions: [senderJid] })
+                        await X.sendMessage(chat, { text: `╔══〔 🔗 ANTI-LINK 〕══╗\n\n║ ⚠️ @${senderNum}\n║ Links are not allowed in this group.\n║ Your message has been deleted.\n╚═══════════════════════╝`, mentions: [senderJid] })
                     }
                 } catch {}
             }
@@ -1431,7 +1431,7 @@ if (!global._connMsgSent.has(phone)) {
       }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
-        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(23)}╝`})
+        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ ��� Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(23)}╝`})
     } catch (e) {}
 }
 console.log(`[BOT_CONNECTED:${connUser}]`)
@@ -1612,7 +1612,7 @@ _Use your powers wisely and responsibly!_ ⚡`
 @${numClean} has been *demoted from Admin*
 in *${groupName}*
 
-┌─────────────────────────────
+┌────────────────────────���────
 │ 👤 Role     : Member
 │ 👥 Members  : ${totalMembers}
 └─────────────────────────────
