@@ -8646,6 +8646,80 @@ case 'tr': {
     } catch(e) { reply('❌ Translation failed: ' + e.message) }
 } break
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔊  TEXT TO SPEECH
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  case 'tts':
+  case 'speak':
+  case 'say': {
+      await X.sendMessage(m.chat, { react: { text: '🔊', key: m.key } })
+      let _ttsText = text || (m.quoted ? (m.quoted.text || m.quoted.body || '') : '')
+      let _ttsLang = 'en'
+      if (!_ttsText) return reply(`╔══〔 🔊 TEXT TO SPEECH 〕══╗\n\n║ *Usage:*\n║ *${prefix}tts* [text]\n║ *${prefix}tts* [lang]|[text]\n║ Reply to text with *${prefix}tts*\n║\n║ *Languages:* en · es · fr · de · ar\n║   pt · hi · zh · ja · ko · ru\n╚═══════════════════════╝`)
+      if (_ttsText.includes('|')) {
+          const _sp = _ttsText.split('|')
+          _ttsLang = _sp[0].trim().toLowerCase() || 'en'
+          _ttsText = _sp.slice(1).join('|').trim()
+      }
+      if (!_ttsText) return reply('❌ Please provide text to convert to speech.')
+      if (_ttsText.length > 200) _ttsText = _ttsText.slice(0, 200)
+      try {
+          let _ttsAudio = null
+          // Method 1: Keith API TTS
+          try {
+              const _kth = await _keithFetch(`/tts?text=${encodeURIComponent(_ttsText)}&lang=${encodeURIComponent(_ttsLang)}`, 30000)
+              if (_kth?.url) {
+                  const _rb = await fetch(_kth.url, { signal: AbortSignal.timeout(20000) })
+                  if (_rb.ok) _ttsAudio = Buffer.from(await _rb.arrayBuffer())
+              }
+          } catch {}
+          // Method 2: Google Translate TTS (no key)
+          if (!_ttsAudio) {
+              try {
+                  const _gtUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(_ttsLang)}&client=tw-ob&q=${encodeURIComponent(_ttsText)}`
+                  const _gtRes = await fetch(_gtUrl, {
+                      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36' },
+                      signal: AbortSignal.timeout(20000)
+                  })
+                  if (_gtRes.ok) {
+                      const _ct = _gtRes.headers.get('content-type') || ''
+                      if (_ct.includes('audio') || _ct.includes('mpeg')) {
+                          _ttsAudio = Buffer.from(await _gtRes.arrayBuffer())
+                      }
+                  }
+              } catch {}
+          }
+          // Method 3: VoiceRSS-style fallback via Keith translate endpoint
+          if (!_ttsAudio) {
+              try {
+                  const _vRes = await fetch(`https://apiskeith.top/api/tts?text=${encodeURIComponent(_ttsText)}&language=${encodeURIComponent(_ttsLang)}`, {
+                      signal: AbortSignal.timeout(25000)
+                  })
+                  if (_vRes.ok) {
+                      const _vct = _vRes.headers.get('content-type') || ''
+                      if (_vct.includes('audio') || _vct.includes('mpeg') || _vct.includes('wav')) {
+                          _ttsAudio = Buffer.from(await _vRes.arrayBuffer())
+                      } else {
+                          const _vd = await _vRes.json().catch(() => null)
+                          if (_vd?.url) {
+                              const _vAB = await fetch(_vd.url, { signal: AbortSignal.timeout(15000) })
+                              if (_vAB.ok) _ttsAudio = Buffer.from(await _vAB.arrayBuffer())
+                          }
+                      }
+                  }
+              } catch {}
+          }
+          if (!_ttsAudio || _ttsAudio.length < 500) throw new Error('TTS service unavailable. Try again shortly.')
+          await X.sendMessage(m.chat, {
+              audio: _ttsAudio,
+              mimetype: 'audio/mpeg',
+              fileName: 'tts.mp3',
+              ptt: true
+          }, { quoted: m })
+      } catch(e) { reply(`❌ *TTS failed:* ${e.message}`) }
+  } break
+  
+
 case 'transcribe': {
     await X.sendMessage(m.chat, { react: { text: '🎙️', key: m.key } })
 if (!m.quoted || !/audio|video/.test(m.quoted.mimetype || ''))
