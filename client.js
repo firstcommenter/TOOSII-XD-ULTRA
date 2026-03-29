@@ -11448,59 +11448,62 @@ case 'setgpic': {
 
 case 'blur': {
   await X.sendMessage(m.chat, { react: { text: '🌫️', key: m.key } })
-  if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 🌫️ BLUR EFFECT 〕════╗\n║ Reply to an image with *${prefix}blur*\n╚═══════════════════════╝`)
+  const _blurMime = (m.quoted && (m.quoted.msg || m.quoted).mimetype) || ''
+  if (!m.quoted || !/image/.test(_blurMime)) return reply(`╔══〔 🌫️ BLUR EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}blur*\n╚═══════════════════════╝`)
   try {
     await reply('🌫️ _Applying blur effect..._')
     let buf = await m.quoted.download()
     let Jimp = require('jimp')
-    let img = await Jimp.read(buf)
+    let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.blur(10)
-    let out = await img.getBufferAsync(Jimp.MIME_JPEG)
-    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🌫️ BLUR EFFECT 〕════╗\n║ ✅ Blur applied!\n╚═══════════════════════╝` }, { quoted: m })
+    let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
+    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🌫️ BLUR EFFECT 〕══╗\n\n║ ✅ Blur applied!\n╚═══════════════════════╝` }, { quoted: m })
   } catch (e) { reply('❌ Blur failed: ' + e.message) }
 } break
 
 case 'sharpen': {
   await X.sendMessage(m.chat, { react: { text: '🔪', key: m.key } })
-  if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 🔪 SHARPEN EFFECT 〕══╗\n║ Reply to an image with *${prefix}sharpen*\n╚═══════════════════════╝`)
+  const _sharpMime = (m.quoted && (m.quoted.msg || m.quoted).mimetype) || ''
+  if (!m.quoted || !/image/.test(_sharpMime)) return reply(`╔══〔 🔪 SHARPEN EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}sharpen*\n╚═══════════════════════╝`)
   try {
     await reply('🔪 _Sharpening image..._')
     let buf = await m.quoted.download()
     let Jimp = require('jimp')
-    let img = await Jimp.read(buf)
-    // Apply convolution matrix for sharpen
+    let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.convolute([[0,-1,0],[-1,5,-1],[0,-1,0]])
-    let out = await img.getBufferAsync(Jimp.MIME_JPEG)
-    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🔪 SHARPEN EFFECT 〕══╗\n║ ✅ Image sharpened!\n╚═══════════════════════╝` }, { quoted: m })
+    let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
+    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🔪 SHARPEN EFFECT 〕══╗\n\n║ ✅ Image sharpened!\n╚═══════════════════════╝` }, { quoted: m })
   } catch (e) { reply('❌ Sharpen failed: ' + e.message) }
 } break
 
 case 'greyscale':
 case 'grayscale': {
   await X.sendMessage(m.chat, { react: { text: '⬛', key: m.key } })
-  if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 ⬛ GREYSCALE 〕══════╗\n║ Reply to an image with *${prefix}greyscale*\n╚═══════════════════════╝`)
+  const _greyMime = (m.quoted && (m.quoted.msg || m.quoted).mimetype) || ''
+  if (!m.quoted || !/image/.test(_greyMime)) return reply(`╔══〔 ⬛ GREYSCALE 〕══╗\n\n║ Reply to an image with *${prefix}greyscale*\n╚═══════════════════════╝`)
   try {
     await reply('⬛ _Converting to greyscale..._')
     let buf = await m.quoted.download()
     let Jimp = require('jimp')
-    let img = await Jimp.read(buf)
+    let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.greyscale()
-    let out = await img.getBufferAsync(Jimp.MIME_JPEG)
-    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 ⬛ GREYSCALE 〕══════╗\n║ ✅ Greyscale applied!\n╚═══════════════════════╝` }, { quoted: m })
+    let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
+    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 ⬛ GREYSCALE 〕══╗\n\n║ ✅ Greyscale applied!\n╚═══════════════════════╝` }, { quoted: m })
   } catch (e) { reply('❌ Greyscale failed: ' + e.message) }
 } break
 
 case 'sepia': {
   await X.sendMessage(m.chat, { react: { text: '🟫', key: m.key } })
-  if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 🟫 SEPIA EFFECT 〕═══╗\n║ Reply to an image with *${prefix}sepia*\n╚═══════════════════════╝`)
+  const _sepiaMime = (m.quoted && (m.quoted.msg || m.quoted).mimetype) || ''
+  if (!m.quoted || !/image/.test(_sepiaMime)) return reply(`╔══〔 🟫 SEPIA EFFECT 〕══╗\n\n║ Reply to an image with *${prefix}sepia*\n╚═══════════════════════╝`)
   try {
     await reply('🟫 _Applying sepia tone..._')
     let buf = await m.quoted.download()
     let Jimp = require('jimp')
-    let img = await Jimp.read(buf)
+    let img = await (Jimp.read ? Jimp.read(buf) : Jimp.fromBuffer(buf))
     img.sepia()
-    let out = await img.getBufferAsync(Jimp.MIME_JPEG)
-    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🟫 SEPIA EFFECT 〕═══╗\n║ ✅ Sepia applied!\n╚═══════════════════════╝` }, { quoted: m })
+    let out = await (img.getBufferAsync ? img.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : img.getBuffer('image/jpeg'))
+    await X.sendMessage(m.chat, { image: out, caption: `╔══〔 🟫 SEPIA EFFECT 〕══╗\n\n║ ✅ Sepia applied!\n╚═══════════════════════╝` }, { quoted: m })
   } catch (e) { reply('❌ Sepia failed: ' + e.message) }
 } break
 
