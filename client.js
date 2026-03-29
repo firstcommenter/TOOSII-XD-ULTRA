@@ -12231,6 +12231,8 @@ case 'news': {
     body += `╚═══════════════════════╝`
     reply(body)
   } catch (e) { reply('❌ News fetch failed: ' + e.message) }
+} break
+
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📚  EDUCATION — GRAMMAR · POEM · BOOKS · FRUIT INFO (Keith API)
