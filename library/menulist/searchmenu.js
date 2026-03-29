@@ -1,45 +1,42 @@
 const searchMenu = `
-╔═══〔 🔍 WEB SEARCH 〕═══╗
+  ╔═══〔 🔍 WEB SEARCH 〕═══╗
 
-║ .google
-║ .define
-║ .dictionary
-║ .playstore
-║ .yts
-║ .img
+  ║ .google
+  ║ .define
+  ║ .dictionary
+  ║ .playstore
+  ║ .yts
+  ║ .img
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 🎬 MEDIA SEARCH 〕══╗
+  ╔══〔 🎬 MEDIA SEARCH 〕══╗
 
-║ .movie
-║ .stream
-║ .anime
-║ .manga
-║ .wallpaper
-║ .lyrics
-║ .shazam
+  ║ .movie
+  ║ .stream
+  ║ .anime
+  ║ .manga
+  ║ .wallpaper
+  ║ .lyrics
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 📰 NEWS & INFO 〕═══╗
+  ╔══〔 📰 NEWS & INFO 〕═══╗
 
-║ .news
-║ .wiki
-║ .urban
-║ .weather
-║ .translate
+  ║ .news
+  ║ .wiki
+  ║ .urban
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔═════〔 🐙 GITHUB 〕═════╗
+  ╔═════〔 🐙 GITHUB 〕═════╗
 
-║ .github
-║ .git
-║ .repo
-║ .clone
+  ║ .github
+  ║ .git
+  ║ .repo
+  ║ .clone
 
-╚═══════════════════════╝
-`
+  ╚═══════════════════════╝
+  `
 
-module.exports = searchMenu
+  module.exports = searchMenu
