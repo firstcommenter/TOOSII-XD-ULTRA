@@ -554,14 +554,23 @@ if (!X._botSentTracked) {
     const _origSM = X.sendMessage.bind(X)
     X.sendMessage = async (..._smArgs) => {
         // ── Global empty-message guard ──────────────────────────────────────
-        // Block any outgoing message where text is '', '   ', undefined, or null.
-        // This catches ALL code paths (commands, handlers, auto-features) in one place.
+        // Block any outgoing message where text is '', '   ', undefined, null,
+        // or the literal strings 'undefined'/'null' from bad template interpolation.
+        // Also strips empty captions from media messages (leaves media intact).
         const _msgPayload = _smArgs[1]
-        if (_msgPayload && 'text' in _msgPayload) {
-            const _txt = _msgPayload.text
-            if (_txt === undefined || _txt === null || (typeof _txt === 'string' && !_txt.trim())) {
+        const _isEmptyVal = (v) => {
+            if (v === undefined || v === null) return true
+            if (typeof v !== 'string') return false
+            const _s = v.trim()
+            return !_s || _s === 'undefined' || _s === 'null'
+        }
+        if (_msgPayload) {
+            if ('text' in _msgPayload && _isEmptyVal(_msgPayload.text)) {
                 console.log('[EmptyGuard] Blocked empty text send to', _smArgs[0])
                 return null
+            }
+            if ('caption' in _msgPayload && _isEmptyVal(_msgPayload.caption)) {
+                delete _msgPayload.caption
             }
         }
         // ───────────────────────────────────────────────────────────────────
@@ -13197,7 +13206,7 @@ teks = await eval(`(async () => { ${kode == ">>" ? "return" : ""} ${q}})()`)
 } catch (e) {
 teks = e
 } finally {
-await reply(require('util').format(teks))
+const _evalStr = require('util').format(teks); if (_evalStr && _evalStr !== 'undefined' && _evalStr !== 'null') await reply(_evalStr)
 }
 }
 
@@ -13214,7 +13223,9 @@ if (global.chatBoAIChats && global.chatBoAIChats[m.chat] && budy && !isCmd && !m
     try {
         await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
         const _cbaAutoReply = await _runChatBoAI(budy, true)
-        reply(`${_cbaAutoReply}`)
+        if (_cbaAutoReply && _cbaAutoReply.trim()) {
+              reply(_cbaAutoReply.trim())
+          }
     } catch (e) {
         console.log('[ChatBoAI-Auto] Error:', e.message || e)
     }
