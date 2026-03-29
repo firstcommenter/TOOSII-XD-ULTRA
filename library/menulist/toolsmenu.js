@@ -1,73 +1,61 @@
 const toolsMenu = `
-╔═══〔 ⚡ QUICK TOOLS 〕═══╗
+  ╔═══〔 ⚡ QUICK TOOLS 〕═══╗
 
-║ .totalfitur
-║ .prefix
-║ .pair
-║ .save
-║ .ping
-║ .runtime
-║ .getcmd
+  ║ .totalfitur
+  ║ .prefix
+  ║ .pair
+  ║ .save
+  ║ .ping
+  ║ .runtime
+  ║ .getcmd
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 🛠️ UTILITY TOOLS 〕══╗
+  ╔══〔 🛠️ UTILITY TOOLS 〕══╗
 
-║ .weather
-║ .translate
-║ .tinyurl
-║ .shorturl
-║ .removebg
-║ .qr
-║ .readqr
-║ .xmascard
-║ .robottext
-║ .webcopier
+  ║ .weather
+  ║ .translate
+  ║ .tinyurl
+  ║ .shorturl
+  ║ .removebg
+  ║ .qr
+  ║ .readqr
+  ║ .xmascard
+  ║ .robottext
+  ║ .webcopier
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 🎵 AUDIO & VOICE 〕══╗
+  ╔══〔 🎵 AUDIO & VOICE 〕══╗
 
-║ .tomp3
-║ .toaudio
-║ .toppt
-║ .transcript
-║ .shazam
+  ║ .tomp3
+  ║ .toaudio
+  ║ .toppt
+  ║ .transcript
+  ║ .shazam
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 🤖 AI CREATION 〕═══╗
+  ╔══〔 🤖 AI CREATION 〕═══╗
 
-║ .imagine
-║ .magicstudio
-║ .fluximg
-║ .deepimg
-║ .aiart
-║ .genimage
-║ .aisong
-║ .songgenerator →  [prompt]
+  ║ .fluximg
+  ║ .deepimg
+  ║ .songgenerator →  [prompt]
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 👻 PRESENCE TOOLS 〕══╗
+  ╔══〔 👻 PRESENCE TOOLS 〕══╗
 
-║ .vv
-║ .autoonline
-║ .autorecording
-║ .autotyping
+  ║ .vv
 
-╚═══════════════════════╝
+  ╚═══════════════════════╝
 
-╔══〔 📊 STATUS TOOLS 〕══╗
+  ╔══〔 📊 STATUS TOOLS 〕══╗
 
-║ .autostatus
-║ .autoviewstatus
-║ .autolikestatus
-║ .autoreplystatus
-║ .togroupstatus
-║ .antistatusmention
+  ║ .autostatus
+  ║ .togroupstatus
 
-╚═══════════════════════╝
-`
+  ╚═══════════════════════╝
+  `
 
-module.exports = toolsMenu
+  module.exports = toolsMenu
