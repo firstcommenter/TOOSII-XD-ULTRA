@@ -5821,9 +5821,13 @@ _⚡ Powered by ${global.ownername || 'Toosii Tech'}_`
 
 if (command === 'ping' || command === 'p') {
     const _t = Date.now()
-    const _sent = await X.sendMessage(m.chat, { text: `╔════〔 ⚡ PONG!  🏓 〕════╗` }, { quoted: m })
+    const _sent = await X.sendMessage(m.chat, { text: `╔══════〔 🏓 PING 〕══════╗\n║ Measuring...` }, { quoted: m })
     const _ms = Date.now() - _t
-    await X.sendMessage(m.chat, { text: `╔══〔 ⚡ PONG!  📡 ${ms}ms 〕══╗`, edit: _sent.key })
+    const _rating = _ms < 200 ? '🟢 Fast' : _ms < 600 ? '🟡 Normal' : '🔴 Slow'
+    const _ram = process.memoryUsage()
+    const _ramUsed = (_ram.rss / 1024 / 1024).toFixed(1)
+    const _pingText = `╔══════〔 🏓 PING 〕══════╗\n║ 📡 Speed   : ${_ms}ms\n║ ${_rating}\n║ ⏱️  Uptime  : ${runtime(process.uptime())}\n║ 💾 RAM     : ${_ramUsed} MB\n╚${'═'.repeat(23)}╝`
+    await X.sendMessage(m.chat, { text: _pingText, edit: _sent.key })
 } else {
   const responseText = await getServerInfo()
   await X.sendMessage(m.chat, { text: responseText }, { quoted: m })
