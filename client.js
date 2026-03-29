@@ -1791,8 +1791,23 @@ break
   case 'spotify':
   case 'sp': {
       await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
-      if (!text) return reply(`╔══〔 🎵 SPOTIFY DOWNLOADER 〕══╗\n\n║ Usage: *${prefix + command} <Spotify track link>*\n║ Example: ${prefix + command} https://open.spotify.com/track/...\n╚═══════════════════════╝`)
-      if (!/open\.spotify\.com\/track\//i.test(text)) return reply('❌ Only Spotify *track* links are supported.\nhttps://open.spotify.com/track/...')
+      if (!text) return reply(`╔══〔 🎵 SPOTIFY 〕════════╗\n\n║ *Download:* ${prefix}spotify [track url]\n║ *Search:*   ${prefix}spotify [song name]\n╚═══════════════════════╝`)
+      const _isSpotUrl = /open\.spotify\.com\/track|spotify\.link/i.test(text)
+      if (!_isSpotUrl) {
+          // Song name search → show YouTube results
+          try {
+              let _srch = await yts(text)
+              let _hits = (_srch.all || []).filter(v => v.type === 'video').slice(0, 5)
+              if (!_hits.length) return reply('❌ No results found. Try different keywords.')
+              let _out = `╔══〔 🔍 SPOTIFY SEARCH 〕══╗\n\n`
+              _hits.forEach((v, i) => {
+                  _out += `║ *${i+1}.* ${(v.title||'').slice(0,50)}\n`
+                  _out += `║    👤 ${v.author?.name || 'Unknown'} | ⏱️ ${v.timestamp || '?'}\n`
+              })
+              _out += `╠══〔 📥 DOWNLOAD 〕════════╣\n║ Use *${prefix}play [song name]* to download\n╚═══════════════════════╝`
+              return reply(_out)
+          } catch (_se) { return reply('❌ Search failed: ' + _se.message) }
+      }
       try {
         const _sp = await fetch(`https://eliteprotech-apis.zone.id/spotify?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(25000) })
         const _spd = await _sp.json()
@@ -7568,43 +7583,6 @@ if (videoUrl || videoPath) {
 finally { if (_ytdocvTmp && fs.existsSync(_ytdocvTmp)) try { fs.unlinkSync(_ytdocvTmp) } catch {} }
 } break
 
-case 'spotify': {
-    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
-    if (!text) return reply(`🎵 Example:\n║ ${prefix}spotify Shape of You — search\n║ ${prefix}spotify https://open.spotify.com/track/... — download`)
-    try {
-        const _isSpotUrl = /open\.spotify\.com\/track|spotify\.link/.test(text)
-        if (_isSpotUrl) {
-            // Spotify URL: download using EliteProTech
-            await reply('⏳ _Fetching Spotify track..._')
-            let _ep = await fetch(`https://eliteprotech-apis.zone.id/spotify?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(25000) })
-            let _epd = await _ep.json()
-            if (_epd.success && _epd.data?.download) {
-                let _meta = _epd.data.metadata || {}
-                let _cap = `🎵 *${_meta.title || 'Spotify Track'}*\n`
-                if (_meta.artist)   _cap += `🎤 *Artist:* ${_meta.artist}\n`
-                if (_meta.duration) _cap += `⏱️ *Duration:* ${_meta.duration}\n`
-                await X.sendMessage(m.chat, { audio: { url: _epd.data.download }, mimetype: 'audio/mpeg', fileName: `${_meta.title || 'track'}.mp3` }, { quoted: m })
-                await reply(_cap)
-            } else {
-                reply('❌ Could not download that Spotify track. Make sure it is a public track URL.')
-            }
-        } else {
-            // Song name: search YouTube and show results
-            let search = await yts(text)
-            if (!search.all.length) return reply('No results found.')
-            let results = search.all.filter(v => v.type === 'video').slice(0, 5)
-            if (!results.length) return reply('No results found.')
-            let songInfo = `🎵 *Spotify Search: ${text}*\n\n`
-            results.forEach((v, i) => {
-                songInfo += `*${i+1}.* ${v.title}\n`
-                songInfo += `   Artist: ${v.author?.name || 'Unknown'}\n`
-                songInfo += `   Duration: ${v.timestamp}\n\n`
-            })
-            songInfo += `_Use ${prefix}play [song name] to download as MP3_`
-            reply(songInfo)
-        }
-    } catch(e) { reply('❌ Error: ' + e.message) }
-} break
 
 case 'apk': {
     await X.sendMessage(m.chat, { react: { text: '📲', key: m.key } })
