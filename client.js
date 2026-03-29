@@ -9631,8 +9631,13 @@ if (!_iceDone) {
 try { _fs.unlinkSync(_pyFile) } catch {}
 try { _fs.unlinkSync(_outFile) } catch {}
 } break
-    X.sendMessage(from, { text: `*💕 ${pushname} sends love to @${heartTarget.split('@')[0]}! 💕*`, mentions: [heartTarget] }, { quoted: m })
-} else {
+
+case 'heart': {
+    await X.sendMessage(m.chat, { react: { text: '💕', key: m.key } })
+    let heartTarget = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : sender
+    if (!m.quoted) {
+        X.sendMessage(from, { text: `*💕 ${pushname} sends love to @${heartTarget.split('@')[0]}! 💕*`, mentions: [heartTarget] }, { quoted: m })
+    } else {
     try {
         const imgBuf = await m.quoted.download()
         const Jimp = require('jimp')
