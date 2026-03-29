@@ -1,18 +1,18 @@
 const downloaderMenu = `
 ╔══〔 📥 MEDIA DOWNLOADERS 〕══╗
 
-│  • .play      
-│  • .song      
-│  • .video     
-│  • .ytdocplay 
-│  • .ytdocvideo
-│  • .ig        
-│  • .tt        
-│  • .fb        
-│  • .spotify   
-│  • .mediafire 
-│  • .apk       
-│  • .gitclone  
+║ .play
+║ .song
+║ .video
+║ .ytdocplay
+║ .ytdocvideo
+║ .ig
+║ .tt
+║ .fb
+║ .spotify
+║ .mediafire
+║ .apk
+║ .gitclone
 
 ╚═══════════════════════╝
 `
