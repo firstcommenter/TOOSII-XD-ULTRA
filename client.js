@@ -6414,17 +6414,37 @@ const _ppLabel = async (jid) => {
     // If it's a LID JID (@lid), try to look up the real phone via onWhatsApp
     const isLid = jid.endsWith('@lid')
     if (isLid) {
+        const lidNum = jid.split('@')[0]
+        // TIER 1: resolve via group participant list
         try {
-            // Try to get real number from group participant list if in a group
             if (m.isGroup && participants) {
-                const match = participants.find(p => p.id && p.id.includes(jid.split('@')[0]))
+                const match = participants.find(p => p.id && p.id.includes(lidNum))
                 if (match && match.id && !match.id.endsWith('@lid')) {
-                    const num = '+' + match.id.split('@')[0]
-                    return num
+                    const resolvedJid = match.id
+                    const num = '+' + resolvedJid.split('@')[0]
+                    const sc = store?.contacts?.[resolvedJid]
+                    const sn = sc?.name || sc?.notify || sc?.verifiedName
+                    return sn ? `${sn} (${num})` : num
                 }
             }
         } catch {}
-        return 'Unknown'
+        // TIER 2: check store.contacts keyed by LID directly
+        const lidSc = store?.contacts?.[jid]
+        const lidSn = lidSc?.name || lidSc?.notify || lidSc?.verifiedName
+        if (lidSn) return lidSn
+        // TIER 3: scan store.contacts for a contact whose .lid matches
+        if (store?.contacts) {
+            for (const [cjid, c] of Object.entries(store.contacts)) {
+                if ((c?.lid && c.lid.includes(lidNum)) || (c?.implicitlyNotified && cjid.includes(lidNum))) {
+                    const num = '+' + cjid.split('@')[0]
+                    const sn = c?.name || c?.notify || c?.verifiedName
+                    return sn ? `${sn} (${num})` : num
+                }
+            }
+        }
+        // TIER 4: truly unresolvable — show as Unsaved Contact instead of Unknown
+        return 'Unsaved Contact'
+    }
     }
     const num = _ppNum(jid)
     // Use store.contacts for real push names (same source as group member commands)
