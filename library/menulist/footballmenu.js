@@ -1,55 +1,55 @@
 const footballMenu = `
 ╔══〔 ⚽ FOOTBALL SCORES 〕══╗
 
-│  • .livescore   
-│  • .predictions 
-│  • .tips        
-│  • .fixtures    
-│  • .footnews    
+║ .livescore
+║ .predictions
+║ .tips
+║ .fixtures
+║ .footnews
 
 ╚═══════════════════════╝
 
 ╔══〔 🏴󠁧󠁢󠁥󠁮󠁧󠁿 PREMIER LEAGUE 〕══╗
 
-│  • .epl         
-│  • .eplscorers  
-│  • .eplmatches  
+║ .epl
+║ .eplscorers
+║ .eplmatches
 
 ╚═══════════════════════╝
 
 ╔═══〔 🇪🇸 LA LIGA 〕════╗
 
-│  • .laliga       
-│  • .laligascorers
-│  • .laligamatches
+║ .laliga
+║ .laligascorers
+║ .laligamatches
 
 ╚═══════════════════════╝
 
 ╔══〔 🏆 CHAMPIONS LEAGUE 〕══╗
 
-│  • .ucl          
+║ .ucl
 
 ╚═══════════════════════╝
 
 ╔══〔 🇩🇪 BUNDESLIGA 〕══╗
 
-│  • .bundesliga       
-│  • .bundesligascorers
+║ .bundesliga
+║ .bundesligascorers
 
 ╚═══════════════════════╝
 
 ╔═══〔 🇮🇹 SERIE A 〕════╗
 
-│  • .seriea       
+║ .seriea
 
 ╚═══════════════════════╝
 
 ╔══〔 🏅 MULTI-SPORT 〕═══╗
 
-│  • .sportscategories 
-│  • .livesports [cat] 
-│  • .allsports  [cat] 
-│  • .watchsport [id]  
+║ .sportscategories
+║ .livesports [cat]
+║ .allsports  [cat]
+║ .watchsport [id]
 
 │  Categories: football, basketball, tennis,
 │  cricket, rugby, hockey, volleyball, boxing
