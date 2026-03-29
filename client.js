@@ -5203,13 +5203,13 @@ case 'telestick': {
   async function telestick(url) {
     let match = url.match(/https:\/\/t\.me\/addstickers\/([^\/\?#]+)/)
     if (!match) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} https://...*\n╚═══════════════════════╝`);
-    let { data: a } = await axios.get(`https://api.telegram.org/bot7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc/getStickerSet?name=${match[1]}`)
+    let { data: a } = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getStickerSet?name=${match[1]}`)
     let stickers = await Promise.all(a.result.stickers.map(async v => {
-      let { data: b } = await axios.get(`https://api.telegram.org/bot7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc/getFile?file_id=${v.file_id}`)
+      let { data: b } = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${v.file_id}`)
       return {
         emoji: v.emoji,
         is_animated: v.is_animated,
-        image_url: `https://api.telegram.org/file/bot7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc/${b.result.file_path}`
+        image_url: `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${b.result.file_path}`
       }
     }))
     return { name: a.result.name, title: a.result.title, sticker_type: a.result.sticker_type, stickers }
@@ -8661,7 +8661,7 @@ reply(`╔═════〔 💘 FLIRT 〕══════╗\n\n║ ${flirts
 case 'shayari': {
     await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
 try {
-    let _gs = await fetch('https://api.giftedtech.co.ke/api/fun/shayari?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+    let _gs = await fetch(`https://api.giftedtech.co.ke/api/fun/shayari?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _gsd = await _gs.json()
     if (_gsd.success && _gsd.result) return reply(`╔════〔 📜 SHAYARI 〕═════╗\n\n║ ${_gsd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -8672,7 +8672,7 @@ reply(`╔════〔 📜 SHAYARI 〕═════╗\n\n║ ${shayaris[M
 case 'goodnight': {
     await X.sendMessage(m.chat, { react: { text: '🌙', key: m.key } })
 try {
-    let _ggn = await fetch('https://api.giftedtech.co.ke/api/fun/goodnight?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+    let _ggn = await fetch(`https://api.giftedtech.co.ke/api/fun/goodnight?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _ggnd = await _ggn.json()
     if (_ggnd.success && _ggnd.result) return reply(`╔═══〔 🌙 GOOD NIGHT 〕═══╗\n\n║ ${_ggnd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -8683,7 +8683,7 @@ reply(`╔═══〔 🌙 GOOD NIGHT 〕═══╗\n\n║ ${gn[Math.floor(Ma
 case 'roseday': {
     await X.sendMessage(m.chat, { react: { text: '🌹', key: m.key } })
 try {
-    let _gr = await fetch('https://api.giftedtech.co.ke/api/fun/roseday?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+    let _gr = await fetch(`https://api.giftedtech.co.ke/api/fun/roseday?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _grd = await _gr.json()
     if (_grd.success && _grd.result) return reply(`╔════〔 🌹 ROSE DAY 〕════╗\n\n║ ${_grd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -8738,7 +8738,7 @@ case 'joke': {
 try {
     let jokeText = null
     try {
-        let _gj = await fetch('https://api.giftedtech.co.ke/api/fun/jokes?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+        let _gj = await fetch(`https://api.giftedtech.co.ke/api/fun/jokes?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
         let _gjd = await _gj.json()
         if (_gjd.success && _gjd.result) jokeText = _gjd.result
     } catch {}
@@ -8930,7 +8930,7 @@ case 'neko': {
 try {
     let nekoUrl = null
     try {
-        let _gn = await fetch('https://api.giftedtech.co.ke/api/anime/neko?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+        let _gn = await fetch(`https://api.giftedtech.co.ke/api/anime/neko?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
         let _gnd = await _gn.json()
         if (_gnd.success && _gnd.result) nekoUrl = _gnd.result
     } catch {}
@@ -8948,7 +8948,7 @@ case 'waifu': {
 try {
     let waifuUrl = null
     try {
-        let _gw = await fetch('https://api.giftedtech.co.ke/api/anime/waifu?apikey=${_giftedKey()}', { signal: AbortSignal.timeout(10000) })
+        let _gw = await fetch(`https://api.giftedtech.co.ke/api/anime/waifu?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
         let _gwd = await _gw.json()
         if (_gwd.success && _gwd.result) waifuUrl = _gwd.result
     } catch {}
