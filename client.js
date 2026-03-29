@@ -9740,11 +9740,11 @@ case 'stylish': {
   case 'asciiart': {
       await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
       const _asq = q?.trim() || text?.trim()
-      if (!_asq) return reply('╌══〔 🎨 ASCII ART 〕═════╌\n║ *Usage:* ${prefix}ascii [word]\n║ Example: ${prefix}ascii dragon\n╚═══════════════════════╝')
+      if (!_asq) return reply(`╌══〔 🎨 ASCII ART 〕═════╌\n║ *Usage:* ${prefix}ascii [word]\n║ Example: ${prefix}ascii dragon\n╚═══════════════════════╝`)
       try {
           await reply(`🎨 _Generating ASCII art for: ${_asq}..._`)
           const _asd = await _keithFetch(`/tools/ascii?q=${encodeURIComponent(_asq)}`)
-          const _asr = _asd?.arts || _asd?.result?.arts
+          const _asr = Array.isArray(_asd) ? _asd : (_asd?.arts || _asd?.result?.arts || (_asd?.art ? [_asd.art] : null))
           if (!Array.isArray(_asr) || !_asr.length) throw new Error('No art')
           const _asArt = _asr[Math.floor(Math.random() * Math.min(_asr.length, 3))]
           await reply(`🎨 *ASCII: ${_asq.toUpperCase()}*\n```\n${_asArt}\n````)
@@ -9757,7 +9757,7 @@ case 'stylish': {
       const _wlparts = text?.split(' ') || []
       const _wlnum = _wlparts[0]?.replace(/[^0-9]/g, '')
       const _wlmsg = _wlparts.slice(1).join(' ')
-      if (!_wlnum) return reply('╌══〔 🔗 WA LINK 〕═══════╌\n║ *Usage:* ${prefix}walink [number] [message]\n║ Example: ${prefix}walink 254712345678 Hello!\n╚═══════════════════════╝')
+      if (!_wlnum) return reply(`╌══〔 🔗 WA LINK 〕═══════╌\n║ *Usage:* ${prefix}walink [number] [message]\n║ Example: ${prefix}walink 254712345678 Hello!\n╚═══════════════════════╝`)
       try {
           const _wld = await _keithFetch(`/tools/walink?q=${encodeURIComponent(_wlmsg || 'Hello')}&number=${_wlnum}`)
           const _wlurl = _wld?.shortUrl || _wld?.url || `https://wa.me/${_wlnum}${_wlmsg ? '?text=' + encodeURIComponent(_wlmsg) : ''}`
