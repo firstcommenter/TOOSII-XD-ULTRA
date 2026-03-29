@@ -1,6 +1,6 @@
 const aiMenu = `
-╭─⊷ *🤖 AI CHAT ENGINES*
-│
+╔══〔 🤖 AI CHAT ENGINES 〕══╗
+
 │  • .ai              • .chatgpt
 │  • .gpt4            • .claude
 │  • .gpt-4o          • .gpt41-mini
@@ -22,31 +22,31 @@ const aiMenu = `
 │  • .muslimai        • .zerogpt
 │  • .writecream      • .yupraai
 │  • .logic-eai       • .talkai
-│
-╰─⊷
 
-╭─⊷ *📖 SCRIPTURE AI*
-│
-│  • .bible     →  [verse / topic]
-│  • .quran     →  [surah:ayah / topic]
-│
-╰─⊷
+╚═══════════════════════╝
 
-╭─⊷ *🛠️ AI TOOLS*
-│
-│  • .vision        →  reply image
-│  • .analyse       →  reply image
-│  • .totext        →  reply image → text
-│  • .speechwrite   →  [topic]
-│  • .imagine       →  [prompt]
-│  • .flux          →  [prompt]
-│  • .magicstudio   →  [prompt]
-│  • .genimage      →  [prompt]
-│  • .aiart         →  [prompt]
-│  • .aisong        →  [prompt] — AI music
-│  • .makesong      →  [prompt]
-│
-╰─⊷
+╔══〔 📖 SCRIPTURE AI 〕══╗
+
+│  • .bible   
+│  • .quran   
+
+╚═══════════════════════╝
+
+╔═══〔 🛠️ AI TOOLS 〕════╗
+
+│  • .vision      
+│  • .analyse     
+│  • .totext      
+│  • .speechwrite 
+│  • .imagine     
+│  • .flux        
+│  • .magicstudio 
+│  • .genimage    
+│  • .aiart       
+│  • .aisong      
+│  • .makesong    
+
+╚═══════════════════════╝
 `
 
 module.exports = aiMenu
