@@ -1405,7 +1405,7 @@ const helpText = `╔══〔 📋  QUICK HELP GUIDE 〕══╗
 ║ wa.me/254748340864
 ║ Telegram: @toosiitech
 
-_Powered by Toosii Tech_
+║ _Powered by Toosii Tech_
 ╚═══════════════════════╝`
 const helpThumb = global.botPic || global.thumb || 'https://files.catbox.moe/qbcebp.jpg'
 X.sendMessage(m.chat, { image: { url: helpThumb }, caption: helpText }, { quoted: m })
@@ -2466,7 +2466,7 @@ case 'creator': {
 ║ +254788781373
 
 
-_👇 Tap a contact card below to reach the owner_
+║ _👇 Tap a contact card below to reach the owner_
 ╚═══════════════════════╝`)
     const namaown = global.ownername || 'Toosii Tech'
     const ownerNumbers = ['254748340864', '254746677793', '254788781373']
@@ -2500,7 +2500,7 @@ case 'botinfo': {
 ║ 🔑 *Session* : ${global.sessionUrl}
 
 
-_⚡ Powered by Toosii Tech — wa.me/254748340864_
+║ _⚡ Powered by Toosii Tech — wa.me/254748340864_
 ╚═══════════════════════╝`
   reply(botInfo)
 }
@@ -4035,7 +4035,7 @@ let settingsText = `╔══〔 ⚙️  BOT SETTINGS 〕══╗
 ║ 🔗 Anti Link GC : ${m.isGroup ? (global.antilinkGcGroups?.[m.chat] ? on : off) : '—'}
 ║ 📢 Anti Status Msg : ${m.isGroup ? (global.antiGroupStatusGroups?.[m.chat] ? on : off) : '—'}
 
-_⚡ Powered by ${global.ownername || 'Toosii Tech'}_
+║ _⚡ Powered by ${global.ownername || 'Toosii Tech'}_
 ╚═══════════════════════╝`
 reply(settingsText)
 }
@@ -5821,10 +5821,10 @@ async function getServerInfo() {
 ║ 🟢 *RAM Free* : ${formatp(freeMem)}${storageText ?`
 
 
-💿 *Storage*
+║ 💿 *Storage*
 ${storageText.replace(/\*STORAGE\*\n/,'').replace(/• /g,'║ ')}` : ''}
 
-_⚡ Powered by ${global.ownername || 'Toosii Tech'}_
+║ _⚡ Powered by ${global.ownername || 'Toosii Tech'}_
 ╚═══════════════════════╝`
     return responseText.trim()
 }
@@ -9531,15 +9531,14 @@ const repoInfo =
 ║ 💻 *Language* : ${data.language || 'N/A'}
 ║ 🔄 *Updated* : ${new Date(data.updated_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}
 
-  🔗 ${data.html_url}
+║ 🔗 ${data.html_url}
 
+║ 💛 *Enjoyed the bot?*
+║ ⭐ Star & 🍴 Fork — every click counts!
 
-  💛 *Enjoyed the bot?*
-  ⭐ Star & 🍴 Fork — every click counts!
+║ 🔑 Session : ${global.sessionUrl}
 
-  ║ Session   : ${global.sessionUrl}
-
-_⚡ Powered by Toosii Tech — wa.me/254748340864_
+║ _⚡ Powered by Toosii Tech — wa.me/254748340864_
 ╚═══════════════════════╝`
 reply(repoInfo)
 } catch(e) { reply('❌ Error fetching repo: ' + e.message) }
@@ -9551,16 +9550,16 @@ case 'source': {
     await X.sendMessage(m.chat, { react: { text: '📜', key: m.key } })
 let scText = `╔══〔 📂 SOURCE CODE 〕═══╗
 
-  🤖 *${global.botname}*
+║ 🤖 *${global.botname}*
 
 ║ 🔗 *GitHub*
-  │  github.com/TOOSII102/TOOSII-XD-ULTRA
+║ github.com/TOOSII102/TOOSII-XD-ULTRA
 ║ 🍴 *Fork it*
-  │  github.com/TOOSII102/TOOSII-XD-ULTRA/fork
+║ github.com/TOOSII102/TOOSII-XD-ULTRA/fork
 ║ 👨‍💻 *Dev* : ${global.ownername}
 ║ 📞 *Contact* : ${global.ownerNumber}
 
-_© ${global.ownername} — All Rights Reserved_
+║ _© ${global.ownername} — All Rights Reserved_
 ╚═══════════════════════╝`
 reply(scText)
 } break
