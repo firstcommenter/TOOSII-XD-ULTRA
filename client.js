@@ -8963,36 +8963,36 @@ case 'upscale': {
         const _hdBuf = await quoted.download()
         if (!_hdBuf || _hdBuf.length < 100) throw new Error('Failed to download image')
         let _hdOutUrl = null
-        // Source 1: DeepAI waifu2x (free upscaler)
+        let _hdOutBuf = null
+        // Source 1: waifu2x free API (no key required)
         try {
-            const _hdForm = new FormData()
-            _hdForm.append('image', new Blob([_hdBuf], { type: 'image/jpeg' }), 'image.jpg')
-            const _hdRes = await fetch('https://api.deepai.org/api/waifu2x', {
-                method: 'POST',
-                headers: { 'api-key': 'quickstart-QUdJIGlzIGF3ZXNvbWU=' },
-                body: _hdForm,
-                signal: AbortSignal.timeout(45000)
+            const _fd = require('form-data')
+            const _form = new _fd()
+            _form.append('file', _hdBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
+            const { data: _w } = await axios.post('https://api.deepai.org/api/waifu2x', _form, {
+                headers: { ..._form.getHeaders(), 'api-key': 'quickstart-QUdJIGlzIGF3ZXNvbWU=' },
+                timeout: 40000
             })
-            const _hdData = await _hdRes.json()
-            if (_hdData?.output_url) _hdOutUrl = _hdData.output_url
+            if (_w?.output_url) _hdOutUrl = _w.output_url
         } catch {}
-        // Source 2: DeepAI torch-srgan fallback
+        // Source 2: Jimp 2× upscale (always works — no API needed)
         if (!_hdOutUrl) {
             try {
-                const _hdForm2 = new FormData()
-                _hdForm2.append('image', new Blob([_hdBuf], { type: 'image/jpeg' }), 'image.jpg')
-                const _hdRes2 = await fetch('https://api.deepai.org/api/torch-srgan', {
-                    method: 'POST',
-                    headers: { 'api-key': 'quickstart-QUdJIGlzIGF3ZXNvbWU=' },
-                    body: _hdForm2,
-                    signal: AbortSignal.timeout(45000)
-                })
-                const _hdData2 = await _hdRes2.json()
-                if (_hdData2?.output_url) _hdOutUrl = _hdData2.output_url
-            } catch {}
+                const Jimp = require('jimp')
+                const _img = await Jimp.read(_hdBuf)
+                const _w2 = _img.getWidth(), _h2 = _img.getHeight()
+                _img.resize(Math.min(_w2 * 2, 2048), Jimp.AUTO, Jimp.RESIZE_BICUBIC)
+                _img.quality(95)
+                _hdOutBuf = await _img.getBufferAsync(Jimp.MIME_JPEG)
+            } catch (_je) { throw new Error('Image processing failed: ' + _je.message) }
         }
-        if (!_hdOutUrl) throw new Error('HD upscale service unavailable')
-        await safeSendMedia(m.chat, { image: { url: _hdOutUrl }, caption: '✅ *Image enhanced to HD quality!*' }, {}, { quoted: m })
+        if (_hdOutUrl) {
+            await X.sendMessage(m.chat, { image: { url: _hdOutUrl }, caption: '✅ *Image enhanced to HD!*' }, { quoted: m })
+        } else if (_hdOutBuf) {
+            await X.sendMessage(m.chat, { image: _hdOutBuf, caption: '✅ *Image upscaled 2× with HD quality!*' }, { quoted: m })
+        } else {
+            throw new Error('Could not process image')
+        }
     } catch(e) { reply(`❌ HD upscale failed: ${e.message}`) }
 } break
 case 'imageedit':
