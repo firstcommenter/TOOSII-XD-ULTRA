@@ -130,7 +130,7 @@ const util = require('util')
       return _invPool
   }
 
-  //═══════════════════════════════════════════════════════════════════════════//
+  //═══════════════════════════════════════════════════════��═══════════════════//
   // ── Multi-source Sports Data Helpers (endless fallback chain) ─────────────//
   // Sources: GiftedTech → ESPN (keyless) → TheSportsDB (keyless) → Football-Data.org
   //═══════════════════════════════════════════════════════════════════════════//
@@ -205,7 +205,7 @@ const util = require('util')
       } catch { return null }
   }
 
-  // ── Football-Data.org scorers ─────────────────────────────────────────────
+  // ── Football-Data.org scorers ──────────────────────────────���──────────────
   async function _fdScorers(league) {
       try {
           const code = _FD_CODES[league]; if (!code) return null
@@ -533,6 +533,9 @@ const { smsg, fetchJson, getBuffer, fetchBuffer, getGroupAdmins, TelegraPh, isUr
 // Main Setting (Admin And Prefix ) 
 const budy = body || (typeof m.text === 'string' ? m.text : '');
 const mess = global.mess || {};
+if (!mess.OnlyOwner) mess.OnlyOwner = '╔══〔 👑 OWNER ONLY 〕══╗\n\n║ This command is for bot owner only.\n╚═══════════════════════╝'
+if (!mess.OnlyGrup)  mess.OnlyGrup  = '╔══〔 👥 GROUP ONLY 〕══╗\n\n║ This command only works in a group.\n╚═══════════════════════╝'
+if (!mess.error)     mess.error     = '╔══〔 ❌ ERROR 〕══╗\n\n║ An error occurred. Please try again.\n╚═══════════════════════╝'
 const prefixRegex = /^[°zZ#$@*+,.?=''():√%!¢£¥€π¤ΠΦ_&><`™©®Δ^βα~¦|/\\©^]/;
 const prefix = global.botPrefix ? global.botPrefix : (prefixRegex.test(budy) ? budy.match(prefixRegex)[0] : '.');
 const isCmd = global.botPrefix ? budy.startsWith(global.botPrefix) : budy.startsWith(prefix);
@@ -929,7 +932,7 @@ if (from === 'status@broadcast' && global.antiStatusMentionGroups && Object.valu
         }
     } catch {}
 }
-// ─────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────���────────────────────────
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Leaderboard Games
@@ -1310,10 +1313,10 @@ if (m.key.fromMe && global.ownerFontMode && global.ownerFontMode !== 'off' && bu
             serifbold:     {a:'𝒂',b:'𝒃',c:'𝒄',d:'𝒅',e:'𝒆',f:'𝒇',g:'𝒈',h:'𝒉',i:'𝒊',j:'𝒋',k:'𝒌',l:'𝒍',m:'𝒎',n:'𝒏',o:'𝒐',p:'𝒑',q:'𝒒',r:'𝒓',s:'𝒔',t:'𝒕',u:'𝒖',v:'𝒗',w:'𝒘',x:'𝒙',y:'𝒚',z:'𝒛',A:'𝑨',B:'𝑩',C:'𝑪',D:'𝑫',E:'𝑬',F:'𝑭',G:'𝑮',H:'𝑯',I:'𝑰',J:'𝑱',K:'𝑲',L:'𝑳',M:'𝑴',N:'𝑵',O:'𝑶',P:'𝑷',Q:'𝑸',R:'𝑹',S:'𝑺',T:'𝑻',U:'𝑼',V:'𝑽',W:'𝑾',X:'𝑿',Y:'𝒀',Z:'𝒁'},
             serifitalic:   {a:'𝑎',b:'𝑏',c:'𝑐',d:'𝑑',e:'𝑒',f:'𝑓',g:'𝑔',h:'ℎ',i:'𝑖',j:'𝑗',k:'𝑘',l:'𝑙',m:'𝑚',n:'𝑛',o:'𝑜',p:'𝑝',q:'𝑞',r:'𝑟',s:'𝑠',t:'𝑡',u:'𝑢',v:'𝑣',w:'𝑤',x:'𝑥',y:'𝑦',z:'𝑧',A:'𝐴',B:'𝐵',C:'𝐶',D:'𝐷',E:'𝐸',F:'𝐹',G:'𝐺',H:'𝐻',I:'𝐼',J:'𝐽',K:'𝐾',L:'𝐿',M:'𝑀',N:'𝑁',O:'𝑂',P:'𝑃',Q:'𝑄',R:'𝑅',S:'𝑆',T:'𝑇',U:'𝑈',V:'𝑉',W:'𝑊',X:'𝑋',Y:'𝑌',Z:'𝑍'},
             scriptfont:    {a:'𝒶',b:'𝒷',c:'𝒸',d:'𝒹',e:'𝑒',f:'𝒻',g:'𝑔',h:'𝒽',i:'𝒾',j:'𝒿',k:'𝓀',l:'𝓁',m:'𝓂',n:'𝓃',o:'𝑜',p:'𝓅',q:'𝓆',r:'𝓇',s:'𝓈',t:'𝓉',u:'𝓊',v:'𝓋',w:'𝓌',x:'𝓍',y:'𝓎',z:'𝓏',A:'𝒜',B:'ℬ',C:'𝒞',D:'𝒟',E:'ℰ',F:'ℱ',G:'𝒢',H:'ℋ',I:'ℐ',J:'𝒥',K:'𝒦',L:'ℒ',M:'ℳ',N:'𝒩',O:'𝒪',P:'𝒫',Q:'𝒬',R:'ℛ',S:'𝒮',T:'𝒯',U:'𝒰',V:'𝒱',W:'𝒲',X:'𝒳',Y:'𝒴',Z:'𝒵'},
-            scriptbold:    {a:'𝓪',b:'𝓫',c:'𝓬',d:'𝓭',e:'𝓮',f:'𝓯',g:'𝓰',h:'𝓱',i:'𝓲',j:'𝓳',k:'𝓴',l:'𝓵',m:'𝓶',n:'𝓷',o:'𝓸',p:'𝓹',q:'𝓺',r:'𝓻',s:'𝓼',t:'𝓽',u:'𝓾',v:'𝓿',w:'𝔀',x:'𝔁',y:'𝔂',z:'𝔃',A:'𝓐',B:'𝓑',C:'𝓒',D:'𝓓',E:'𝓔',F:'𝓕',G:'𝓖',H:'𝓗',I:'𝓘',J:'𝓙',K:'𝓚',L:'𝓛',M:'𝓜',N:'𝓝',O:'𝓞',P:'𝓟',Q:'𝓠',R:'𝓡',S:'𝓢',T:'𝓣',U:'𝓤',V:'𝓥',W:'𝓦',X:'𝓧',Y:'𝓨',Z:'𝓩'},
+            scriptbold:    {a:'𝓪',b:'𝓫',c:'𝓬',d:'𝓭',e:'𝓮',f:'𝓯',g:'𝓰',h:'𝓱',i:'𝓲',j:'𝓳',k:'𝓴',l:'𝓵',m:'𝓶',n:'𝓷',o:'𝓸',p:'𝓹',q:'𝓺',r:'𝓻',s:'𝓼',t:'𝓽',u:'𝓾',v:'𝓿',w:'𝔀',x:'𝔁',y:'𝔂',z:'𝔃',A:'𝓐',B:'𝓑',C:'𝓒',D:'𝓓',E:'𝓔',F:'𝓕',G:'𝓖',H:'𝓗',I:'𝓘',J:'𝓙',K:'𝓚',L:'𝓛',M:'𝓜',N:'𝓝',O:'𝓞',P:'𝓟',Q:'𝓠',R:'��',S:'𝓢',T:'𝓣',U:'𝓤',V:'𝓥',W:'𝓦',X:'𝓧',Y:'𝓨',Z:'𝓩'},
             fraktur:       {a:'𝔞',b:'𝔟',c:'𝔠',d:'𝔡',e:'𝔢',f:'𝔣',g:'𝔤',h:'𝔥',i:'𝔦',j:'𝔧',k:'𝔨',l:'𝔩',m:'𝔪',n:'𝔫',o:'𝔬',p:'𝔭',q:'𝔮',r:'𝔯',s:'𝔰',t:'𝔱',u:'𝔲',v:'𝔳',w:'𝔴',x:'𝔵',y:'𝔶',z:'𝔷',A:'𝔄',B:'𝔅',C:'ℭ',D:'𝔇',E:'𝔈',F:'𝔉',G:'𝔊',H:'ℌ',I:'ℑ',J:'𝔍',K:'𝔎',L:'𝔏',M:'𝔐',N:'𝔑',O:'𝔒',P:'𝔓',Q:'𝔔',R:'ℜ',S:'𝔖',T:'𝔗',U:'𝔘',V:'𝔙',W:'𝔚',X:'𝔛',Y:'𝔜',Z:'ℨ'},
             frakturbold:   {a:'𝖆',b:'𝖇',c:'𝖈',d:'𝖉',e:'𝖊',f:'𝖋',g:'𝖌',h:'𝖍',i:'𝖎',j:'𝖏',k:'𝖐',l:'𝖑',m:'𝖒',n:'𝖓',o:'𝖔',p:'𝖕',q:'𝖖',r:'𝖗',s:'𝖘',t:'𝖙',u:'𝖚',v:'𝖛',w:'𝖜',x:'𝖝',y:'𝖞',z:'𝖟',A:'𝕬',B:'𝕭',C:'𝕮',D:'𝕯',E:'𝕰',F:'𝕱',G:'𝕲',H:'𝕳',I:'𝕴',J:'𝕵',K:'𝕶',L:'𝕷',M:'𝕸',N:'𝕹',O:'𝕺',P:'𝕻',Q:'𝕼',R:'𝕽',S:'𝕾',T:'𝕿',U:'𝖀',V:'𝖁',W:'𝖂',X:'𝖃',Y:'𝖄',Z:'𝖅'},
-            doublestruck:  {a:'𝕒',b:'𝕓',c:'𝕔',d:'𝕕',e:'𝕖',f:'𝕗',g:'𝕘',h:'𝕙',i:'𝕚',j:'𝕛',k:'𝕜',l:'𝕝',m:'𝕞',n:'𝕟',o:'𝕠',p:'𝕡',q:'𝕢',r:'𝕣',s:'𝕤',t:'𝕥',u:'𝕦',v:'𝕧',w:'𝕨',x:'𝕩',y:'𝕪',z:'𝕫',A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'𝔼',F:'𝔽',G:'𝔾',H:'ℍ',I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ','0':'𝟘','1':'𝟙','2':'𝟚','3':'𝟛','4':'𝟜','5':'𝟝','6':'𝟞','7':'𝟟','8':'𝟠','9':'𝟡'},
+            doublestruck:  {a:'𝕒',b:'𝕓',c:'𝕔',d:'𝕕',e:'𝕖',f:'𝕗',g:'𝕘',h:'𝕙',i:'𝕚',j:'𝕛',k:'𝕜',l:'𝕝',m:'𝕞',n:'𝕟',o:'𝕠',p:'𝕡',q:'𝕢',r:'𝕣',s:'𝕤',t:'𝕥',u:'𝕦',v:'𝕧',w:'𝕨',x:'𝕩',y:'𝕪',z:'𝕫',A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'���',F:'𝔽',G:'𝔾',H:'ℍ',I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ','0':'𝟘','1':'𝟙','2':'𝟚','3':'𝟛','4':'𝟜','5':'𝟝','6':'𝟞','7':'𝟟','8':'𝟠','9':'𝟡'},
             smallcaps:     {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'Q',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ',A:'ᴀ',B:'ʙ',C:'ᴄ',D:'ᴅ',E:'ᴇ',F:'ꜰ',G:'ɢ',H:'ʜ',I:'ɪ',J:'ᴊ',K:'ᴋ',L:'ʟ',M:'ᴍ',N:'ɴ',O:'ᴏ',P:'ᴘ',Q:'Q',R:'ʀ',S:'ꜱ',T:'ᴛ',U:'ᴜ',V:'ᴠ',W:'ᴡ',X:'x',Y:'ʏ',Z:'ᴢ'},
             bubble:        {a:'ⓐ',b:'ⓑ',c:'ⓒ',d:'ⓓ',e:'ⓔ',f:'ⓕ',g:'ⓖ',h:'ⓗ',i:'ⓘ',j:'ⓙ',k:'ⓚ',l:'ⓛ',m:'ⓜ',n:'ⓝ',o:'ⓞ',p:'ⓟ',q:'ⓠ',r:'ⓡ',s:'ⓢ',t:'ⓣ',u:'ⓤ',v:'ⓥ',w:'ⓦ',x:'ⓧ',y:'ⓨ',z:'ⓩ',A:'Ⓐ',B:'Ⓑ',C:'Ⓒ',D:'Ⓓ',E:'Ⓔ',F:'Ⓕ',G:'Ⓖ',H:'Ⓗ',I:'Ⓘ',J:'Ⓙ',K:'Ⓚ',L:'Ⓛ',M:'Ⓜ',N:'Ⓝ',O:'Ⓞ',P:'Ⓟ',Q:'Ⓠ',R:'Ⓡ',S:'Ⓢ',T:'Ⓣ',U:'Ⓤ',V:'Ⓥ',W:'Ⓦ',X:'Ⓧ',Y:'Ⓨ',Z:'Ⓩ','0':'⓪','1':'①','2':'②','3':'③','4':'④','5':'⑤','6':'⑥','7':'⑦','8':'⑧','9':'⑨'},
             bubblebold:    {a:'🅐',b:'🅑',c:'🅒',d:'🅓',e:'🅔',f:'🅕',g:'🅖',h:'🅗',i:'🅘',j:'🅙',k:'🅚',l:'🅛',m:'🅜',n:'🅝',o:'🅞',p:'🅟',q:'🅠',r:'🅡',s:'🅢',t:'🅣',u:'🅤',v:'🅥',w:'🅦',x:'🅧',y:'🅨',z:'🅩',A:'🅐',B:'🅑',C:'🅒',D:'🅓',E:'🅔',F:'🅕',G:'🅖',H:'🅗',I:'🅘',J:'🅙',K:'🅚',L:'🅛',M:'🅜',N:'🅝',O:'🅞',P:'🅟',Q:'🅠',R:'🅡',S:'🅢',T:'🅣',U:'🅤',V:'🅥',W:'🅦',X:'🅧',Y:'🅨',Z:'🅩'},
@@ -2266,7 +2269,7 @@ case 'songlyrics': {
     let _lyrResult = null
     let _lyrSource = ''
 
-    // ── Source 0: GiftedTech lyrics API ──────────────────────────────
+    // ── Source 0: GiftedTech lyrics API ─��────────────────────────────
     try {
         let _gt = await fetch(`https://api.giftedtech.co.ke/api/search/lyrics?apikey=${_giftedKey()}&query=${encodeURIComponent(_lyrQuery)}`, { signal: AbortSignal.timeout(15000) })
         let _gtd = await _gt.json()
@@ -2587,7 +2590,7 @@ case 'bratv':
 case 'bratvideo': {
     await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
   if (!text) return reply(`╔══〔 🎬 BRAT VIDEO 〕══╗\n\n║ Usage: *${prefix}${command} [pesan]*\n║ Contoh: ${prefix}${command} Hai bang, apa kabar?\n╚═══════════════════════╝`)
-  if (text.length > 250) return reply(`╔══〔 ⚠️ BRAT VIDEO 〕══╗\n\n║ Character limit exceeded!\n║ Maximum: 250 characters\n╚═══════════════════════╝`)
+  if (text.length > 250) return reply(`╔══〔 ⚠️ BRAT VIDEO 〕══╗\n\n║ Character limit exceeded!\n║ Maximum: 250 characters\n╚═════════���═════════════╝`)
   const words = text.split(" ")
   const tempDir = path.join(process.cwd(), 'tmp')
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir)
@@ -2882,7 +2885,7 @@ if (global.fakePresence === 'typing') {
     reply('╔══〔 ⌨️ FAKE TYPING 〕════╗\n\n║ ❌ *Status* : OFF\n╚═══════════════════════╝')
 } else {
     global.fakePresence = 'typing'
-    reply('╔══〔 ⌨️ FAKE TYPING 〕════╗\n\n║ ✅ *Status* : ON\n║ Bot now appears as typing.\n╚═══════════════════════╝')
+    reply('╔══�� ⌨️ FAKE TYPING 〕════╗\n\n║ ✅ *Status* : ON\n║ Bot now appears as typing.\n╚═══════════════════════╝')
 }
 }
 break
@@ -2968,7 +2971,7 @@ case 'statusreact': {
     const _arStatus = () => {
         const _vm = _ar.viewMode === 'view+react' ? '👁️ + react' : 'react only'
         const _em = _ar.mode === 'fixed' ? _ar.fixedEmoji : '🎲 random'
-        return `╔══〔 ❤️  AUTO REACT STATUS 〕══╗\n\n║ 📊 *Status* : ${_ar.enabled ? '✅ ON' : '❌ OFF'}\n║ 👁️  *View Mode* : ${_vm}\n║ 🎭 *Emoji* : ${_em}\n║ 📈 *Reacted* : ${_ar.totalReacted} statuses\n║ 🎨 *Pool* : ${_ar.reactions.join(' ')}\n\n║ *Commands:*\n║ ${prefix}als on / off\n║ ${prefix}als view+react / react-only\n║ ${prefix}als fixed / random\n║ ${prefix}als emoji [emoji]\n║ ${prefix}als add [emoji] / remove [emoji]\n║ ${prefix}als reset\n║ ${prefix}als stats\n╚═══════════════════════╝`
+        return `╔══〔 ❤️  AUTO REACT STATUS 〕══╗\n\n║ 📊 *Status* : ${_ar.enabled ? '��� ON' : '❌ OFF'}\n║ 👁️  *View Mode* : ${_vm}\n║ 🎭 *Emoji* : ${_em}\n║ 📈 *Reacted* : ${_ar.totalReacted} statuses\n║ 🎨 *Pool* : ${_ar.reactions.join(' ')}\n\n║ *Commands:*\n║ ${prefix}als on / off\n║ ${prefix}als view+react / react-only\n║ ${prefix}als fixed / random\n║ ${prefix}als emoji [emoji]\n║ ${prefix}als add [emoji] / remove [emoji]\n║ ${prefix}als reset\n║ ${prefix}als stats\n╚═══════════════════════╝`
     }
 
     if (!_arAction || _arAction === 'status') return reply(_arStatus())
@@ -3149,7 +3152,7 @@ reply(`╔══〔 📊 STATUS TOOLS CONFIG 〕══╗
 ║ 🛡️  *Anti-Mention* : ${asmState}
 
 
-  ⚙️  *Commands*
+  ���️  *Commands*
 ║ ${prefix}autoviewstatus
 ║ ${prefix}autolikestatus [emoji/off]
 ║ ${prefix}autoreplystatus [msg/off]
@@ -3681,7 +3684,7 @@ if (!isOwner) return reply(mess.OnlyOwner)
 let acArg = (args[0] || '').toLowerCase()
 if (!acArg) {
     let acState = global.antiCall ? 'ON' : 'OFF'
-    reply(`╔══〔 📵 ANTI CALL 〕══════╗\n║ 📊 *Status* : ${acState}\n║ Rejects & warns callers automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}anticall on\n║ ${prefix}anticall off\n╚═══════════════════════╝`)
+    reply(`╔══〔 📵 ANTI CALL 〕══════╗\n║ 📊 *Status* : ${acState}\n��� Rejects & warns callers automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}anticall on\n║ ${prefix}anticall off\n╚═══════════════════════╝`)
 } else if (acArg === 'on' || acArg === 'enable') {
     global.antiCall = true
     reply('╔══〔 📵 ANTI-CALL 〕══╗\n\n║ Status: ✅ ON\n║ Incoming calls will be rejected.\n╚═══════════════════════╝')
@@ -3881,7 +3884,7 @@ case 'antidelete':
 
       if (!_arg || _arg === 'status') return reply(_statusMsg())
 
-      // ── gc subcommand ──────────────────────────────────────────────────
+      // ── gc subcommand ───────────────���──────────────────────────────────
       if (_arg === 'gc' || _arg === 'group' || _arg === 'groups') {
           if (_sub === 'on' || _sub === 'enable') {
               _ad.gc.enabled = true; _syncLegacy()
@@ -3965,7 +3968,7 @@ case 'antidelete':
           )
       }
 
-      // ── clear ──────────────────────────────────────────────────────────
+      // ── clear ───────────────────────────────────────────���──────────────
       if (_arg === 'clear' || _arg === 'clean') {
           const _sz = global._adCache?.size || 0
           global._adCache = new Map()
@@ -4018,7 +4021,7 @@ case 'setantibot': {
         return reply(`╔══〔 🤖 ANTIBOT SETTINGS 〕══╗\n\n║ 📊 *This group* : ${_grpEnabled}\n║ 🗂️  *Known bots* : ${global.knownBots.length}\n\n${_botList}\n\n║ ${prefix}antibot on     — enable here\n║ ${prefix}antibot off    — disable here\n║ ${prefix}antibot scan   — scan & remove bots\n║ ${prefix}antibot add [number] — mark as bot\n║ ${prefix}antibot list   — list known bots\n╚═══════════════════════╝`)
     }
 
-    // ── on ────────────────────────────────────────────────────────────
+    // ── on ─────────────────��──────────────────────────────────────────
     if (_subArg === 'on' || _subArg === 'enable') {
         global.antiBotGroups[m.chat] = true
         return reply(`╔════〔 🤖 ANTIBOT 〕═════╗\n\n║ ✅ *Enabled in this group*\n║ _Bots will be auto-removed when detected._\n╚═══════════════════════╝`)
@@ -4106,7 +4109,7 @@ case 'botconfig': {
 if (!isOwner) return reply(mess.OnlyOwner)
 const on = '✅ ON'
 const off = '❌ OFF'
-let settingsText = `╔══〔 ⚙️  BOT SETTINGS 〕══╗
+let settingsText = `╔══〔 ⚙️  BOT SETTINGS ���══╗
 
 ║ 📛 *Name* : ${global.botname}
 ║ 🏷️  *Version* : v${global.botver}
@@ -4193,7 +4196,7 @@ try {
         const tryMain = await run('git reset --hard origin/main')
         if (!tryMain.ok) {
             const tryMaster = await run('git reset --hard origin/master')
-            if (!tryMaster.ok) return reply(`❌ Could not find main or master branch.`)
+            if (!tryMaster.ok) return reply(`��� Could not find main or master branch.`)
             initBranch = 'master'
         }
         await run('npm install --production')
@@ -4685,7 +4688,7 @@ ${list}\n║ ${prefix}reject all — reject all\n║ ${prefix}reject [n]  — re
                         }
                         break
                                 
-//━━━━━━━━━━━━━━━━━━━━━━━━//                            
+//━━━━━━━━━━━��━━━━━━━━━━━━//                            
 // search features
                         case 'wikimedia': {
     await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
@@ -5151,7 +5154,7 @@ case 'conciseai':{
 }
 break;
 case 'claudeai':{
-  if (!text) return reply(`╔══〔 💎 CLAUDE AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
+  if (!text) return reply(`╔══〔 💎 CLAUDE AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═��═════════════════════╝`)
   try {
     await X.sendMessage(m.chat, { react: { text: '💎', key: m.key } })
     const result = await _runAI('You are Claude AI, an AI assistant made by Anthropic. You are helpful, harmless, and honest. Provide thoughtful and detailed responses.', text)
@@ -5258,7 +5261,7 @@ case 'gpt41-mini':{
 break
 
 case 'openai':{
-  if (!text) return reply(`╔══〔 🔵 OPEN AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
+  if (!text) return reply(`╔══〔 🔵 OPEN AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═════════════════���═════╝`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
     const result = await _runAI('You are OpenAI GPT-4.1, a powerful AI assistant by OpenAI. Provide detailed, accurate and helpful responses.', text)
@@ -5369,7 +5372,7 @@ case 'yupraai':{
 break
 
 case 'feloai':{
-  if (!text) return reply(`╔══〔 🦅 FELO AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
+  if (!text) return reply(`╔���═〔 🦅 FELO AI 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
   try {
     await X.sendMessage(m.chat, { react: { text: '🔭', key: m.key } })
     const result = await _runAI('You are Felo AI, a research-oriented AI assistant. Provide well-researched, in-depth answers.', text)
@@ -5439,7 +5442,7 @@ case 'aliceai': {
 break
 
 case 'magicstudio':{
-if (!text) return reply(`╔══〔 ✨ MAGIC STUDIO AI 〕══╗\n\n║ Generate stunning AI images instantly.\n\n║ *Usage:* ${prefix}magicstudio [description]\n\n║ _Examples:_\n║ • a woman in a red dress in Paris\n║ • cyberpunk warrior with glowing sword\n║ • magical forest with fairy lights\n╚═══════════════════════╝`)
+if (!text) return reply(`╔══〔 ✨ MAGIC STUDIO AI 〕══╗\n\n║ Generate stunning AI images instantly.\n\n║ *Usage:* ${prefix}magicstudio [description]\n\n║ _Examples:_\n║ • a woman in a red dress in Paris\n║ • cyberpunk warrior with glowing sword\n║ • magical forest with fairy lights\n╚════════���══════════════╝`)
 try {
 await reply('✨ _Magic Studio is generating your image..._')
 // Use pollinations with artistic model parameters for magic studio style
@@ -5777,7 +5780,7 @@ case 'typli-ai':{
     reply(result)
   } catch (e) {
     console.error('[TYPLI-AI ERROR]', e.message)
-    reply('❌ typli-ai is currently unavailable. Please try again.')
+    reply('��� typli-ai is currently unavailable. Please try again.')
   }
 }
 break;
@@ -5859,7 +5862,7 @@ break;
 // Info Bot             
 case 'debugrole': {
     await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-    if (!isOwner) return reply('╔══〔 👑 OWNER ONLY 〕══╗\n\n║ This command is for owner only.\n╚═══════════════════════╝')
+    if (!isOwner) return reply('╔══〔 👑 OWNER ONLY 〕══╗\n\n║ This command is for owner only.\n╚═══════���═══════════════╝')
     let dbgMsg = `*🔍 ROLE DEBUG INFO*\n\n`
     dbgMsg += `*Bot Identity:*\n`
     dbgMsg += `• X.user.id: ${X.user?.id || 'null'}\n`
@@ -5992,7 +5995,7 @@ break
 
 case 'getcmd': {
   await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-  if (!text) return reply(`╔══〔 🔍 GET COMMAND CODE 〕══╗\n\n║ Usage: *${prefix}getcmd [command]*\n║ Example: *${prefix}getcmd play*\n\n║ Returns the real source code for that command.\n╚═══════════════════════╝`)
+  if (!text) return reply(`╔══〔 🔍 GET COMMAND CODE 〕══╗\n\n║ Usage: *${prefix}getcmd [command]*\n║ Example: *${prefix}getcmd play*\n\n║ Returns the real source code for that command.\n╚═══════���═══════════════╝`)
   const _q = text.trim().toLowerCase().replace(/^\./, '')
   try {
     const _src = fs.readFileSync(__filename, 'utf8')
@@ -6104,7 +6107,7 @@ case 'block': {
     let _currentBL = []
     try { _currentBL = await X.fetchBlocklist() } catch {}
     const _alreadyBlocked = _currentBL.some(j => j.includes(_blkPhone) || (_blkLid && j.includes(_blkLid.split('@')[0])))
-    if (_alreadyBlocked) return reply(`╔═══〔 🚫 BLOCK USER 〕═══╗\n\n║ ⚠️ Already blocked\n║ +${_blkPhone} is already on your block list.\n╚═══════════════════════╝`)
+    if (_alreadyBlocked) return reply(`╔═══〔 🚫 BLOCK USER 〕══���╗\n\n║ ⚠️ Already blocked\n║ +${_blkPhone} is already on your block list.\n╚═══════════════════════╝`)
     const _blkJidToUse = _blkLid || _blkJid
     let _blkOk = false, _blkLastErr = ''
     // Strategy 1: wrap item in <list> node (matches fetchBlocklist response format)
@@ -6263,7 +6266,7 @@ let ppBuf = await getBuffer(ppUrl)
 if (!ppBuf || ppBuf.length < 100) throw new Error('Failed to download picture')
 await X.sendMessage(m.chat, {
     image: ppBuf,
-    caption: `╔══〔 🖼️  PROFILE PICTURE 〕══╗\n\n║ 👤 *User* : ${label}\n╚═══════════════════════╝`
+    caption: `╔═��〔 🖼️  PROFILE PICTURE 〕══╗\n\n║ 👤 *User* : ${label}\n╚═══════════════════════╝`
 }, { quoted: m })
 } catch(e) {
 reply(`❌ *Failed to fetch profile picture.*
@@ -6466,7 +6469,7 @@ case 'unban': {
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
 let unbanUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net' : null
-if (!unbanUser) return reply(`╔═══〔 ✅ UNBAN USER 〕════╗\n\n║ Usage: *${prefix}unban @user*\n╚═══════════════════════╝`)
+if (!unbanUser) return reply(`╔═══〔 ✅ UNBAN USER 〕════╗\n\n║ Usage: *${prefix}unban @user*\n╚���══════════════════════╝`)
 let usersDb = loadUsers()
 if (usersDb[unbanUser]) { usersDb[unbanUser].banned = false; saveUsers(usersDb) }
 X.sendMessage(from, { text: `✅ *@${unbanUser.split('@')[0]} has been unbanned.*`, mentions: [unbanUser] }, { quoted: m })
@@ -6518,7 +6521,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let atgArg = (args[0] || '').toLowerCase()
 if (atgArg === 'on') { global.antiTag = true; reply('🛡️ *Anti Tag ON* — Mass tagging will be detected.') }
 else if (atgArg === 'off') { global.antiTag = false; reply('❌ *Anti Tag OFF*') }
-else reply(`╔══〔 🏷️ ANTI TAG 〕══════╗\n║ 📊 *Status* : ${global.antiTag ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antitag on/off*\n╚═══════════════════════╝`)
+else reply(`���══〔 🏷️ ANTI TAG 〕══════╗\n║ 📊 *Status* : ${global.antiTag ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}antitag on/off*\n╚═══════════════════════╝`)
 } break
 
 case 'antisticker': {
@@ -6645,7 +6648,7 @@ if (!isBotAdmins) return reply(mess.botAdmin)
 try {
 let code = await X.groupInviteCode(m.chat)
 let memberCount = participants.length
-reply(`╔══〔 🔗 GROUP INVITE LINK 〕══╗\n\n║ 🏘️  *Group* : ${groupName || 'This Group'}\n║ 👥 *Members* : ${memberCount}\n\n║ 🔗 https://chat.whatsapp.com/${code}\n\n║ _Use ${prefix}resetlink to revoke & regenerate._\n╚═══════════════════════╝`)
+reply(`╔══〔 🔗 GROUP INVITE LINK 〕══╗\n\n║ 🏘️  *Group* : ${groupName || 'This Group'}\n║ 👥 *Members* : ${memberCount}\n\n║ ���� https://chat.whatsapp.com/${code}\n\n║ _Use ${prefix}resetlink to revoke & regenerate._\n╚═══════════════════════╝`)
 } catch(err) {
 let errMsg = (err?.message || '').toLowerCase()
 if (errMsg.includes('not-authorized') || errMsg.includes('403')) reply(mess.botAdmin)
@@ -6870,7 +6873,7 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 reply('╔══〔 🗑️ CLEAR CHAT 〕══╗\n\n║ ✅ Chat cleared.\n║ Note: WhatsApp does not support\n║ remote chat clearing.\n╚═══════════════════════╝')
 } break
 
-//━━━━━━━━━━━━━━━━━━━━━━━━//
+//━━━━━━━━━━━━━━━━��━━━━━━━//
 // Additional AI Commands
 case 'copilot':{
   if (!text) return reply(`╔══〔 🪁 COPILOT 〕══╗\n\n║ Usage: *${prefix}${command} [message]*\n║ Example: ${prefix}${command} Hello, how are you?\n╚═══════════════════════╝`)
@@ -6921,7 +6924,7 @@ break
 case 'vision':
 case 'analyse': {
     await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 🔍 IMAGE ANALYSIS 〕══╗\n\n║ Reply to an image with *${prefix}${command}*\n║ _Optionally add a question after the command._\n╚═══════════════════════╝`)
+if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) return reply(`╔══〔 🔍 IMAGE ANALYSIS 〕══╗\n\n║ Reply to an image with *${prefix}${command}*\n║ _Optionally add a question after the command._\n╚═════════════════���═════╝`)
 try {
 let question = text || 'Describe this image in detail. Include objects, people, colors, text, and any notable elements.'
 await reply('🔍 _Analysing image, please wait..._')
@@ -7505,7 +7508,7 @@ try {
 let _finalImg = _keithImgUrl || imgUrl
 await X.sendMessage(m.chat, { image: { url: _finalImg }, caption: `╔══〔 🖼️ IMAGE SEARCH 〕══╗
 ║ 🔍 *Query:* ${text}
-╚═══════════════════════╝` }, { quoted: m })
+╚���══════════════════════╝` }, { quoted: m })
 } catch(e) { reply('Error: ' + e.message) }
 } break
 
@@ -8259,7 +8262,7 @@ case 'ttt': {
     await X.sendMessage(m.chat, { react: { text: '❎', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 let tttUser = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : null
-if (!tttUser) return reply(`╔═══〔 ❎ TIC TAC TOE 〕═══╗\n\n║ Usage: *${prefix}ttt @opponent*\n║ Mention the user you want to play against\n╚═══════════════════════╝`)
+if (!tttUser) return reply(`╔═══〔 ❎ TIC TAC TOE 〕═══╗\n\n║ Usage: *${prefix}ttt @opponent*\n║ Mention the user you want to play against\n╚══���════════════════════╝`)
 if (tttUser === sender) return reply('╔══〔 ⚠️ GAME 〕══╗\n\n║ You cannot play against yourself!\n╚═══════════════════════╝')
 if (!global.tttGames) global.tttGames = {}
 let gameId = m.chat
@@ -8271,7 +8274,7 @@ X.sendMessage(from, { text: `*Tic Tac Toe*\n\n@${sender.split('@')[0]} (X) vs @$
 
 case 'tttend': {
     await X.sendMessage(m.chat, { react: { text: '🏁', key: m.key } })
-if (!global.tttGames || !global.tttGames[m.chat]) return reply('╔══〔 ⚠️ GAME 〕══╗\n\n║ No game in progress.\n╚═══════════════════════╝')
+if (!global.tttGames || !global.tttGames[m.chat]) return reply('╔══〔 ⚠️ GAME 〕══╗\n\n║ No game in progress.\n╚═════���═════════════════╝')
 delete global.tttGames[m.chat]
 reply('╔══〔 🎮 GAME 〕══╗\n\n║ Game ended.\n╚═══════════════════════╝')
 } break
@@ -8454,7 +8457,7 @@ case 'insult': {
         _insultText = _localInsults[Math.floor(Math.random() * _localInsults.length)]
     }
     let _insultTarget = (m.mentionedJid && m.mentionedJid[0]) ? `@${m.mentionedJid[0].split('@')[0]}` : pushname
-    reply(`╔═════〔 🔥 ROAST 〕══════╗\n\n║ 👤 *${_insultTarget}*\n║ ${_insultText}\n╚═══════════════════════╝`)
+    reply(`╔═════〔 🔥 ROAST 〕══════╗\n\n║ 👤 *${_insultTarget}*\n��� ${_insultText}\n╚═══════════════════════╝`)
 } break
 
   case 'story':
@@ -8927,12 +8930,12 @@ case 'stylish': {
     // ── font table (from fontConverter.js) ──────────────────────────
     const _FNTS = {
         bold:            { l:'𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇', u:'𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭', d:'𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵', n:'Bold' },
-        italic:          { l:'𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻', u:'𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡', d:'0123456789', n:'Italic' },
+        italic:          { l:'𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻', u:'𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜��𝘞𝘟𝘠𝘡', d:'0123456789', n:'Italic' },
         bolditalic:      { l:'𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯', u:'𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕', d:'0123456789', n:'Bold Italic' },
         serif:           { l:'𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳', u:'𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙', d:'0123456789', n:'Serif Bold' },
         serifitalic:     { l:'𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧', u:'𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍', d:'0123456789', n:'Serif Italic' },
         serifbolditalic: { l:'𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛', u:'𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁', d:'0123456789', n:'Serif Bold Italic' },
-        script:          { l:'𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃', u:'𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩', d:'0123456789', n:'Script Bold' },
+        script:          { l:'𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃', u:'𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚��𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩', d:'0123456789', n:'Script Bold' },
         scriptlight:     { l:'𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏', u:'𝒜𝐵𝒞𝒟𝐸𝐹𝒢𝐻𝐼𝒥𝒦𝐿𝑀𝒩𝒪𝒫𝒬𝑅𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵', d:'0123456789', n:'Script' },
         gothic:          { l:'𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷', u:'𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ', d:'0123456789', n:'Gothic' },
         gothicbold:      { l:'𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟', u:'𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅', d:'0123456789', n:'Gothic Bold' },
@@ -9023,7 +9026,7 @@ if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n_Send 
 // text provided — show all fonts as live Unicode preview
 const _fMaps = {
   '𝗕𝗼𝗹𝗱 𝗦𝗮𝗻𝘀':      {a:'𝗮',b:'𝗯',c:'𝗰',d:'𝗱',e:'𝗲',f:'𝗳',g:'𝗴',h:'𝗵',i:'𝗶',j:'𝗷',k:'𝗸',l:'𝗹',m:'𝗺',n:'𝗻',o:'𝗼',p:'𝗽',q:'𝗾',r:'𝗿',s:'𝘀',t:'𝘁',u:'𝘂',v:'𝘃',w:'𝘄',x:'𝘅',y:'𝘆',z:'𝘇',A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',K:'𝗞',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭'},
-  '𝘐𝘵𝘢𝘭𝘪𝘤 𝘚𝘢𝘯𝘴':    {a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'𝘻',A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘑',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡'},
+  '𝘐𝘵𝘢𝘭𝘪𝘤 𝘚𝘢𝘯𝘴':    {a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'����',A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘑',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡'},
   '𝙱𝚘𝚕𝚍 𝙸𝚝𝚊𝚕𝚒𝚌':   {a:'𝙖',b:'𝙗',c:'𝙘',d:'𝙙',e:'𝙚',f:'𝙛',g:'𝙜',h:'𝙝',i:'𝙞',j:'𝙟',k:'𝙠',l:'𝙡',m:'𝙢',n:'𝙣',o:'𝙤',p:'𝙥',q:'𝙦',r:'𝙧',s:'𝙨',t:'𝙩',u:'𝙪',v:'𝙫',w:'𝙬',x:'𝙭',y:'𝙮',z:'𝙯',A:'𝘼',B:'𝘽',C:'𝘾',D:'𝘿',E:'𝙀',F:'𝙁',G:'𝙂',H:'𝙃',I:'𝙄',J:'𝙅',K:'𝙆',L:'𝙇',M:'𝙈',N:'𝙉',O:'𝙊',P:'𝙋',Q:'𝙌',R:'𝙍',S:'𝙎',T:'𝙏',U:'𝙐',V:'𝙑',W:'𝙒',X:'𝙓',Y:'𝙔',Z:'𝙕'},
   '𝙼𝚘𝚗𝚘':            {a:'𝚊',b:'𝚋',c:'𝚌',d:'𝚍',e:'𝚎',f:'𝚏',g:'𝚐',h:'𝚑',i:'𝚒',j:'𝚓',k:'𝚔',l:'𝚕',m:'𝚖',n:'𝚗',o:'𝚘',p:'𝚙',q:'𝚚',r:'𝚛',s:'𝚜',t:'𝚝',u:'𝚞',v:'𝚟',w:'𝚠',x:'𝚡',y:'𝚢',z:'𝚣',A:'𝙰',B:'𝙱',C:'𝙲',D:'𝙳',E:'𝙴',F:'𝙵',G:'𝙶',H:'𝙷',I:'𝙸',J:'𝙹',K:'𝙺',L:'𝙻',M:'𝙼',N:'𝙽',O:'𝙾',P:'𝙿',Q:'𝚀',R:'𝚁',S:'𝚂',T:'𝚃',U:'𝚄',V:'𝚅',W:'𝚆',X:'𝚇',Y:'𝚈',Z:'𝚉'},
   '𝒮𝒸𝓇𝒾𝓅𝓉':         {a:'𝒶',b:'𝒷',c:'𝒸',d:'𝒹',e:'𝑒',f:'𝒻',g:'𝑔',h:'𝒽',i:'𝒾',j:'𝒿',k:'𝓀',l:'𝓁',m:'𝓂',n:'𝓃',o:'𝑜',p:'𝓅',q:'𝓆',r:'𝓇',s:'𝓈',t:'𝓉',u:'𝓊',v:'𝓋',w:'𝓌',x:'𝓍',y:'𝓎',z:'𝓏',A:'𝒜',B:'ℬ',C:'𝒞',D:'𝒟',E:'ℰ',F:'ℱ',G:'𝒢',H:'ℋ',I:'ℐ',J:'𝒥',K:'𝒦',L:'ℒ',M:'ℳ',N:'𝒩',O:'𝒪',P:'𝒫',Q:'𝒬',R:'ℛ',S:'𝒮',T:'𝒯',U:'𝒰',V:'𝒱',W:'𝒲',X:'𝒳',Y:'𝒴',Z:'𝒵'},
@@ -9031,7 +9034,7 @@ const _fMaps = {
   '𝔉𝔯𝔞𝔨𝔱𝔲𝔯':        {a:'𝔞',b:'𝔟',c:'𝔠',d:'𝔡',e:'𝔢',f:'𝔣',g:'𝔤',h:'𝔥',i:'𝔦',j:'𝔧',k:'𝔨',l:'𝔩',m:'𝔪',n:'𝔫',o:'𝔬',p:'𝔭',q:'𝔮',r:'𝔯',s:'𝔰',t:'𝔱',u:'𝔲',v:'𝔳',w:'𝔴',x:'𝔵',y:'𝔶',z:'𝔷',A:'𝔄',B:'𝔅',C:'ℭ',D:'𝔇',E:'𝔈',F:'𝔉',G:'𝔊',H:'ℌ',I:'ℑ',J:'𝔍',K:'𝔎',L:'𝔏',M:'𝔐',N:'𝔑',O:'𝔒',P:'𝔓',Q:'𝔔',R:'ℜ',S:'𝔖',T:'𝔗',U:'𝔘',V:'𝔙',W:'𝔚',X:'𝔛',Y:'𝔜',Z:'ℨ'},
   '𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐𝖙𝖚𝖗': {a:'𝖆',b:'𝖇',c:'𝖈',d:'𝖉',e:'𝖊',f:'𝖋',g:'𝖌',h:'𝖍',i:'𝖎',j:'𝖏',k:'𝖐',l:'𝖑',m:'𝖒',n:'𝖓',o:'𝖔',p:'𝖕',q:'𝖖',r:'𝖗',s:'𝖘',t:'𝖙',u:'𝖚',v:'𝖛',w:'𝖜',x:'𝖝',y:'𝖞',z:'𝖟',A:'𝕬',B:'𝕭',C:'𝕮',D:'𝕯',E:'𝕰',F:'𝕱',G:'𝕲',H:'𝕳',I:'𝕴',J:'𝕵',K:'𝕶',L:'𝕷',M:'𝕸',N:'𝕹',O:'𝕺',P:'𝕻',Q:'𝕼',R:'𝕽',S:'𝕾',T:'𝕿',U:'𝖀',V:'𝖁',W:'𝖂',X:'𝖃',Y:'𝖄',Z:'𝖅'},
   '𝔻𝕠𝕦𝕓𝕝𝕖 𝕊𝕥𝕣𝕦𝕔𝕜':{a:'𝕒',b:'𝕓',c:'𝕔',d:'𝕕',e:'𝕖',f:'𝕗',g:'𝕘',h:'𝕙',i:'𝕚',j:'𝕛',k:'𝕜',l:'𝕝',m:'𝕞',n:'𝕟',o:'𝕠',p:'𝕡',q:'𝕢',r:'𝕣',s:'𝕤',t:'𝕥',u:'𝕦',v:'𝕧',w:'𝕨',x:'𝕩',y:'𝕪',z:'𝕫',A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'𝔼',F:'𝔽',G:'𝔾',H:'ℍ',I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ'},
-  'ꜱᴍᴀʟʟ ᴄᴀᴘꜱ':      {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'Q',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ',A:'ᴀ',B:'ʙ',C:'ᴄ',D:'ᴅ',E:'ᴇ',F:'ꜰ',G:'ɢ',H:'ʜ',I:'ɪ',J:'ᴊ',K:'ᴋ',L:'ʟ',M:'ᴍ',N:'ɴ',O:'ᴏ',P:'ᴘ',Q:'Q',R:'ʀ',S:'ꜱ',T:'ᴛ',U:'ᴜ',V:'ᴠ',W:'ᴡ',X:'x',Y:'ʏ',Z:'ᴢ'},
+  'ꜱᴍᴀʟʟ ᴄᴀᴘꜱ':      {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'Q',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ',A:'ᴀ',B:'ʙ',C:'ᴄ',D:'ᴅ',E:'ᴇ',F:'��',G:'ɢ',H:'ʜ',I:'ɪ',J:'ᴊ',K:'ᴋ',L:'ʟ',M:'ᴍ',N:'ɴ',O:'ᴏ',P:'ᴘ',Q:'Q',R:'ʀ',S:'ꜱ',T:'ᴛ',U:'ᴜ',V:'ᴠ',W:'ᴡ',X:'x',Y:'ʏ',Z:'ᴢ'},
   'ⓑⓤⓑⓑⓛⓔ':         {a:'ⓐ',b:'ⓑ',c:'ⓒ',d:'ⓓ',e:'ⓔ',f:'ⓕ',g:'ⓖ',h:'ⓗ',i:'ⓘ',j:'ⓙ',k:'ⓚ',l:'ⓛ',m:'ⓜ',n:'ⓝ',o:'ⓞ',p:'ⓟ',q:'ⓠ',r:'ⓡ',s:'ⓢ',t:'ⓣ',u:'ⓤ',v:'ⓥ',w:'ⓦ',x:'ⓧ',y:'ⓨ',z:'ⓩ',A:'Ⓐ',B:'Ⓑ',C:'Ⓒ',D:'Ⓓ',E:'Ⓔ',F:'Ⓕ',G:'Ⓖ',H:'Ⓗ',I:'Ⓘ',J:'Ⓙ',K:'Ⓚ',L:'Ⓛ',M:'Ⓜ',N:'Ⓝ',O:'Ⓞ',P:'Ⓟ',Q:'Ⓠ',R:'Ⓡ',S:'Ⓢ',T:'Ⓣ',U:'Ⓤ',V:'Ⓥ',W:'Ⓦ',X:'Ⓧ',Y:'Ⓨ',Z:'Ⓩ'},
   '🅑🅤🅑🅑🅛🅔 🅑🅞🅛🅓':{a:'🅐',b:'🅑',c:'🅒',d:'🅓',e:'🅔',f:'🅕',g:'🅖',h:'🅗',i:'🅘',j:'🅙',k:'🅚',l:'🅛',m:'🅜',n:'🅝',o:'🅞',p:'🅟',q:'🅠',r:'🅡',s:'🅢',t:'🅣',u:'🅤',v:'🅥',w:'🅦',x:'🅧',y:'🅨',z:'🅩',A:'🅐',B:'🅑',C:'🅒',D:'🅓',E:'🅔',F:'🅕',G:'🅖',H:'🅗',I:'🅘',J:'🅙',K:'🅚',L:'🅛',M:'🅜',N:'🅝',O:'🅞',P:'🅟',Q:'🅠',R:'🅡',S:'🅢',T:'🅣',U:'🅤',V:'🅥',W:'🅦',X:'🅧',Y:'🅨',Z:'🅩'},
   'Ａｅｓｔｈｅｔｉｃ':    {a:'ａ',b:'ｂ',c:'ｃ',d:'ｄ',e:'ｅ',f:'ｆ',g:'ｇ',h:'ｈ',i:'ｉ',j:'ｊ',k:'ｋ',l:'ｌ',m:'ｍ',n:'ｎ',o:'ｏ',p:'ｐ',q:'ｑ',r:'ｒ',s:'ｓ',t:'ｔ',u:'ｕ',v:'ｖ',w:'ｗ',x:'ｘ',y:'ｙ',z:'ｚ',A:'Ａ',B:'Ｂ',C:'Ｃ',D:'Ｄ',E:'Ｅ',F:'Ｆ',G:'Ｇ',H:'Ｈ',I:'Ｉ',J:'Ｊ',K:'Ｋ',L:'Ｌ',M:'Ｍ',N:'Ｎ',O:'Ｏ',P:'Ｐ',Q:'Ｑ',R:'Ｒ',S:'Ｓ',T:'Ｔ',U:'Ｕ',V:'Ｖ',W:'Ｗ',X:'Ｘ',Y:'Ｙ',Z:'Ｚ'},
@@ -9061,7 +9064,7 @@ case 'bold': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
 if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}bold [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
-const boldMap={a:'𝗮',b:'𝗯',c:'𝗰',d:'𝗱',e:'𝗲',f:'𝗳',g:'𝗴',h:'𝗵',i:'𝗶',j:'𝗷',k:'𝗸',l:'𝗹',m:'𝗺',n:'𝗻',o:'𝗼',p:'𝗽',q:'𝗾',r:'𝗿',s:'𝘀',t:'𝘁',u:'𝘂',v:'𝘃',w:'𝘄',x:'𝘅',y:'𝘆',z:'𝘇',A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',K:'𝗞',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭','0':'𝟬','1':'𝟭','2':'𝟮','3':'𝟯','4':'𝟰','5':'𝟱','6':'𝟲','7':'𝟳','8':'𝟴','9':'𝟵'}
+const boldMap={a:'𝗮',b:'𝗯',c:'𝗰',d:'𝗱',e:'𝗲',f:'𝗳',g:'𝗴',h:'𝗵',i:'𝗶',j:'𝗷',k:'𝗸',l:'𝗹',m:'𝗺',n:'𝗻',o:'𝗼',p:'𝗽',q:'𝗾',r:'𝗿',s:'𝘀',t:'𝘁',u:'𝘂',v:'𝘃',w:'𝘄',x:'𝘅',y:'𝘆',z:'𝘇',A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',K:'����',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭','0':'𝟬','1':'𝟭','2':'𝟮','3':'𝟯','4':'𝟰','5':'𝟱','6':'𝟲','7':'𝟳','8':'𝟴','9':'𝟵'}
 reply([...ftIn].map(c=>boldMap[c]||c).join(''))
 } break
 
@@ -9087,7 +9090,7 @@ case 'mono': {
     await X.sendMessage(m.chat, { react: { text: '𝙼', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
-if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}mono [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
+if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}mono [text]*\n║ Or reply to any message with the command\n╚��══════════════════════╝`)
 const monoMap={a:'𝚊',b:'𝚋',c:'𝚌',d:'𝚍',e:'𝚎',f:'𝚏',g:'𝚐',h:'𝚑',i:'𝚒',j:'𝚓',k:'𝚔',l:'𝚕',m:'𝚖',n:'𝚗',o:'𝚘',p:'𝚙',q:'𝚚',r:'𝚛',s:'𝚜',t:'𝚝',u:'𝚞',v:'𝚟',w:'𝚠',x:'𝚡',y:'𝚢',z:'𝚣',A:'𝙰',B:'𝙱',C:'𝙲',D:'𝙳',E:'𝙴',F:'𝙵',G:'𝙶',H:'𝙷',I:'𝙸',J:'𝙹',K:'𝙺',L:'𝙻',M:'𝙼',N:'𝙽',O:'𝙾',P:'𝙿',Q:'𝚀',R:'𝚁',S:'𝚂',T:'𝚃',U:'𝚄',V:'𝚅',W:'𝚆',X:'𝚇',Y:'𝚈',Z:'𝚉','0':'𝟶','1':'𝟷','2':'𝟸','3':'𝟹','4':'𝟺','5':'𝟻','6':'𝟼','7':'𝟽','8':'𝟾','9':'𝟿'}
 reply([...ftIn].map(c=>monoMap[c]||c).join(''))
 } break
@@ -9097,7 +9100,7 @@ case 'serif': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
 if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}serif [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
-const serifMap={a:'𝐚',b:'𝐛',c:'𝐜',d:'𝐝',e:'𝐞',f:'𝐟',g:'𝐠',h:'𝐡',i:'𝐢',j:'𝐣',k:'𝐤',l:'𝐥',m:'𝐦',n:'𝐧',o:'𝐨',p:'𝐩',q:'𝐪',r:'𝐫',s:'𝐬',t:'𝐭',u:'𝐮',v:'𝐯',w:'𝐰',x:'𝐱',y:'𝐲',z:'𝐳',A:'𝐀',B:'𝐁',C:'𝐂',D:'𝐃',E:'𝐄',F:'𝐅',G:'𝐆',H:'𝐇',I:'𝐈',J:'𝐉',K:'𝐊',L:'𝐋',M:'𝐌',N:'𝐍',O:'𝐎',P:'𝐏',Q:'𝐐',R:'𝐑',S:'𝐒',T:'𝐓',U:'𝐔',V:'𝐕',W:'𝐖',X:'𝐗',Y:'𝐘',Z:'𝐙','0':'𝟎','1':'𝟏','2':'𝟐','3':'𝟑','4':'𝟒','5':'𝟓','6':'𝟔','7':'𝟕','8':'𝟖','9':'𝟗'}
+const serifMap={a:'𝐚',b:'𝐛',c:'𝐜',d:'𝐝',e:'𝐞',f:'𝐟',g:'𝐠',h:'𝐡',i:'𝐢',j:'𝐣',k:'𝐤',l:'𝐥',m:'𝐦',n:'𝐧',o:'𝐨',p:'𝐩',q:'𝐪',r:'��',s:'𝐬',t:'𝐭',u:'𝐮',v:'𝐯',w:'𝐰',x:'𝐱',y:'𝐲',z:'𝐳',A:'𝐀',B:'𝐁',C:'𝐂',D:'𝐃',E:'𝐄',F:'𝐅',G:'𝐆',H:'𝐇',I:'𝐈',J:'𝐉',K:'𝐊',L:'𝐋',M:'𝐌',N:'𝐍',O:'𝐎',P:'𝐏',Q:'𝐐',R:'𝐑',S:'𝐒',T:'𝐓',U:'𝐔',V:'𝐕',W:'𝐖',X:'𝐗',Y:'𝐘',Z:'𝐙','0':'𝟎','1':'𝟏','2':'𝟐','3':'𝟑','4':'𝟒','5':'𝟓','6':'𝟔','7':'𝟕','8':'𝟖','9':'𝟗'}
 reply([...ftIn].map(c=>serifMap[c]||c).join(''))
 } break
 
@@ -9106,7 +9109,7 @@ case 'serifbold': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
 if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}serifbold [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
-const sbMap={a:'𝐚',b:'𝐛',c:'𝐜',d:'𝐝',e:'𝐞',f:'𝐟',g:'𝐠',h:'𝐡',i:'𝐢',j:'𝐣',k:'𝐤',l:'𝐥',m:'𝐦',n:'𝐧',o:'𝐨',p:'𝐩',q:'𝐪',r:'𝐫',s:'𝐬',t:'𝐭',u:'𝐮',v:'𝐯',w:'𝐰',x:'𝐱',y:'𝐲',z:'𝐳',A:'𝐀',B:'𝐁',C:'𝐂',D:'𝐃',E:'𝐄',F:'𝐅',G:'𝐆',H:'𝐇',I:'𝐈',J:'𝐉',K:'𝐊',L:'𝐋',M:'𝐌',N:'𝐍',O:'𝐎',P:'𝐏',Q:'𝐐',R:'𝐑',S:'𝐒',T:'𝐓',U:'𝐔',V:'𝐕',W:'𝐖',X:'𝐗',Y:'𝐘',Z:'𝐙'}
+const sbMap={a:'𝐚',b:'𝐛',c:'𝐜',d:'𝐝',e:'𝐞',f:'𝐟',g:'𝐠',h:'𝐡',i:'𝐢',j:'𝐣',k:'𝐤',l:'𝐥',m:'𝐦',n:'𝐧',o:'𝐨',p:'𝐩',q:'𝐪',r:'𝐫',s:'𝐬',t:'𝐭',u:'𝐮',v:'𝐯',w:'𝐰',x:'𝐱',y:'𝐲',z:'𝐳',A:'𝐀',B:'𝐁',C:'𝐂',D:'𝐃',E:'𝐄',F:'𝐅',G:'𝐆',H:'𝐇',I:'𝐈',J:'𝐉',K:'𝐊',L:'𝐋',M:'𝐌',N:'𝐍',O:'𝐎',P:'𝐏',Q:'𝐐',R:'𝐑',S:'����',T:'𝐓',U:'𝐔',V:'𝐕',W:'𝐖',X:'𝐗',Y:'𝐘',Z:'𝐙'}
 reply([...ftIn].map(c=>sbMap[c]||c).join(''))
 } break
 
@@ -9283,7 +9286,7 @@ case 'negative': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
 if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}negative [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
-const negMap={a:'🅐',b:'🅑',c:'🅒',d:'🅓',e:'🅔',f:'🅕',g:'🅖',h:'🅗',i:'🅘',j:'🅙',k:'🅚',l:'🅛',m:'🅜',n:'🅝',o:'🅞',p:'🅟',q:'🅠',r:'🅡',s:'🅢',t:'🅣',u:'🅤',v:'🅥',w:'🅦',x:'🅧',y:'🅨',z:'🅩',A:'🅐',B:'🅑',C:'🅒',D:'🅓',E:'🅔',F:'🅕',G:'🅖',H:'🅗',I:'🅘',J:'🅙',K:'🅚',L:'🅛',M:'🅜',N:'🅝',O:'🅞',P:'🅟',Q:'🅠',R:'🅡',S:'🅢',T:'🅣',U:'🅤',V:'🅥',W:'🅦',X:'🅧',Y:'🅨',Z:'🅩'}
+const negMap={a:'🅐',b:'🅑',c:'🅒',d:'🅓',e:'🅔',f:'🅕',g:'🅖',h:'🅗',i:'🅘',j:'🅙',k:'🅚',l:'🅛',m:'🅜',n:'🅝',o:'🅞',p:'🅟',q:'🅠',r:'🅡',s:'🅢',t:'🅣',u:'🅤',v:'🅥',w:'🅦',x:'🅧',y:'🅨',z:'🅩',A:'🅐',B:'🅑',C:'🅒',D:'🅓',E:'🅔',F:'🅕',G:'🅖',H:'🅗',I:'🅘',J:'🅙',K:'🅚',L:'🅛',M:'��',N:'🅝',O:'🅞',P:'🅟',Q:'🅠',R:'🅡',S:'🅢',T:'🅣',U:'🅤',V:'🅥',W:'🅦',X:'🅧',Y:'🅨',Z:'🅩'}
 reply([...ftIn].map(c=>negMap[c]||c).join(''))
 } break
 
@@ -9319,7 +9322,7 @@ case 'aesthetic': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let ftIn = text || (m.quoted && (m.quoted.text || m.quoted.body || m.quoted.caption || '').trim()) || ''
 if (!ftIn) return reply(`╔══〔 🔤 FONT CONVERTER 〕══╗\n\n║ Usage: *${prefix}aesthetic [text]*\n║ Or reply to any message with the command\n╚═══════════════════════╝`)
-const aesMap={a:'ａ',b:'ｂ',c:'ｃ',d:'ｄ',e:'ｅ',f:'ｆ',g:'ｇ',h:'ｈ',i:'ｉ',j:'ｊ',k:'ｋ',l:'ｌ',m:'ｍ',n:'ｎ',o:'ｏ',p:'ｐ',q:'ｑ',r:'ｒ',s:'ｓ',t:'ｔ',u:'ｕ',v:'ｖ',w:'ｗ',x:'ｘ',y:'ｙ',z:'ｚ',A:'Ａ',B:'Ｂ',C:'Ｃ',D:'Ｄ',E:'Ｅ',F:'Ｆ',G:'Ｇ',H:'Ｈ',I:'Ｉ',J:'Ｊ',K:'Ｋ',L:'Ｌ',M:'Ｍ',N:'Ｎ',O:'Ｏ',P:'Ｐ',Q:'Ｑ',R:'Ｒ',S:'Ｓ',T:'Ｔ',U:'Ｕ',V:'Ｖ',W:'Ｗ',X:'Ｘ',Y:'Ｙ',Z:'Ｚ','0':'０','1':'１','2':'２','3':'３','4':'４','5':'５','6':'６','7':'７','8':'８','9':'９'}
+const aesMap={a:'ａ',b:'ｂ',c:'ｃ',d:'ｄ',e:'ｅ',f:'ｆ',g:'ｇ',h:'ｈ',i:'ｉ',j:'ｊ',k:'ｋ',l:'ｌ',m:'ｍ',n:'ｎ',o:'ｏ',p:'ｐ',q:'ｑ',r:'ｒ',s:'ｓ',t:'ｔ',u:'ｕ',v:'ｖ',w:'ｗ',x:'ｘ',y:'ｙ',z:'ｚ',A:'Ａ',B:'Ｂ',C:'Ｃ',D:'Ｄ',E:'Ｅ',F:'Ｆ',G:'Ｇ',H:'Ｈ',I:'Ｉ',J:'Ｊ',K:'Ｋ',L:'Ｌ',M:'Ｍ',N:'Ｎ',O:'Ｏ',P:'Ｐ',Q:'Ｑ',R:'Ｒ',S:'Ｓ',T:'Ｔ',U:'Ｕ',V:'Ｖ',W:'Ｗ',X:'Ｘ',Y:'Ｙ',Z:'Ｚ','0':'０','1':'１','2':'���','3':'３','4':'４','5':'５','6':'６','7':'７','8':'８','9':'９'}
 reply([...ftIn].map(c=>aesMap[c]||c).join(''))
 } break
 
@@ -9387,12 +9390,12 @@ const maps = {
   'Italic Sans':     {a:'𝘢',b:'𝘣',c:'𝘤',d:'𝘥',e:'𝘦',f:'𝘧',g:'𝘨',h:'𝘩',i:'𝘪',j:'𝘫',k:'𝘬',l:'𝘭',m:'𝘮',n:'𝘯',o:'𝘰',p:'𝘱',q:'𝘲',r:'𝘳',s:'𝘴',t:'𝘵',u:'𝘶',v:'𝘷',w:'𝘸',x:'𝘹',y:'𝘺',z:'𝘻',A:'𝘈',B:'𝘉',C:'𝘊',D:'𝘋',E:'𝘌',F:'𝘍',G:'𝘎',H:'𝘏',I:'𝘐',J:'𝘑',K:'𝘒',L:'𝘓',M:'𝘔',N:'𝘕',O:'𝘖',P:'𝘗',Q:'𝘘',R:'𝘙',S:'𝘚',T:'𝘛',U:'𝘜',V:'𝘝',W:'𝘞',X:'𝘟',Y:'𝘠',Z:'𝘡'},
   'Bold Italic':     {a:'𝙖',b:'𝙗',c:'𝙘',d:'𝙙',e:'𝙚',f:'𝙛',g:'𝙜',h:'𝙝',i:'𝙞',j:'𝙟',k:'𝙠',l:'𝙡',m:'𝙢',n:'𝙣',o:'𝙤',p:'𝙥',q:'𝙦',r:'𝙧',s:'𝙨',t:'𝙩',u:'𝙪',v:'𝙫',w:'𝙬',x:'𝙭',y:'𝙮',z:'𝙯',A:'𝘼',B:'𝘽',C:'𝘾',D:'𝘿',E:'𝙀',F:'𝙁',G:'𝙂',H:'𝙃',I:'𝙄',J:'𝙅',K:'𝙆',L:'𝙇',M:'𝙈',N:'𝙉',O:'𝙊',P:'𝙋',Q:'𝙌',R:'𝙍',S:'𝙎',T:'𝙏',U:'𝙐',V:'𝙑',W:'𝙒',X:'𝙓',Y:'𝙔',Z:'𝙕'},
   'Mono':            {a:'𝚊',b:'𝚋',c:'𝚌',d:'𝚍',e:'𝚎',f:'𝚏',g:'𝚐',h:'𝚑',i:'𝚒',j:'𝚓',k:'𝚔',l:'𝚕',m:'𝚖',n:'𝚗',o:'𝚘',p:'𝚙',q:'𝚚',r:'𝚛',s:'𝚜',t:'𝚝',u:'𝚞',v:'𝚟',w:'𝚠',x:'𝚡',y:'𝚢',z:'𝚣',A:'𝙰',B:'𝙱',C:'𝙲',D:'𝙳',E:'𝙴',F:'𝙵',G:'𝙶',H:'𝙷',I:'𝙸',J:'𝙹',K:'𝙺',L:'𝙻',M:'𝙼',N:'𝙽',O:'𝙾',P:'𝙿',Q:'𝚀',R:'𝚁',S:'𝚂',T:'𝚃',U:'𝚄',V:'𝚅',W:'𝚆',X:'𝚇',Y:'𝚈',Z:'𝚉'},
-  'Script':          {a:'𝒶',b:'𝒷',c:'𝒸',d:'𝒹',e:'𝑒',f:'𝒻',g:'𝑔',h:'𝒽',i:'𝒾',j:'𝒿',k:'𝓀',l:'𝓁',m:'𝓂',n:'𝓃',o:'𝑜',p:'𝓅',q:'𝓆',r:'𝓇',s:'𝓈',t:'𝓉',u:'𝓊',v:'𝓋',w:'𝓌',x:'𝓍',y:'𝓎',z:'𝓏',A:'𝒜',B:'ℬ',C:'𝒞',D:'𝒟',E:'ℰ',F:'ℱ',G:'𝒢',H:'ℋ',I:'ℐ',J:'𝒥',K:'𝒦',L:'ℒ',M:'ℳ',N:'𝒩',O:'𝒪',P:'𝒫',Q:'𝒬',R:'ℛ',S:'𝒮',T:'𝒯',U:'𝒰',V:'𝒱',W:'𝒲',X:'𝒳',Y:'𝒴',Z:'𝒵'},
+  'Script':          {a:'𝒶',b:'𝒷',c:'𝒸',d:'𝒹',e:'𝑒',f:'𝒻',g:'𝑔',h:'����',i:'𝒾',j:'𝒿',k:'𝓀',l:'𝓁',m:'𝓂',n:'𝓃',o:'𝑜',p:'𝓅',q:'𝓆',r:'𝓇',s:'𝓈',t:'𝓉',u:'𝓊',v:'𝓋',w:'𝓌',x:'𝓍',y:'𝓎',z:'𝓏',A:'𝒜',B:'ℬ',C:'𝒞',D:'𝒟',E:'ℰ',F:'ℱ',G:'𝒢',H:'ℋ',I:'ℐ',J:'𝒥',K:'𝒦',L:'ℒ',M:'ℳ',N:'𝒩',O:'𝒪',P:'𝒫',Q:'𝒬',R:'ℛ',S:'𝒮',T:'𝒯',U:'𝒰',V:'𝒱',W:'𝒲',X:'𝒳',Y:'𝒴',Z:'𝒵'},
   'Bold Script':     {a:'𝓪',b:'𝓫',c:'𝓬',d:'𝓭',e:'𝓮',f:'𝓯',g:'𝓰',h:'𝓱',i:'𝓲',j:'𝓳',k:'𝓴',l:'𝓵',m:'𝓶',n:'𝓷',o:'𝓸',p:'𝓹',q:'𝓺',r:'𝓻',s:'𝓼',t:'𝓽',u:'𝓾',v:'𝓿',w:'𝔀',x:'𝔁',y:'𝔂',z:'𝔃',A:'𝓐',B:'𝓑',C:'𝓒',D:'𝓓',E:'𝓔',F:'𝓕',G:'𝓖',H:'𝓗',I:'𝓘',J:'𝓙',K:'𝓚',L:'𝓛',M:'𝓜',N:'𝓝',O:'𝓞',P:'𝓟',Q:'𝓠',R:'𝓡',S:'𝓢',T:'𝓣',U:'𝓤',V:'𝓥',W:'𝓦',X:'𝓧',Y:'𝓨',Z:'𝓩'},
   'Fraktur':         {a:'𝔞',b:'𝔟',c:'𝔠',d:'𝔡',e:'𝔢',f:'𝔣',g:'𝔤',h:'𝔥',i:'𝔦',j:'𝔧',k:'𝔨',l:'𝔩',m:'𝔪',n:'𝔫',o:'𝔬',p:'𝔭',q:'𝔮',r:'𝔯',s:'𝔰',t:'𝔱',u:'𝔲',v:'𝔳',w:'𝔴',x:'𝔵',y:'𝔶',z:'𝔷',A:'𝔄',B:'𝔅',C:'ℭ',D:'𝔇',E:'𝔈',F:'𝔉',G:'𝔊',H:'ℌ',I:'ℑ',J:'𝔍',K:'𝔎',L:'𝔏',M:'𝔐',N:'𝔑',O:'𝔒',P:'𝔓',Q:'𝔔',R:'ℜ',S:'𝔖',T:'𝔗',U:'𝔘',V:'𝔙',W:'𝔚',X:'𝔛',Y:'𝔜',Z:'ℨ'},
   'Bold Fraktur':    {a:'𝖆',b:'𝖇',c:'𝖈',d:'𝖉',e:'𝖊',f:'𝖋',g:'𝖌',h:'𝖍',i:'𝖎',j:'𝖏',k:'𝖐',l:'𝖑',m:'𝖒',n:'𝖓',o:'𝖔',p:'𝖕',q:'𝖖',r:'𝖗',s:'𝖘',t:'𝖙',u:'𝖚',v:'𝖛',w:'𝖜',x:'𝖝',y:'𝖞',z:'𝖟',A:'𝕬',B:'𝕭',C:'𝕮',D:'𝕯',E:'𝕰',F:'𝕱',G:'𝕲',H:'𝕳',I:'𝕴',J:'𝕵',K:'𝕶',L:'𝕷',M:'𝕸',N:'𝕹',O:'𝕺',P:'𝕻',Q:'𝕼',R:'𝕽',S:'𝕾',T:'𝕿',U:'𝖀',V:'𝖁',W:'𝖂',X:'𝖃',Y:'𝖄',Z:'𝖅'},
   'Double Struck':   {a:'𝕒',b:'𝕓',c:'𝕔',d:'𝕕',e:'𝕖',f:'𝕗',g:'𝕘',h:'𝕙',i:'𝕚',j:'𝕛',k:'𝕜',l:'𝕝',m:'𝕞',n:'𝕟',o:'𝕠',p:'𝕡',q:'𝕢',r:'𝕣',s:'𝕤',t:'𝕥',u:'𝕦',v:'𝕧',w:'𝕨',x:'𝕩',y:'𝕪',z:'𝕫',A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'𝔼',F:'𝔽',G:'𝔾',H:'ℍ',I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ'},
-  'Small Caps':      {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'Q',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ',A:'ᴀ',B:'ʙ',C:'ᴄ',D:'ᴅ',E:'ᴇ',F:'ꜰ',G:'ɢ',H:'ʜ',I:'ɪ',J:'ᴊ',K:'ᴋ',L:'ʟ',M:'ᴍ',N:'ɴ',O:'ᴏ',P:'ᴘ',Q:'Q',R:'ʀ',S:'ꜱ',T:'ᴛ',U:'ᴜ',V:'ᴠ',W:'ᴡ',X:'x',Y:'ʏ',Z:'ᴢ'},
+  'Small Caps':      {a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',n:'ɴ',o:'ᴏ',p:'ᴘ',q:'Q',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ',A:'ᴀ',B:'ʙ',C:'ᴄ',D:'ᴅ',E:'ᴇ',F:'ꜰ',G:'ɢ',H:'ʜ',I:'ɪ',J:'ᴊ',K:'ᴋ',L:'ʟ',M:'ᴍ',N:'ɴ',O:'ᴏ',P:'ᴘ',Q:'Q',R:'ʀ',S:'ꜱ',T:'ᴛ',U:'ᴜ',V:'ᴠ',W:'���',X:'x',Y:'ʏ',Z:'ᴢ'},
   'Bubble':          {a:'ⓐ',b:'ⓑ',c:'ⓒ',d:'ⓓ',e:'ⓔ',f:'ⓕ',g:'ⓖ',h:'ⓗ',i:'ⓘ',j:'ⓙ',k:'ⓚ',l:'ⓛ',m:'ⓜ',n:'ⓝ',o:'ⓞ',p:'ⓟ',q:'ⓠ',r:'ⓡ',s:'ⓢ',t:'ⓣ',u:'ⓤ',v:'ⓥ',w:'ⓦ',x:'ⓧ',y:'ⓨ',z:'ⓩ',A:'Ⓐ',B:'Ⓑ',C:'Ⓒ',D:'Ⓓ',E:'Ⓔ',F:'Ⓕ',G:'Ⓖ',H:'Ⓗ',I:'Ⓘ',J:'Ⓙ',K:'Ⓚ',L:'Ⓛ',M:'Ⓜ',N:'Ⓝ',O:'Ⓞ',P:'Ⓟ',Q:'Ⓠ',R:'Ⓡ',S:'Ⓢ',T:'Ⓣ',U:'Ⓤ',V:'Ⓥ',W:'Ⓦ',X:'Ⓧ',Y:'Ⓨ',Z:'Ⓩ'},
   'Wide':            {},
   'Medieval':        {a:'\u{1D51E}',b:'\u{1D51F}',c:'\u{1D520}',d:'\u{1D521}',e:'\u{1D522}',f:'\u{1D523}',g:'\u{1D524}',h:'\u{1D525}',i:'\u{1D526}',j:'\u{1D527}',k:'\u{1D528}',l:'\u{1D529}',m:'\u{1D52A}',n:'\u{1D52B}',o:'\u{1D52C}',p:'\u{1D52D}',q:'\u{1D52E}',r:'\u{1D52F}',s:'\u{1D530}',t:'\u{1D531}',u:'\u{1D532}',v:'\u{1D533}',w:'\u{1D534}',x:'\u{1D535}',y:'\u{1D536}',z:'\u{1D537}',A:'\u{1D504}',B:'\u{1D505}',C:'\u212D',D:'\u{1D507}',E:'\u{1D508}',F:'\u{1D509}',G:'\u{1D50A}',H:'\u210C',I:'\u2111',J:'\u{1D50D}',K:'\u{1D50E}',L:'\u{1D50F}',M:'\u{1D510}',N:'\u{1D511}',O:'\u{1D512}',P:'\u{1D513}',Q:'\u{1D514}',R:'\u211C',S:'\u{1D516}',T:'\u{1D517}',U:'\u{1D518}',V:'\u{1D519}',W:'\u{1D51A}',X:'\u{1D51B}',Y:'\u{1D51C}',Z:'\u2128'},
@@ -9696,7 +9699,7 @@ reply(`╔═══〔 🪪 ${ncName} 〕════╗\n\n║ Bot : ${global.b
 
 case 'tweet': {
     await X.sendMessage(m.chat, { react: { text: '🐦', key: m.key } })
-if (!text) return reply(`╔═══〔 🐦 TWEET CARD 〕═══╗\n\n║ Usage: *${prefix}tweet [message]*\n║ Example: ${prefix}tweet I love coding!\n╚═══════════════════════╝`)
+if (!text) return reply(`╔═══〔 🐦 TWEET CARD 〕═══╗\n\n║ Usage: *${prefix}tweet [message]*\n║ Example: ${prefix}tweet I love coding!\n╚═════════���═════════════╝`)
 reply(`╔═════〔 🐦 TWEET 〕══════╗\n\n║ 👤 *@${pushname}*\n║ ${text}\n\n║ ❤️ ${Math.floor(Math.random() * 10000)}  🔁 ${Math.floor(Math.random() * 5000)}  💬 ${Math.floor(Math.random() * 1000)}\n╚═══════════════════════╝`)
 } break
 
@@ -9924,7 +9927,7 @@ case 'qrcode':
 case 'makeqr':
 case 'genqr': {
     await X.sendMessage(m.chat, { react: { text: '📲', key: m.key } })
-    if (!text) return reply(`╔══〔 📲 QR CODE GENERATOR 〕══╗\n\n║ Usage: *${prefix}${command} [text or url]*\n║ Example: ${prefix}${command} https://google.com\n║ Example: ${prefix}${command} Hello World\n╚═══════════════════════╝`)
+    if (!text) return reply(`╔══〔 📲 QR CODE GENERATOR 〕══╗\n\n║ Usage: *${prefix}${command} [text or url]*\n║ Example: ${prefix}${command} https://google.com\n║ Example: ${prefix}${command} Hello World\n╚═══��═══════════════════╝`)
     try {
         let _qrRes = await fetch(`https://eliteprotech-apis.zone.id/qr?text=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
         if (!_qrRes.ok) throw new Error('QR API error: ' + _qrRes.status)
@@ -9980,7 +9983,7 @@ case 'deepimg':
 case 'genimage':
 case 'aiart': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
-    if (!text) return reply(`╔══〔 🎨 AI IMAGE GENERATOR 〕══╗\n\n║ Usage: *${prefix}${command} [describe your image]*\n║ Example: ${prefix}${command} A futuristic city at night\n╚═══════════════════════╝`)
+    if (!text) return reply(`╔══〔 🎨 AI IMAGE GENERATOR 〕══╗\n\n║ Usage: *${prefix}${command} [describe your image]*\n║ Example: ${prefix}${command} A futuristic city at night\n╚═════════════���═════════╝`)
     try {
         await reply('🎨 _Generating your image with AI, please wait..._')
         let r = await fetch(`https://api.giftedtech.co.ke/api/ai/fluximg?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
@@ -10058,7 +10061,7 @@ case 'tips': {
         await reply('🔮 _Fetching today\'s football predictions..._')
         let preds = await _getPredictions()
         if (!preds?.length) return reply('🔮 No predictions available right now. Try again later.')
-        let msg = `╔══〔 🔮 FOOTBALL PREDICTIONS (${preds.length}) 〕══╗\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 🔮 FOOTBALL PREDICTIONS (${preds.length}) 〕══╗\n\n╚═══════════════���═══════╝`
         for (let p of preds) {
             msg += `\n🏆 *${p.league || 'Unknown League'}*\n`
             msg += `  ⚽ ${p.match}\n`
@@ -10081,7 +10084,7 @@ case 'tips': {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📰  FOOTBALL NEWS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━
 case 'footnews':
 case 'footballnews':
 case 'sportnews': {
@@ -10177,7 +10180,7 @@ case 'laligastandings': {
         await reply('🏆 _Fetching La Liga standings..._')
         let teams = await _getStandings('laliga', 'laliga')
         if (!teams?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 🏆 LA LIGA STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 🏆 LA LIGA STANDINGS ${new Date().getFullYear()} 〕══╗\n\n\n╚══════���════════════════╝`
         msg += `${'#'.padEnd(3)} ${'Team'.padEnd(22)} ${'P'.padEnd(3)} ${'W'.padEnd(3)} ${'D'.padEnd(3)} ${'L'.padEnd(3)} ${'GD'.padEnd(5)} Pts\n`
         msg += `${'─'.repeat(50)}\n`
         for (let t of teams) {
@@ -10202,7 +10205,7 @@ case 'laligatopscorers': {
         await reply('⚽ _Fetching La Liga top scorers..._')
         let scorers = await _getScorers('laliga', 'laliga')
         if (!scorers?.length) throw new Error('No data from any source')
-        let msg = `╔══〔 ⚽ LA LIGA TOP SCORERS 〕══╗\n\n\n╚═══════════════════════╝`
+        let msg = `╔══〔 ⚽ LA LIGA TOP SCORERS 〕══╗\n\n\n╚════════════════════���══╝`
         for (let s of scorers) {
             let rank = s.rank || s.position || ''
             msg += `${rank}. *${s.player || s.name}* (${s.team || s.club || ''})\n`
@@ -10314,7 +10317,7 @@ case 'laligaupcoming': {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🇮🇹  SERIE A STANDINGS
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━
   case 'seriea':
   case 'serieastandings': {
       await X.sendMessage(m.chat, { react: { text: '🇮🇹', key: m.key } })
@@ -10424,7 +10427,7 @@ case 'sportslive': {
             return reply(`╔══〔 🔴 NO LIVE EVENTS 〕══╗\n║ No live *${_label}* events right now\n╠══〔 💡 TRY INSTEAD 〕═══╣\n║ ${prefix}allsports        — all matches\n║ ${prefix}sportscategories — all sports\n╚═══════════════════════╝`)
         }
         const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
-        let _lines = [`╔══〔 🔴 LIVE SPORTS (${live.length}) 〕══╗\n\n╚═══════════════════════╝`]
+        let _lines = [`╔���═〔 🔴 LIVE SPORTS (${live.length}) 〕══╗\n\n╚═══════════════════════╝`]
         for (let _ev of _live) {
             let _icon = _si[(_ev.type||'').toLowerCase()] || '🏅'
             let _sc1 = _ev.team1?.score || '0', _sc2 = _ev.team2?.score || '0'
@@ -10780,7 +10783,7 @@ case 'antigstt': {
     if (!['on','off'].includes(_agsArg)) return reply(`╔══〔 🚫 ANTI GROUP STATUS 〕══╗\n\n║ Usage: *${prefix}antigroupstatus on/off*\n╚═══════════════════════╝`)
     if (!global.antiGroupStatusGroups) global.antiGroupStatusGroups = {}
     global.antiGroupStatusGroups[m.chat] = _agsArg === 'on'
-    reply(`╔══〔 🚫  ANTI GROUP STATUS 〕══╗\n\n║ ${_agsArg === 'on' ? '✅ *ENABLED* — status shares will be removed.' : '❌ *DISABLED* — status shares are allowed.'}\n╚═══════════════════════╝`)
+    reply(`╔══〔 🚫  ANTI GROUP STATUS 〕══╗\n\n║ ${_agsArg === 'on' ? '✅ *ENABLED* �� status shares will be removed.' : '❌ *DISABLED* — status shares are allowed.'}\n╚═══════════════════════╝`)
 } break
 
 case 'antilinkgc': {
@@ -10795,7 +10798,7 @@ case 'antilinkgc': {
     if (!['on','off'].includes(_alcArg)) return reply(`╔══〔 🔗 ANTI GC LINK 〕══╗\n\n║ Usage: *${prefix}antilinkgc on/off*\n╚═══════════════════════╝`)
     if (!global.antilinkGcGroups) global.antilinkGcGroups = {}
     global.antilinkGcGroups[m.chat] = _alcArg === 'on'
-    reply(`╔══〔 🔗  ANTI GC LINK 〕══╗\n\n║ ${_alcArg === 'on' ? '✅ *ENABLED* — group links will be removed.' : '❌ *DISABLED* — group links are allowed.'}\n╚═══════════════════════╝`)
+    reply(`╔══〔 🔗  ANTI GC LINK 〕══╗\n\n║ ${_alcArg === 'on' ? '✅ *ENABLED* — group links will be removed.' : '❌ *DISABLED* — group links are allowed.'}\n╚════════════��══════════╝`)
 } break
 
 case 'antiimage':
@@ -10850,7 +10853,7 @@ case 'resetwarn': {
     if (!m.isGroup) return reply(mess.OnlyGrup)
     if (!isAdmins && !isOwner) return reply(mess.admin)
     const _cwUser = (m.mentionedJid && m.mentionedJid[0]) || (m.quoted && m.quoted.sender) || (text && text.replace(/\D/g,'') + '@s.whatsapp.net')
-    if (!_cwUser) return reply(`╔═══〔 ✅ CLEAR WARN 〕════╗\n\n║ Usage: *${prefix}clearwarn @user*\n║ Or reply to their message\n╚═══════════════════════╝`)
+    if (!_cwUser) return reply(`��═══〔 ✅ CLEAR WARN 〕════╗\n\n║ Usage: *${prefix}clearwarn @user*\n║ Or reply to their message\n╚═══════════════════════╝`)
     const _cwDbPath = path.join(__dirname, 'database', 'warnings.json')
     let _cwDb = {}
     try { _cwDb = JSON.parse(fs.readFileSync(_cwDbPath, 'utf-8')) } catch { _cwDb = {} }
@@ -11284,7 +11287,7 @@ case 'fluximg': {
     if (imgBuf.length < 1000) throw new Error('Invalid image returned')
     await X.sendMessage(m.chat, {
       image: imgBuf,
-      caption: `╔══〔 🎨 FLUX IMAGE AI 〕══╗\n║ 🖌️ *Prompt:* ${text.slice(0,100)}\n║ 🤖 *Model:* Flux by Keith\n╚═══════════════════════╝`
+      caption: `╔══〔 🎨 FLUX IMAGE AI 〕══╗\n║ 🖌️ *Prompt:* ${text.slice(0,100)}\n�� 🤖 *Model:* Flux by Keith\n╚═══════════════════════╝`
     }, { quoted: m })
   } catch (e) { reply('❌ Flux image generation failed: ' + e.message) }
 } break
