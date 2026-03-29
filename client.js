@@ -2042,43 +2042,62 @@ break
   case 'tempmail': {
       await X.sendMessage(m.chat, { react: { text: '📧', key: m.key } })
 
-      // ── Check inbox: .tempemail [email] ──────────────────────────────
+      // ── Check inbox: .tempmail [email] ──────────────────────────────
       if (text && text.includes('@')) {
           try {
               await reply('📬 _Checking inbox, please wait..._')
-              const _ti = await fetch(`https://eliteprotech-apis.zone.id/tempemail?action=inbox&email=${encodeURIComponent(text.trim())}`, { signal: AbortSignal.timeout(20000) })
-              const _tid = await _ti.json()
-              if (!_tid.success) return reply('❌ Could not check inbox. Make sure the email is valid.')
-              if (!_tid.inbox) {
-                  return reply(`╔══〔 📭 INBOX EMPTY 〕═══╗\n\n║ 📧 *Email* : ${text.trim()}\n\n║ _No messages received yet._\n║ _Send something to this address, then check again._\n╚═══════════════════════╝`)
+              let _inboxReply = null
+              // Primary: Keith API
+              try {
+                  const _ki = await _keithFetch(`/tempmail/inbox?email=${encodeURIComponent(text.trim())}`)
+                  const _kim = _ki?.result?.messages || _ki?.messages || (_ki?.result ? [_ki.result] : null)
+                  if (Array.isArray(_kim) && _kim.length) {
+                      const _msg = _kim[0]
+                      const _from    = _msg.from || _msg.sender || 'Unknown'
+                      const _subject = _msg.subject || '(no subject)'
+                      const _time    = _msg.date || _msg.time || 'Unknown'
+                      const _body    = (_msg.body || _msg.text || _msg.content || _msg.message || '').slice(0, 1500)
+                      _inboxReply = `╔══〔 📬 INBOX 〕══╗\n\n║ 📧 *To* : ${text.trim()}\n║ 👤 *From* : ${_from}\n║ 📌 *Subject* : ${_subject}\n║ 🕐 *Time* : ${_time}\n${_body ? '\n' + _body + '\n' : ''}\n╚═══════════════════════╝`
+                  } else if (_ki !== null) {
+                      _inboxReply = `╔══〔 📭 INBOX EMPTY 〕═══╗\n\n║ 📧 *Email* : ${text.trim()}\n\n║ _No messages received yet._\n╚═══════════════════════╝`
+                  }
+              } catch(_) {}
+              // Fallback: eliteprotech
+              if (!_inboxReply) {
+                  const _ti = await fetch(`https://eliteprotech-apis.zone.id/tempemail?action=inbox&email=${encodeURIComponent(text.trim())}`, { signal: AbortSignal.timeout(20000) })
+                  const _tid = await _ti.json()
+                  if (!_tid.success) return reply('❌ Could not check inbox. Make sure the email is valid.')
+                  if (!_tid.inbox) {
+                      return reply(`╔══〔 📭 INBOX EMPTY 〕═══╗\n\n║ 📧 *Email* : ${text.trim()}\n\n║ _No messages received yet._\n║ _Send something to this address, then check again._\n╚═══════════════════════╝`)
+                  }
+                  const _fmsg = _tid.inbox
+                  const _fbody = (_fmsg.body || _fmsg.text || _fmsg.content || _fmsg.message || '').slice(0, 1500)
+                  _inboxReply = `╔══〔 📬 INBOX 〕══╗\n\n║ 📧 *To* : ${text.trim()}\n║ 👤 *From* : ${_fmsg.from || 'Unknown'}\n║ 📌 *Subject* : ${_fmsg.subject || '(no subject)'}\n║ 🕐 *Time* : ${_fmsg.time || 'Unknown'}\n${_fbody ? '\n' + _fbody + '\n' : ''}\n╚═══════════════════════╝`
               }
-              const _msg = _tid.inbox
-              const _from    = _msg.from    || 'Unknown'
-              const _subject = _msg.subject || '(no subject)'
-              const _time    = _msg.time    || 'Unknown'
-              const _body    = _msg.body || _msg.text || _msg.content || _msg.message || ''
-              let _inboxReply = `╔══〔 📬 INBOX — LATEST MESSAGE 〕══╗\n\n\n╚═══════════════════════╝`
-              _inboxReply += `║ 📧 *To* : ${text.trim()}\n`
-              _inboxReply += `║ 👤 *From* : ${_from}\n`
-              _inboxReply += `║ 📌 *Subject* : ${_subject}\n`
-              _inboxReply += `║ 🕐 *Time* : ${_time}\n`
-              if (_body) _inboxReply += `\n║\n\n${_body.slice(0, 1500)}`
-              _inboxReply += `\n\n║ _Reply to check again: ${prefix}tempemail ${text.trim()}_`
-              reply(_inboxReply)
+              reply(_inboxReply || '❌ Could not check inbox. Try again.')
           } catch(e) { reply('❌ Inbox check failed: ' + e.message) }
 
-      // ── Generate new temp email: .tempemail ──────────────────────────
+      // ── Generate new temp email: .tempmail ──────────────────────────
       } else {
           try {
-              const _te = await fetch('https://eliteprotech-apis.zone.id/tempemail', { signal: AbortSignal.timeout(15000) })
-              const _ted = await _te.json()
-              if (_ted.success && _ted.email) {
-                  reply(`╔══〔 📧 TEMP EMAIL GENERATOR 〕══╗\n\n║ ✅ *Your Temporary Email:*\n\n║ 📨  ${_ted.email}\n\n║ Use it for sign-ups & verifications\n║ To check received messages:\n║ *${prefix}tempemail ${_ted.email}*\n\n║ _Inbox refreshes on each check._\n╚═══════════════════════╝`)
+              let _email = null
+              // Primary: Keith API
+              try {
+                  const _ke = await _keithFetch('/tempmail/generate')
+                  _email = _ke?.result?.email || _ke?.email || (typeof _ke?.result === 'string' ? _ke.result : null)
+              } catch(_) {}
+              // Fallback: eliteprotech
+              if (!_email) {
+                  const _te = await fetch('https://eliteprotech-apis.zone.id/tempemail', { signal: AbortSignal.timeout(15000) })
+                  const _ted = await _te.json()
+                  if (_ted.success && _ted.email) _email = _ted.email
+              }
+              if (_email) {
+                  reply(`╔══〔 📧 TEMP EMAIL 〕══╗\n\n║ ✅ *Your Temporary Email:*\n\n║ 📨  ${_email}\n\n║ Use it for sign-ups & verifications\n║ To check received messages:\n║ *${prefix}tempmail ${_email}*\n\n║ _Inbox refreshes on each check._\n╚═══════════════════════╝`)
               } else reply('❌ Failed to generate email. Try again.')
           } catch(e) { reply('❌ Error: ' + e.message) }
       }
-  }
-  break
+  } break
 
   case 'tt':  
 case 'tiktok': {
@@ -5991,44 +6010,66 @@ case 'bibleverse': {
 
         if (isRef) {
             const _bRef = encodeURIComponent(text.trim())
-            let _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=kjv`)
-            let _bData = await _bRes.json()
-            if (_bData.error) {
-                _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=web`)
-                _bData = await _bRes.json()
-                if (_bData.error) return reply(`❌ *Verse not found:* _${text}_\n\n_Check spelling, e.g._ *John 3:16* _or_ *Psalm 23:1*`)
-                translation = 'WEB'
+            // ── Primary: Keith API ──────────────────────────────────────────
+            try {
+                const _kb = await _keithFetch(`/bible/search?q=${_bRef}`)
+                const _kbr = _kb?.result || _kb
+                if (_kbr?.text || _kbr?.verse) {
+                    verseText   = _kbr.text || _kbr.verse
+                    reference   = _kbr.reference || _kbr.ref || text.trim()
+                    translation = _kbr.translation || 'KJV'
+                }
+            } catch(_) {}
+            // ── Fallback: bible-api.com ─────────────────────────────────────
+            if (!verseText) {
+                let _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=kjv`)
+                let _bData = await _bRes.json()
+                if (_bData.error) {
+                    _bRes = await fetch(`https://bible-api.com/${_bRef}?translation=web`)
+                    _bData = await _bRes.json()
+                    if (_bData.error) return reply(`❌ *Verse not found:* _${text}_\n\n_Check spelling, e.g._ *John 3:16* _or_ *Psalm 23:1*`)
+                    translation = 'WEB'
+                }
+                verseText = _bData.text?.trim()
+                reference = _bData.reference
             }
-            verseText = _bData.text?.trim()
-            reference = _bData.reference
         } else {
-            const _aiRes = await fetch('https://text.pollinations.ai/openai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'openai', stream: false, max_tokens: 300,
-                    messages: [
-                        { role: 'system', content: 'You are a Bible scholar. When given a topic or keyword, respond with ONLY three lines: Line 1: the verse text. Line 2: the reference (e.g. John 3:16). Line 3: the translation (e.g. KJV). No extra text.' },
-                        { role: 'user', content: `Give me a Bible verse about: ${text}` }
-                    ]
+            // ── Topic search: Keith then Pollinations.ai ────────────────────
+            try {
+                const _kt = await _keithFetch(`/bible/verse?topic=${encodeURIComponent(text.trim())}`)
+                const _ktr = _kt?.result || _kt
+                if (_ktr?.text || _ktr?.verse) {
+                    verseText   = _ktr.text || _ktr.verse
+                    reference   = _ktr.reference || _ktr.ref || `Topic: ${text}`
+                    translation = _ktr.translation || 'KJV'
+                }
+            } catch(_) {}
+            if (!verseText) {
+                const _aiRes = await fetch('https://text.pollinations.ai/openai', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'openai', stream: false, max_tokens: 300,
+                        messages: [
+                            { role: 'system', content: 'You are a Bible scholar. When given a topic or keyword, respond with ONLY three lines: Line 1: the verse text. Line 2: the reference (e.g. John 3:16). Line 3: the translation (e.g. KJV). No extra text.' },
+                            { role: 'user', content: `Give me a Bible verse about: ${text}` }
+                        ]
+                    })
                 })
-            })
-            const _aiData = await _aiRes.json()
-            const _aiLines = (_aiData.choices?.[0]?.message?.content || '').trim().split('\n').filter(Boolean)
-            verseText = _aiLines[0] || ''
-            reference = _aiLines[1] || `Topic: ${text}`
-            translation = _aiLines[2] || 'KJV'
+                const _aiData = await _aiRes.json()
+                const _aiLines = (_aiData.choices?.[0]?.message?.content || '').trim().split('\n').filter(Boolean)
+                verseText   = _aiLines[0] || ''
+                reference   = _aiLines[1] || `Topic: ${text}`
+                translation = _aiLines[2] || 'KJV'
+            }
         }
 
         if (!verseText) return reply(`❌ Could not find a verse for: _${text}_`)
-
         reply(`╔══〔 📖 BIBLE VERSE 〕═══╗\n\n║ _❝ ${verseText} ❞_\n\n║ 📌 *${reference}*\n║ 📚 *Translation* : ${translation}\n\n_⚡ TOOSII-XD ULTRA_\n╚═══════════════════════╝`)
 
     } catch(e) {
         reply(`❌ *Bible search failed.*\n_${e.message || 'Please try again.'}_`)
     }
-}
-break;
+} break
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🎶  HYMN SEARCH (Keith API)
@@ -10615,25 +10656,38 @@ case 'clima': {
     await X.sendMessage(m.chat, { react: { text: '🌤️', key: m.key } })
     if (!text) return reply(`╔════〔 🌤️ WEATHER 〕════╗\n\n║ Usage: *${prefix}weather [city]*\n║ Example: ${prefix}weather Nairobi\n╚═══════════════════════╝`)
     try {
-        let r = await fetch(`https://api.giftedtech.co.ke/api/search/weather?apikey=${_giftedKey()}&location=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(15000) })
-        let d = await r.json()
-        if (!d.success || !d.result) throw new Error('No weather data')
-        let w = d.result
-        let msg = `╔══〔 🌤️ WEATHER — ${(w.location || text).toUpperCase()} 〕══╗\n\n\n╚═══════════════════════╝`
-        msg += `  📍 *Location:* ${w.location || text}\n`
-        if (w.weather) {
-            msg += `  🌡️ *Condition:* ${w.weather.description || w.weather.main}\n`
+        let _wCity = text.trim()
+        let _wMsg = null
+
+        // ── Primary: Keith API ──────────────────────────────────────────────
+        try {
+            const _kw = await _keithFetch(`/weather?city=${encodeURIComponent(_wCity)}`)
+            const _kwd = (_kw?.result || _kw) ?? {}
+            const _wTemp = _kwd.temperature ?? _kwd.temp
+            if (_wTemp !== undefined) {
+                const _wCond = _kwd.condition || _kwd.description || _kwd.weather || '-'
+                const _wFeel = _kwd.feels_like ?? _kwd.feelslike
+                const _wHum  = _kwd.humidity
+                const _wWnd  = _kwd.wind || _kwd.wind_speed
+                const _wLoc  = (_kwd.location || _kwd.city || _wCity).toUpperCase()
+                _wMsg = `╔══〔 🌤️ WEATHER 〕══╗\n║ 📍 *${_wLoc}*\n║ 🌡️ *Temp:* ${_wTemp}°C${_wFeel !== undefined ? ` (feels ${_wFeel}°C)` : ''}\n║ 🌤️ *Condition:* ${_wCond}\n${_wHum !== undefined ? `║ 💧 *Humidity:* ${_wHum}%\n` : ''}${_wWnd !== undefined ? `║ 💨 *Wind:* ${_wWnd} km/h\n` : ''}╚═══════════════════════╝`
+            }
+        } catch(_) {}
+
+        // ── Fallback: wttr.in (free, no key) ───────────────────────────────
+        if (!_wMsg) {
+            const _wr = await safeJson(`https://wttr.in/${encodeURIComponent(_wCity)}?format=j1`)
+            const _wc = _wr?.current_condition?.[0]
+            if (_wc) {
+                const _wa    = _wr?.nearest_area?.[0]
+                const _wLoc2 = _wa?.areaName?.[0]?.value || _wCity
+                const _wCtry = _wa?.country?.[0]?.value || ''
+                _wMsg = `╔══〔 🌤️ WEATHER 〕══╗\n║ 📍 *${_wLoc2}${_wCtry ? ', ' + _wCtry : ''}*\n║ 🌡️ *Temp:* ${_wc.temp_C}°C (feels ${_wc.FeelsLikeC}°C)\n║ 🌤️ *Condition:* ${_wc.weatherDesc?.[0]?.value || '-'}\n║ 💧 *Humidity:* ${_wc.humidity}%\n║ 💨 *Wind:* ${_wc.windspeedKmph} km/h (${_wc.winddir16Point})\n║ 👁️ *Visibility:* ${_wc.visibility} km\n║ 🔵 *Pressure:* ${_wc.pressure} hPa\n║ ☀️ *UV Index:* ${_wc.uvIndex}\n╚═══════════════════════╝`
+            }
         }
-        if (w.main) {
-            msg += `  🌡️ *Temperature:* ${w.main.temp}°C (feels like ${w.main.feels_like}°C)\n`
-            msg += `  🔼 *Max:* ${w.main.temp_max}°C  🔽 *Min:* ${w.main.temp_min}°C\n`
-            msg += `  💧 *Humidity:* ${w.main.humidity}%\n`
-            msg += `  🔵 *Pressure:* ${w.main.pressure} hPa\n`
-        }
-        if (w.wind) msg += `  💨 *Wind:* ${w.wind.speed} m/s\n`
-        if (w.visibility) msg += `  👁️ *Visibility:* ${Math.round(w.visibility/1000)} km\n`
-        if (w.clouds) msg += `  ☁️ *Cloud Cover:* ${w.clouds.all}%\n`
-        await reply(msg)
+
+        if (!_wMsg) throw new Error('No weather data')
+        await reply(_wMsg)
     } catch(e) { reply(`❌ Could not fetch weather for *${text}*. Try a different city name.`) }
 } break
 
