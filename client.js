@@ -8996,6 +8996,8 @@ case 'upscale': {
         await safeSendMedia(m.chat, { image: { url: _hdOutUrl }, caption: '✅ *Image enhanced to HD quality!*' }, {}, { quoted: m })
     } catch(e) { reply(`❌ HD upscale failed: ${e.message}`) }
 } break
+case 'imageedit':
+case 'imgfilter': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
     const _ieMsg = m.quoted || m
     const _ieMime = _ieMsg?.message?.imageMessage?.mimetype || ''
