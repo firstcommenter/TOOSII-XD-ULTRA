@@ -588,8 +588,8 @@ if (!mess.OnlyOwner) mess.OnlyOwner = '╔══〔 👑 OWNER ONLY 〕══╗
 if (!mess.OnlyGrup)  mess.OnlyGrup  = '╔══〔 👥 GROUP ONLY 〕══╗\n\n║ This command only works in a group.\n╚═══════════════════════╝'
 if (!mess.error)     mess.error     = '╔══〔 ❌ ERROR 〕══╗\n\n║ An error occurred. Please try again.\n╚═══════════════════════╝'
 const prefixRegex = /^[°zZ#$@*+,.?=''():√%!¢£¥€π¤ΠΦ_&><`™©®Δ^βα~¦|/\\©^]/;
-const prefix = global.botPrefix ? global.botPrefix : (prefixRegex.test(budy) ? budy.match(prefixRegex)[0] : '.');
-const isCmd = global.botPrefix ? budy.startsWith(global.botPrefix) : budy.startsWith(prefix);
+const _bpDefined = global.botPrefix !== undefined && global.botPrefix !== null; const prefix = _bpDefined ? (global.botPrefix || '') : (prefixRegex.test(budy) ? budy.match(prefixRegex)[0] : '.');
+const isCmd = _bpDefined ? (global.botPrefix === '' ? true : budy.startsWith(global.botPrefix)) : budy.startsWith(prefix);
 const command = isCmd ? budy.slice(prefix.length).trim().split(' ').shift().toLowerCase() : '';
 const args = isCmd
   ? budy.slice(prefix.length).trim().split(/ +/).slice(1)
@@ -3730,11 +3730,14 @@ case 'setprefix': {
 if (!isOwner) return reply(mess.OnlyOwner)
 let newPrefix = text.trim()
 if (!newPrefix) {
-    let currentPfx = global.botPrefix || '.'
-    reply(`╔══〔 ⌨️  SET PREFIX 〕═══╗\n\n║ 📌 *Current* : *${currentPfx}*\n\n║ ${prefix}setprefix [prefix]  — set new prefix\n║ ${prefix}setprefix reset    — restore default (.)\n\n║ 💡 *Works with anything:*\n║  Single char  : . ! # @ $\n║  Emojis       : 🔥 ⚡ 🤖 👑\n║  Words        : bot toosii XD\n║  Mixed        : 🔥bot! XD~\n╚═══════════════════════╝`)
+    let currentPfx = (global.botPrefix === '') ? '*none* (no prefix)' : (global.botPrefix || '.')
+    reply(`╔══〔 ⌨️  SET PREFIX 〕═══╗\n\n║ 📌 *Current* : ${currentPfx}\n\n║ ${prefix}setprefix [prefix]  — set new prefix\n║ ${prefix}setprefix none     — remove prefix\n║ ${prefix}setprefix reset    — restore default (.)\n\n║ 💡 *Works with anything:*\n║  Single char  : . ! # @ $\n║  Emojis       : 🔥 ⚡ 🤖 👑\n║  Words        : bot toosii XD\n║  Mixed        : 🔥bot! XD~\n╚═══════════════════════╝`)
 } else if (newPrefix.toLowerCase() === 'reset' || newPrefix.toLowerCase() === 'default') {
     global.botPrefix = '.'
     reply(`╔══〔 ⌨️  SET PREFIX 〕═══╗\n\n║ ✅ *Prefix reset to default*\n║ 🔤 Now using: *.*\n║ Example: *.menu*, *.ping*\n╚═══════════════════════╝`)
+} else if (newPrefix.toLowerCase() === 'none' || newPrefix.toLowerCase() === 'off' || newPrefix.toLowerCase() === 'remove') {
+    global.botPrefix = ''
+    reply(`╔══〔 ⌨️  SET PREFIX 〕═══╗\n\n║ ✅ *Prefix removed!*\n║ Commands now work without a prefix.\n║ Example: *menu*, *ping*, *help*\n╚═══════════════════════╝`)
 } else {
     global.botPrefix = newPrefix
     reply(`╔══〔 ⌨️  SET PREFIX 〕═══╗\n\n║ ✅ *Prefix updated!*\n║ 🔤 *New prefix* : *${global.botPrefix}*\n\n║ Example: *${global.botPrefix}menu*\n║          *${global.botPrefix}ping*\n║          *${global.botPrefix}help*\n╚═══════════════════════╝`)
