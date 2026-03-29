@@ -7416,6 +7416,10 @@ if (gbArg === 'on') {
 } break
 
 // GROUP TOOLS COMMANDS
+case 'everyone':
+case 'all':
+case 'tageveryone':
+case 'mentionall':
 case 'tagall': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
@@ -7454,6 +7458,8 @@ nonAdmins.forEach(id => tnaText += `• @${id.split('@')[0]}\n`)
 X.sendMessage(from, { text: tnaText, mentions: nonAdmins }, { quoted: m })
 } break
 
+case 'hiall':
+case 'hiko':
 case 'mention': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
