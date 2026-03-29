@@ -1,70 +1,70 @@
 const toolsMenu = `
-╭─⊷ *⚡ QUICK TOOLS*
-│
+╔═══〔 ⚡ QUICK TOOLS 〕═══╗
+
 │  • .totalfitur   • .prefix
-│  • .pair         • .save   →  reply msg
+│  • .pair         • .save 
 │  • .ping         • .runtime
-│  • .getcmd       →  [command] — get source code
-│
-╰─⊷
+│  • .getcmd     
 
-╭─⊷ *🛠️ UTILITY TOOLS*
-│
-│  • .weather       →  [city]
-│  • .translate     →  [lang]|[text]
-│  • .tinyurl       →  [url]
-│  • .shorturl      →  [url]
-│  • .removebg      →  reply image
-│  • .qr            →  [text/url] — generate QR
-│  • .readqr        →  reply image — scan QR
-│  • .xmascard      →  [text]
-│  • .robottext     →  [text]
-│  • .webcopier     →  [url] — download website ZIP
-│
-╰─⊷
+╚═══════════════════════╝
 
-╭─⊷ *🎵 AUDIO & VOICE*
-│
-│  • .tomp3         →  video → mp3
-│  • .toaudio       →  video → audio
-│  • .toppt         →  audio → voice note
-│  • .transcript    →  [youtube url]
-│  • .shazam        →  reply audio — identify song
-│
-╰─⊷
+╔══〔 🛠️ UTILITY TOOLS 〕══╗
 
-╭─⊷ *🤖 AI CREATION*
-│
-│  • .imagine       →  [prompt]
-│  • .magicstudio   →  [prompt]
-│  • .fluximg       →  [prompt]
-│  • .deepimg       →  [prompt]
-│  • .aiart         →  [prompt]
-│  • .genimage      →  [prompt]
-│  • .aisong        →  [prompt] — AI music
+│  • .weather     
+│  • .translate   
+│  • .tinyurl     
+│  • .shorturl    
+│  • .removebg    
+│  • .qr          
+│  • .readqr      
+│  • .xmascard    
+│  • .robottext   
+│  • .webcopier   
+
+╚═══════════════════════╝
+
+╔══〔 🎵 AUDIO & VOICE 〕══╗
+
+│  • .tomp3       
+│  • .toaudio     
+│  • .toppt       
+│  • .transcript  
+│  • .shazam      
+
+╚═══════════════════════╝
+
+╔══〔 🤖 AI CREATION 〕═══╗
+
+│  • .imagine     
+│  • .magicstudio 
+│  • .fluximg     
+│  • .deepimg     
+│  • .aiart       
+│  • .genimage    
+│  • .aisong      
 │  • .songgenerator →  [prompt]
-│
-╰─⊷
 
-╭─⊷ *👻 PRESENCE TOOLS*
-│
-│  • .vv               →  view once bypass
+╚═══════════════════════╝
+
+╔══〔 👻 PRESENCE TOOLS 〕══╗
+
+│  • .vv             
 │  • .autoonline
 │  • .autorecording
 │  • .autotyping
-│
-╰─⊷
 
-╭─⊷ *📊 STATUS TOOLS*
-│
+╚═══════════════════════╝
+
+╔══〔 📊 STATUS TOOLS 〕══╗
+
 │  • .autostatus
 │  • .autoviewstatus
-│  • .autolikestatus     →  [emoji/off]
-│  • .autoreplystatus    →  [msg/off]
-│  • .togroupstatus      →  [text/on/off]
-│  • .antistatusmention  →  [on/warn/kick/del]
-│
-╰─⊷
+│  • .autolikestatus   
+│  • .autoreplystatus  
+│  • .togroupstatus    
+│  • .antistatusmention
+
+╚═══════════════════════╝
 `
 
 module.exports = toolsMenu
