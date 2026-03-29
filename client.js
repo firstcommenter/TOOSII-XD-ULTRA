@@ -12312,7 +12312,6 @@ case 'news': {
       } catch(e) { reply(`❌ Could not find info for *${_fiq}*. Try: mango, apple, lemon`) }
   } break
 
-} break
 
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
