@@ -1,24 +1,24 @@
 const otherMenu = `
-╭─⊷ *🎨 IMAGE EFFECTS*
-│
-│  • .blur        →  reply image
-│  • .sharpen     →  reply image
-│  • .greyscale   →  reply image
-│  • .negative    →  reply image
-│  • .sepia       →  reply image
-│  • .circle      →  reply image
-│  • .jail        →  @user
-│  • .passed      →  @user
-│  • .triggered   →  @user
-│  • .comrade     →  @user
-│  • .lgbt        →  @user
-│  • .lolice      →  @user
-│  • .glass       →  reply image
-│
-╰─⊷
+╔══〔 🎨 IMAGE EFFECTS 〕══╗
 
-╭─⊷ *✨ TEXT EFFECTS*
-│
+│  • .blur      
+│  • .sharpen   
+│  • .greyscale 
+│  • .negative  
+│  • .sepia     
+│  • .circle    
+│  • .jail      
+│  • .passed    
+│  • .triggered 
+│  • .comrade   
+│  • .lgbt      
+│  • .lolice    
+│  • .glass     
+
+╚═══════════════════════╝
+
+╔══〔 ✨ TEXT EFFECTS 〕═══╗
+
 │  • .metallic   • .ice
 │  • .snow       • .neon
 │  • .fire       • .glitch
@@ -28,13 +28,13 @@ const otherMenu = `
 │  • .sand       • .arena
 │  • .1917       • .light
 │  all accept → [text]
-│
-╰─⊷
 
-╭─⊷ *🔤 FONT CONVERTER*
-│
-│  • .fonts         →  show all
-│  • .allfonts      →  [text]
+╚═══════════════════════╝
+
+╔══〔 🔤 FONT CONVERTER 〕══╗
+
+│  • .fonts       
+│  • .allfonts    
 │  • .bold          • .italic
 │  • .bolditalic    • .mono
 │  • .serif         • .serifbold
@@ -49,8 +49,8 @@ const otherMenu = `
 │  • .dotted        • .oldeng
 │  • .aesthetic     • .cursive
 │  all accept → [text]
-│
-╰─⊷
+
+╚═══════════════════════╝
 `
 
 module.exports = otherMenu
