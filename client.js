@@ -9548,50 +9548,40 @@ print('OK')
 const _pyFile = _path.join(_os.tmpdir(), `tm_${Date.now()}_gen.py`)
 _fs.writeFileSync(_pyFile, _pyScript)
 
-// Use async exec — keeps event loop alive during render so WA gets ACKs
-// spawnSync was blocking the loop → WA retried the message → double image
-await new Promise((resolve) => {
-    const { exec: _exec } = require('child_process')
-    // Try python3 first, fall back to python
-    const _tryRender = (bins, idx) => {
-        if (idx >= bins.length) {
-            // All python attempts failed — fall back to Jimp
-            resolve({ usedJimp: true })
-            return
+// Outer safety net — guarantees a reply no matter what fails
+let _iceDone = false
+try {
+    // ── Step 1: Try Python (async exec keeps event loop alive) ──────
+    let _pyOk = false
+    await new Promise(resolve => {
+        const { exec: _exec } = require('child_process')
+        const _tryPy = (bins, i2) => {
+            if (i2 >= bins.length) { resolve(); return }
+            _exec(`${bins[i2]} "${_pyFile}"`, { timeout: 22000 }, (err) => {
+                if (!err) { _pyOk = true; resolve() }
+                else _tryPy(bins, i2 + 1)
+            })
         }
-        _exec(`${bins[idx]} "${_pyFile}"`, { timeout: 25000 }, (err, stdout, stderr) => {
-            if (!err) {
-                resolve({ usedJimp: false })
-            } else if (idx + 1 < bins.length) {
-                _tryRender(bins, idx + 1)
-            } else {
-                resolve({ usedJimp: true, pyErr: (stderr || err.message || '').trim().split('\n').slice(-3).join(' | ') })
-            }
-        })
-    }
-    _tryRender(['python3', 'python'], 0)
-}).then(async ({ usedJimp, pyErr }) => {
-    if (!usedJimp) {
-        // Python succeeded
+        _tryPy(['python3', 'python'], 0)
+    })
+
+    if (_pyOk) {
         try {
             const _buf = _fs.readFileSync(_outFile)
-            try { _fs.unlinkSync(_pyFile); _fs.unlinkSync(_outFile) } catch {}
-            if (!_buf || _buf.length < 2000) throw new Error('Empty render')
-            await X.sendMessage(m.chat, { image: _buf, caption: _caption }, { quoted: m })
-        } catch(e) {
-            try { _fs.unlinkSync(_pyFile); _fs.unlinkSync(_outFile) } catch {}
-            reply(`❌ *Text maker failed:* ${e.message.slice(0, 150)}`)
-        }
-    } else {
-        // Jimp fallback — tries v3 font rendering first, then v4 plain image, then text-only
-        try { _fs.unlinkSync(_pyFile) } catch {}
-        try { _fs.unlinkSync(_outFile) } catch {}
-        let _jimpDone = false
+            if (_buf && _buf.length > 1000) {
+                await X.sendMessage(m.chat, { image: _buf, caption: _caption }, { quoted: m })
+                _iceDone = true
+            }
+        } catch (_re) { console.log('[ice] read outFile:', _re.message) }
+    }
+
+    // ── Step 2: Jimp fallback ────────────────────────────────────────
+    if (!_iceDone) {
         try {
             const Jimp = require('jimp')
             const _W = 1024, _H = 400
-            // ── Jimp v3 path: full font rendering ──────────────────────
             if (typeof Jimp.rgbaToInt === 'function' && typeof Jimp.loadFont === 'function') {
+                // Jimp v3 — full layered font rendering
                 const _bgInt = Jimp.rgbaToInt(_sty.bg[0], _sty.bg[1], _sty.bg[2], 255)
                 const _img = new Jimp(_W, _H, _bgInt)
                 const _font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
@@ -9613,49 +9603,34 @@ await new Promise((resolve) => {
                 }
                 const _buf2 = await _img.getBufferAsync(Jimp.MIME_JPEG)
                 await X.sendMessage(m.chat, { image: _buf2, caption: _caption }, { quoted: m })
-                _jimpDone = true
+                _iceDone = true
             } else {
-                // ── Jimp v4 path: colored bg image + text in caption ──
+                // Jimp v4 — solid color bg + text in caption
                 const [_br, _bg2, _bb] = _sty.bg
                 const _bgHex = (_br << 24 | _bg2 << 16 | _bb << 8 | 0xff) >>> 0
+                const _topLayer = _sty.layers[_sty.layers.length - 1]
+                const _accentHex = (_topLayer[2] << 24 | _topLayer[3] << 16 | _topLayer[4] << 8 | 0xff) >>> 0
                 let _img4
-                try {
-                    _img4 = new Jimp({ width: _W, height: _H, color: _bgHex })
-                } catch {
-                    _img4 = await new Promise(r => {
-                        const j = new Jimp(_W, _H, _bgHex); r(j)
-                    })
-                }
-                const _topColor = _sty.layers[_sty.layers.length - 1]
-                const [_tr, _tg, _tb] = [_topColor[2], _topColor[3], _topColor[4]]
-                const _accentHex = (_tr << 24 | _tg << 16 | _tb << 8 | 0xff) >>> 0
-                // Draw a colored accent strip so the image isn't plain
-                for (let _px = 0; _px < _W; _px++) {
-                    for (let _py = Math.floor(_H * 0.35); _py < Math.floor(_H * 0.65); _py++) {
-                        _img4.setPixelColor(_accentHex, _px, _py)
-                    }
-                }
-                const _buf4 = await (_img4.getBufferAsync ? _img4.getBufferAsync('image/jpeg') : _img4.getBuffer('image/jpeg'))
+                try { _img4 = new Jimp({ width: _W, height: _H, color: _bgHex }) }
+                catch { _img4 = new Jimp(_W, _H, _bgHex) }
+                for (let _px = 0; _px < _W; _px++)
+                    for (let _py2 = Math.floor(_H*0.38); _py2 < Math.floor(_H*0.62); _py2++)
+                        _img4.setPixelColor(_accentHex, _px, _py2)
+                const _buf4 = await (_img4.getBufferAsync ? _img4.getBufferAsync(Jimp.MIME_JPEG || 'image/jpeg') : _img4.getBuffer('image/jpeg'))
                 await X.sendMessage(m.chat, { image: _buf4, caption: _caption }, { quoted: m })
-                _jimpDone = true
+                _iceDone = true
             }
-        } catch(e2) { console.log('[ice] jimp fallback error:', e2.message) }
-
-        if (!_jimpDone) {
-            // Final fallback: text-only styled reply
-            reply(`╔══〔 🎨 ${command.toUpperCase()} TEXT 〕══╗\n\n║ ${tmText}\n╚═══════════════════════╝`)
-            if (pyErr) console.log('[ice] python err was:', pyErr)
-        }
+        } catch (_je) { console.log('[ice] jimp:', _je.message) }
     }
-})
-} break
+} catch (_oe) { console.log('[ice] outer error:', _oe.message) }
 
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Image Edit Commands
-case 'heart': {
-    await X.sendMessage(m.chat, { react: { text: '❤️', key: m.key } })
-if (!m.quoted || !/image/.test(m.quoted.mimetype || '')) {
-    let heartTarget = (m.mentionedJid && m.mentionedJid[0]) ? m.mentionedJid[0] : sender
+// ── Step 3: Text-only final fallback ───────────────────────────────
+if (!_iceDone) {
+    reply(`╔══〔 🎨 ${command.toUpperCase()} TEXT 〕══╗\n\n║ ${tmText}\n╚═══════════════════════╝`)
+}
+try { _fs.unlinkSync(_pyFile) } catch {}
+try { _fs.unlinkSync(_outFile) } catch {}
+} break
     X.sendMessage(from, { text: `*💕 ${pushname} sends love to @${heartTarget.split('@')[0]}! 💕*`, mentions: [heartTarget] }, { quoted: m })
 } else {
     try {
