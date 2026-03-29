@@ -1595,7 +1595,10 @@ break;
 case 'mfdl':
 case 'mediafire': {
     await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
- if (!text) return reply('Please provide a MediaFire link')
+ if (!text) return reply(`╔══〔 📥 MEDIAFIRE 〕══════╗
+║ *Usage:* ${prefix}mediafire [link]
+║ Example: ${prefix}mediafire https://mediafire.com/...
+╚═══════════════════════╝`)
   try {
     const _mfHtml = await axios.get(text, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
@@ -1665,9 +1668,13 @@ case 'ig':
           const response = await axios.head(_igUrl);
           const contentType = response.headers['content-type'];
           if (contentType && contentType.startsWith('image/')) {
-              await safeSendMedia(m.chat, { image: { url: _igUrl}, caption: 'Done!' }, {}, { quoted: m });
+              await safeSendMedia(m.chat, { image: { url: _igUrl}, caption: `╔══〔 📸 INSTAGRAM DOWNLOAD 〕╗
+║ ✅ Downloaded!
+╚═══════════════════════╝` }, {}, { quoted: m });
           } else {
-              await safeSendMedia(m.chat, { video: { url: _igUrl}, caption: 'Done!' }, {}, { quoted: m });
+              await safeSendMedia(m.chat, { video: { url: _igUrl}, caption: `╔══〔 📸 INSTAGRAM DOWNLOAD 〕╗
+║ ✅ Downloaded!
+╚═══════════════════════╝` }, {}, { quoted: m });
           }
       } catch(e) {
          console.log('[ig] send error:', e.message)
@@ -1744,7 +1751,22 @@ break
           const _cap = `🎵 *${_meta?.title || 'Track'}*\n👤 ${_meta?.artist || 'Unknown'}\n⏱️ ${_meta?.duration || '--:--'}\n\n_Downloaded via Toosii Tech_`
           await X.sendMessage(m.chat, { audio: { url: _spd.data.download }, mimetype: 'audio/mpeg', fileName: `${_meta?.title || 'spotify'}.mp3` }, { quoted: m })
           await reply(_cap)
-        } else reply('❌ Could not download. Make sure it is a valid public Spotify track link.')
+        } else {
+          // Fallback: Keith Spotify
+          try {
+            let _kSp = await fetch(`https://apiskeith.top/download/spotify?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(25000) })
+            let _kSpd = await _kSp.json()
+            console.log('[spotify] keith:', _kSpd.status)
+            if (_kSpd.status && (_kSpd.result?.download_url || _kSpd.result?.url)) {
+              let _spUrl = _kSpd.result.download_url || _kSpd.result.url
+              let _spTitle = _kSpd.result.title || 'Spotify Track'
+              await X.sendMessage(m.chat, { audio: { url: _spUrl }, mimetype: 'audio/mpeg', fileName: `${_spTitle}.mp3` }, { quoted: m })
+              reply(`╔══〔 🎵 SPOTIFY DOWNLOAD 〕══╗
+║ 🎵 *${_spTitle}*
+╚═══════════════════════╝`)
+            } else reply('❌ Could not download. Make sure it is a valid public Spotify track link.')
+          } catch (_kE) { reply('❌ Could not download. Make sure it is a valid public Spotify track link.') }
+        }
       } catch(e) { reply('❌ Error: ' + e.message) }
   }
   break
@@ -1821,9 +1843,45 @@ try {
     } else {
         reply('Failed to download. No media URL found.')
     }
-} catch (e) {
-    console.log('TikTok error:', e)
-    reply('An error occurred while downloading. Please try again.')
+} catch (err1) {
+    console.log('[tt] fg.tiktok failed:', err1.message)
+    // Fallback: EliteProTech /tiktok
+    let _ttFallback = false
+    try {
+      let _ep = await fetch(`https://eliteprotech-apis.zone.id/tiktok?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(25000) })
+      let _epd = await _ep.json()
+      console.log('[tt] eliteprotech:', _epd.success)
+      if (_epd.success && (_epd.video || _epd.result?.url || _epd.data?.url)) {
+        let _vidUrl = _epd.video || _epd.result?.url || _epd.data?.url || _epd.url
+        let _ttCap = `╔══〔 🎵 TIKTOK DOWNLOAD 〕══╗
+║ 👤 *Author* : ${_epd.author?.nickname || _epd.author || 'Unknown'}
+║ 📝 *Title* : ${(_epd.title || _epd.desc || '').slice(0,80)}
+╚═══════════════════════╝`
+        await safeSendMedia(m.chat, { video: { url: _vidUrl }, mimetype: 'video/mp4', caption: _ttCap }, {}, { quoted: m })
+        _ttFallback = true
+      }
+    } catch (_e2) { console.log('[tt] eliteprotech:', _e2.message) }
+    // Fallback 2: tikwm
+    if (!_ttFallback) {
+      try {
+        let _tw = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(text)}&hd=1`, { signal: AbortSignal.timeout(25000) })
+        let _twd = await _tw.json()
+        console.log('[tt] tikwm: code=', _twd.code)
+        if (_twd.code === 0 && _twd.data?.play) {
+          let _vidUrl2 = _twd.data.hdplay || _twd.data.play
+          let _ttCap2 = `╔══〔 🎵 TIKTOK DOWNLOAD 〕══╗
+║ 👤 *Author* : ${_twd.data.author?.nickname || 'Unknown'}
+║ 📝 *Title* : ${(_twd.data.title || '').slice(0,80)}
+║ ❤️  *Likes* : ${_twd.data.digg_count || 0}
+║ ▶️  *Plays* : ${_twd.data.play_count || 0}
+╚═══════════════════════╝`
+          await safeSendMedia(m.chat, { video: { url: _vidUrl2 }, mimetype: 'video/mp4', caption: _ttCap2 }, {}, { quoted: m })
+          if (_twd.data.music) await safeSendMedia(m.chat, { audio: { url: _twd.data.music }, mimetype: 'audio/mpeg' }, {}, { quoted: m })
+          _ttFallback = true
+        }
+      } catch (_e3) { console.log('[tt] tikwm:', _e3.message) }
+    }
+    if (!_ttFallback) reply('❌ TikTok download failed. Please make sure the link is valid and public.')
 }
 }
 break
@@ -2185,14 +2243,13 @@ case 'lyrics':
 case 'lyric':
 case 'songlyrics': {
     await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
-    if (!text) return reply(
-`🎵 *Lyrics Search*
-
-Usage: ${prefix}lyrics [song name] - [artist]
-Examples:
-• ${prefix}lyrics Lucid Dreams Juice WRLD
-• ${prefix}lyrics Blinding Lights - The Weeknd
-• ${prefix}lyrics HUMBLE Kendrick Lamar`)
+    if (!text) return reply(`╔══〔 🎵 LYRICS SEARCH 〕═══╗
+║ *Usage:* ${prefix}lyrics [song] - [artist]
+╠══〔 💡 EXAMPLES 〕═══════╣
+║ ${prefix}lyrics Lucid Dreams Juice WRLD
+║ ${prefix}lyrics Blinding Lights - The Weeknd
+║ ${prefix}lyrics HUMBLE Kendrick Lamar
+╚═══════════════════════╝`)
 
     await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 
@@ -3350,7 +3407,10 @@ break
 
 case 'save': {
     await X.sendMessage(m.chat, { react: { text: '💾', key: m.key } })
-if (!m.quoted) return reply(`Reply to a message/media with ${prefix}save to save it to your DM`)
+if (!m.quoted) return reply(`╔══〔 💾 SAVE TO DM 〕═════╗
+║ Reply to any message/media
+║ with *${prefix}save* to save it to your DM
+╚═══════════════════════╝`)
 try {
 let savedMsg = {}
 if (/image/.test(m.quoted.mimetype || '')) {
@@ -3368,7 +3428,7 @@ if (/image/.test(m.quoted.mimetype || '')) {
 } else if (m.quoted.text) {
     savedMsg = { text: m.quoted.text }
 } else {
-    return reply('Unsupported media type.')
+    return reply('❌ *Unsupported media type.* Only images, videos, audio, stickers and text are supported.')
 }
 await X.sendMessage(sender, savedMsg)
 } catch (e) { reply('Failed to save: ' + e.message) }
@@ -7306,7 +7366,10 @@ case 'spotify': {
 
 case 'apk': {
     await X.sendMessage(m.chat, { react: { text: '📲', key: m.key } })
-    if (!text) return reply(`📦 Example: ${prefix}apk WhatsApp`)
+    if (!text) return reply(`╔══〔 📲 APK SEARCH 〕═════╗
+║ *Usage:* ${prefix}apk [app name]
+║ Example: ${prefix}apk WhatsApp
+╚═══════════════════════╝`)
     try {
         await reply('📲 _Searching APK..._')
         let _apkResults = null
@@ -9671,10 +9734,9 @@ if (data.message) {
 }
 const repoInfo =
 `╔══〔 📦 REPOSITORY INFO 〕══╗
-
-  🏷️  *${data.full_name}*
-  📝  _${(data.description || 'No description').slice(0,60)}_
-
+║ 🏷️  *${data.full_name}*
+║ 📝 _${(data.description || 'No description').slice(0,80)}_
+║
 ║ ⭐ *Stars* : ${data.stargazers_count}
 ║ 🍴 *Forks* : ${data.forks_count}
 ║ 💻 *Language* : ${data.language || 'N/A'}
