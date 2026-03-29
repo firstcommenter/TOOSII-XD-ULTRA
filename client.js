@@ -1378,6 +1378,19 @@ if (m.key.fromMe && global.ownerFontMode && global.ownerFontMode !== 'off' && bu
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // jangan di apa apain
 // Media download with retry — handles WhatsApp CDN socket hang up
+// Panel restart helper — tries pm2 first, falls back to process.exit(1)
+const _restartBot = () => {
+  const { exec: _rex } = require('child_process')
+  // pm2 restart: exit(1) tells pm2 to restart (exit 0 = "stop" in default pm2 config)
+  _rex('pm2 restart all', (e1) => {
+    if (!e1) return
+    _rex('pm2 restart 0', (e2) => {
+      if (!e2) return
+      // Not running under pm2 — exit with code 1 so any process manager restarts us
+      process.exit(1)
+    })
+  })
+}
 const _dlWithRetry = async (quotedMsg, maxTries = 3) => {
   let lastErr
   for (let _t = 0; _t < maxTries; _t++) {
@@ -4219,8 +4232,8 @@ try {
         }
         await run('npm install --production')
         await reply(`╔══〔 ✅ BOT INITIALIZED 〕══╗\n\n║ 🌿 *Branch* : ${initBranch}\n║ 🔄 Restarting now...\n╚═══════════════════════╝`)
-        await sleep(3000)
-        return process.exit(0)
+        await new Promise(r => setTimeout(r, 2500))
+        return _restartBot()
     }
 
     // ── Step 2: Point remote ──────────────────────────────────────────
@@ -4243,7 +4256,7 @@ try {
 
     if (localCommit.stdout && remoteCommit.stdout && localCommit.stdout === remoteCommit.stdout) {
         const lastLog = await run('git log -1 --format="%s | %cr" HEAD')
-        return reply(`╔══〔 ✅ ALREADY UP TO DATE 〕══╗\n\n║ 🌿 *Branch* : ${branch}\n║ 🔖 *Commit* : ${localHash}\n║ 📝 ${lastLog.stdout || 'N/A'}\n╚═══════════════════════╝`)
+        return reply(`╔══〔 ✅ ALREADY UP TO DATE 〕══╗\n\n║ 🌿 *Branch* : ${branch}\n║ 🔖 *Commit* : ${localHash}\n║ 📝 ${(lastLog.stdout || 'N/A').slice(0,80)}\n╚═══════════════════════╝`)
     }
 
     // ── Step 6: Get changelog ─────────────────────────────────────────
@@ -4265,16 +4278,18 @@ try {
     // ── Step 9: Done ──────────────────────────────────────────────────
     const newCommit = await run('git rev-parse HEAD')
     const newHash = newCommit.stdout.slice(0, 7)
-    await reply(`╔═══〔 ✅ BOT UPDATED 〕═══╗
+    await reply(`╔══〔 ✅ BOT UPDATED 〕══╗
 
-║ 🌿 *Branch* : ${branch}
-║ 🔖 *Commits* : ${localHash} : ${newHash}
-║ 📋 *Changes* : ${changeCount} commit(s)
-  │  ${changeLines.slice(0, 300)}
-║ 🔄 Restarting now...
+║ 🌿 *Branch*   : ${branch}
+║ 🔖 *Old*      : ${localHash}
+║ 🆕 *New*      : ${newHash}
+║ 📋 *Changes*  : ${changeCount} commit(s)
+${changeLines ? changeLines.split('\n').slice(0,8).map(l => '║  • '+l.trim().slice(0,60)).join('\n') : ''}
+║
+║ 🔄 Restarting panel now...
 ╚═══════════════════════╝`)
-    await sleep(3000)
-    process.exit(0)
+    await new Promise(r => setTimeout(r, 2500))
+    _restartBot()
 
 } catch (e) {
     reply(`❌ *Update error:*\n${(e.message || e).slice(0, 300)}`)
