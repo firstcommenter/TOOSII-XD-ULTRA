@@ -1,53 +1,53 @@
 const gameMenu = `
-╭─⊷ *🧩 TRIVIA GAMES*
-│
-│  • .tebak        →  [category]
+╔══〔 🧩 TRIVIA GAMES 〕══╗
+
+│  • .tebak      
 │  • .tebakld
 │  • .trivia
-│  • .answer       →  [answer]
+│  • .answer     
 │  • .hangman
 │  • .hangmanend
-│
-╰─⊷
 
-╭─⊷ *🎮 CLASSIC GAMES*
-│
-│  • .ttt          →  @user
-│  • .tictactoe    →  @user
+╚═══════════════════════╝
+
+╔══〔 🎮 CLASSIC GAMES 〕══╗
+
+│  • .ttt        
+│  • .tictactoe  
 │  • .tttend
-│  • .rps          →  rock/paper/scissors
+│  • .rps        
 │  • .coinflip
-│  • .dice         →  [sides]
+│  • .dice       
 │  • .slot
-│  • .8ball        →  [question]
-│  • .eightball    →  [question]
-│
-╰─⊷
+│  • .8ball      
+│  • .eightball  
 
-╭─⊷ *🎭 SOCIAL GAMES*
-│
+╚═══════════════════════╝
+
+╔══〔 🎭 SOCIAL GAMES 〕══╗
+
 │  • .truth
 │  • .dare
-│  • .ship     →  @user @user
-│  • .simp     →  @user
-│  • .stupid   →  @user
-│  • .horny    →  @user
-│  • .flirt    →  @user
-│  • .rizz     →  @user
-│
-╰─⊷
+│  • .ship   
+│  • .simp   
+│  • .stupid 
+│  • .horny  
+│  • .flirt  
+│  • .rizz   
 
-╭─⊷ *🎲 RANDOM FUN*
-│
-│  • .wyr      →  would you rather
-│  • .nvhh     →  never have I ever
+╚═══════════════════════╝
+
+╔═══〔 🎲 RANDOM FUN 〕═══╗
+
+│  • .wyr    
+│  • .nvhh   
 │  • .joke
-│  • .roast    →  @user
+│  • .roast  
 │  • .quote
 │  • .fact
-│  • .meme     →  random meme
-│
-╰─⊷
+│  • .meme   
+
+╚═══════════════════════╝
 `
 
 module.exports = gameMenu
