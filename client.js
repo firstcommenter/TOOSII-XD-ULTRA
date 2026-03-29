@@ -7752,42 +7752,52 @@ reply(`╔══〔 🎤 YOUR SPEECH 〕═══╗\n\n${speech}\n\n_Generated 
 case 'imagine':
 case 'flux': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
-if (!text) return reply(`╔══〔 🎨 AI IMAGE GENERATOR 〕══╗\n\n║ *Usage:* ${prefix}${command} [description]\n\n║ _Examples:_\n║ • a futuristic city at night\n║ • lion wearing a crown, digital art\n║ • sunset over the ocean, photorealistic\n╚═══════════════════════╝`)
-try {
-await reply('🎨 _Generating your image, please wait..._')
-const _imgCaption = `╔══〔 🎨 AI GENERATED IMAGE 〕══╗\n\n║ 📝 *Prompt* : ${text}\n╚═══════════════════════╝`
-let _imgSent = false
-// Source 1: EliteProTech Imagine (primary — returns raw JPEG)
-if (command !== 'flux') {
-    try {
-        let _epImgRes = await fetch(`https://eliteprotech-apis.zone.id/imagine?prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(35000) })
-        if (_epImgRes.ok) {
-            let _epBuf = Buffer.from(await _epImgRes.arrayBuffer())
-            if (_epBuf && _epBuf.length > 5000) {
-                await X.sendMessage(m.chat, { image: _epBuf, caption: _imgCaption }, { quoted: m })
-                _imgSent = true
-            }
+    // Resolve prompt — typed text > quoted text > quoted image caption
+    let _imgPrompt = text
+    if (!_imgPrompt && m.quoted) {
+        const _qBody = m.quoted.text || m.quoted.caption || ''
+        if (_qBody.trim()) {
+            _imgPrompt = _qBody.trim()
+        } else if (/image/.test(mime)) {
+            return reply(`╔══〔 🎨 IMAGINE 〕══╗\n\n║ ℹ️ You replied to an image.\n║ Add a description after the command:\n║ *${prefix}imagine [what to generate]*\n╚═══════════════════════╝`)
         }
-    } catch {}
-}
-// Source 2: Pollinations fallback (also handles .flux)
-if (!_imgSent) {
-    let model = command === 'flux' ? 'flux' : 'turbo'
-    let seed  = Math.floor(Math.random() * 999999)
-    let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?model=${model}&width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`
-    let imgBuffer = await getBuffer(imgUrl)
-    if (!imgBuffer || imgBuffer.length < 5000) throw new Error('Image generation returned empty result')
-    await X.sendMessage(m.chat, { image: imgBuffer, caption: _imgCaption + `\n║ 🤖 *Model* : ${model.toUpperCase()}\n║ 🎲 *Seed* : ${seed}` }, { quoted: m })
-    _imgSent = true
-}
-} catch(e) {
-// Final fallback: direct URL send
-try {
-let seed2 = Math.floor(Math.random() * 999999)
-let fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=1024&height=1024&seed=${seed2}&nologo=true`
-await X.sendMessage(m.chat, { image: { url: fallbackUrl }, caption: `🎨 *Generated:* ${text}` }, { quoted: m })
-} catch(e2) { reply(`❌ *Image generation failed.*\n_${e2.message || 'Try again shortly.'}_`) }
-}
+    }
+    if (!_imgPrompt) return reply(`╔══〔 🎨 AI IMAGE GENERATOR 〕══╗\n\n║ *Usage:* ${prefix}${command} [description]\n║ _Or reply to a text/caption with the command_\n\n║ _Examples:_\n║ • a futuristic city at night\n║ • lion wearing a crown, digital art\n║ • sunset over the ocean, photorealistic\n╚═══════════════════════╝`)
+    try {
+        await reply('🎨 _Generating your image, please wait..._')
+        const _imgCaption = `╔══〔 🎨 AI GENERATED IMAGE 〕══╗\n\n║ 📝 *Prompt* : ${_imgPrompt}\n╚═══════════════════════╝`
+        let _imgSent = false
+        // Source 1: EliteProTech Imagine (primary — returns raw JPEG)
+        if (command !== 'flux') {
+            try {
+                let _epImgRes = await fetch(`https://eliteprotech-apis.zone.id/imagine?prompt=${encodeURIComponent(_imgPrompt)}`, { signal: AbortSignal.timeout(35000) })
+                if (_epImgRes.ok) {
+                    let _epBuf = Buffer.from(await _epImgRes.arrayBuffer())
+                    if (_epBuf && _epBuf.length > 5000) {
+                        await X.sendMessage(m.chat, { image: _epBuf, caption: _imgCaption }, { quoted: m })
+                        _imgSent = true
+                    }
+                }
+            } catch {}
+        }
+        // Source 2: Pollinations fallback (also handles .flux)
+        if (!_imgSent) {
+            let model = command === 'flux' ? 'flux' : 'turbo'
+            let seed  = Math.floor(Math.random() * 999999)
+            let imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(_imgPrompt)}?model=${model}&width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`
+            let imgBuffer = await getBuffer(imgUrl)
+            if (!imgBuffer || imgBuffer.length < 5000) throw new Error('Image generation returned empty result')
+            await X.sendMessage(m.chat, { image: imgBuffer, caption: _imgCaption + `\n║ 🤖 *Model* : ${model.toUpperCase()}\n║ 🎲 *Seed* : ${seed}` }, { quoted: m })
+            _imgSent = true
+        }
+    } catch(e) {
+        // Final fallback: direct URL send
+        try {
+            let seed2 = Math.floor(Math.random() * 999999)
+            let fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(_imgPrompt || text)}?width=1024&height=1024&seed=${seed2}&nologo=true`
+            await X.sendMessage(m.chat, { image: { url: fallbackUrl }, caption: `🎨 *Generated:* ${_imgPrompt || text}` }, { quoted: m })
+        } catch(e2) { reply(`❌ *Image generation failed.*\n_${e2.message || 'Try again shortly.'}_`) }
+    }
 } break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
