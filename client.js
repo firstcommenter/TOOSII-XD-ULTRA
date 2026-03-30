@@ -1357,6 +1357,15 @@ const isDeployedNumber = m.key.fromMe || senderClean === botClean
 if (isCmd && X.public === false && !isDeployedNumber) {
     return reply('🔒 *Bot is in Private Mode.*\n_Only the bot owner can use commands._')
 }
+if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber) {
+    return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner can use commands._')
+}
+if (isCmd && global.BOT_MODE === 'groups' && !m.chat.endsWith('@g.us') && !isDeployedNumber) {
+    return
+}
+if (isCmd && global.BOT_MODE === 'dms' && m.chat.endsWith('@g.us') && !isDeployedNumber) {
+    return
+}
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Owner Font Mode — auto-converts every message the bot owner sends
@@ -7154,20 +7163,35 @@ if (!isOwner) return reply(mess.OnlyOwner)
 reply(`╔══〔 🖼️ IMAGE CONFIG 〕═══╗\n║ 🖼️ *Menu Thumb* : ${global.menuThumb || global.thumb}\n║ 🤖 *Bot Pic* : ${global.botPic || 'Default'}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}menuimage — change menu image\n║ ${prefix}botpic    — change bot picture\n╚═══════════════════════╝`)
 } break
 
+case 'botmode':
+case 'setmode':
 case 'mode': {
     await X.sendMessage(m.chat, { react: { text: '⚙️', key: m.key } })
-if (!isOwner) return reply(mess.OnlyOwner)
-let modeArg = (args[0] || '').toLowerCase()
-if (modeArg === 'public') {
-    X.public = true
-    reply(`╔══〔 🌐 BOT MODE: PUBLIC 〕══╗\n\n║ ✅ Everyone can use bot commands.\n╚═══════════════════════╝`)
-} else if (modeArg === 'private' || modeArg === 'self') {
-    X.public = false
-    reply(`╔══〔 🔒 BOT MODE: PRIVATE 〕══╗\n\n║ 🚫 Only the owner can use commands.\n╚═══════════════════════╝`)
-} else {
-    let currentMode = X.public !== false ? 'PUBLIC ✅' : 'PRIVATE 🔒'
-    reply(`╔═══〔 ⚙️  BOT MODE 〕════╗\n\n║ 📊 *Current* : ${currentMode}\n║ ${prefix}mode public  — all users\n║ ${prefix}mode private — owner only\n╚═══════════════════════╝`)
-}
+    if (!isOwner) return reply(mess.OnlyOwner)
+    let modeArg = (args[0] || '').toLowerCase()
+    const _validModes = ['public', 'groups', 'dms', 'silent', 'private', 'default']
+    if (!modeArg) {
+        let _curMode = global.BOT_MODE || (X.public === false ? 'silent' : 'public')
+        reply(`╔═══〔 ⚙️  BOT MODE 〕═══╗\n\n║ 📊 *Current Mode* : ${_curMode.toUpperCase()}\n║\n║ 📌 *Available Modes:*\n║ ${prefix}mode public  — everyone can use bot\n║ ${prefix}mode groups  — group chats only\n║ ${prefix}mode dms     — private chats only\n║ ${prefix}mode silent  — owner only\n║ ${prefix}mode private — same as silent\n║ ${prefix}mode default — reset back to public\n╚═══════════════════════╝`)
+    } else if (modeArg === 'public' || modeArg === 'default') {
+        X.public = true
+        global.BOT_MODE = 'public'
+        reply(`╔══〔 🌐 BOT MODE: PUBLIC 〕══╗\n\n║ ✅ *Activated*\n║ All users can use bot commands.\n╚═══════════════════════╝`)
+    } else if (modeArg === 'private' || modeArg === 'silent') {
+        X.public = false
+        global.BOT_MODE = 'silent'
+        reply(`╔══〔 🔇 BOT MODE: SILENT 〕══╗\n\n║ ✅ *Activated*\n║ Only the owner can use commands.\n╚═══════════════════════╝`)
+    } else if (modeArg === 'groups') {
+        X.public = true
+        global.BOT_MODE = 'groups'
+        reply(`╔══〔 👥 BOT MODE: GROUPS 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in group chats.\n║ Private messages are ignored.\n╚═══════════════════════╝`)
+    } else if (modeArg === 'dms') {
+        X.public = true
+        global.BOT_MODE = 'dms'
+        reply(`╔══〔 💬 BOT MODE: DMs ONLY 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in private chats.\n║ Group messages are ignored.\n╚═══════════════════════╝`)
+    } else {
+        reply(`╔══〔 ❌ INVALID MODE 〕══╗\n\n║ Usage: *${prefix}mode public / groups / dms / silent / default*\n╚═══════════════════════╝`)
+    }
 } break
 
 // GROUP ADMIN COMMANDS
