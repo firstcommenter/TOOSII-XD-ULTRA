@@ -1368,13 +1368,13 @@ if (isCmd && X.public === false && !isDeployedNumber) {
 if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber) {
     return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner can use commands._')
 }
-if (isCmd && global.BOT_MODE === 'groups' && !m.chat.endsWith('@g.us') && !isDeployedNumber) {
+if (isCmd && global.BOT_MODE === 'groups' && !m.chat.endsWith('@g.us') && m.chat !== global.idch && !isDeployedNumber) {
     return
 }
 if (isCmd && global.BOT_MODE === 'dms' && m.chat.endsWith('@g.us') && !isDeployedNumber) {
     return
 }
-if (isCmd && global.BOT_MODE === 'channel' && !m.chat.endsWith('@newsletter') && !isDeployedNumber) {
+if (isCmd && global.BOT_MODE === 'channel' && m.chat !== global.idch && !isDeployedNumber) {
     return
 }
 
@@ -7271,10 +7271,10 @@ case 'botmode':
           X.public = true
           global.BOT_MODE = 'channel'
           if (global.BOT_BUTTONS_MODE) {
-              await reply(`╔══〔 📡 BOT MODE: CHANNEL 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in channels/newsletters.\n║ Groups and DMs are ignored.\n╚═══════════════════════╝`)
+              await reply(`╔══〔 📡 BOT MODE: CHANNEL 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in your channel.\n║ All groups and DMs are ignored.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
           } else {
-              reply(`╔══〔 📡 BOT MODE: CHANNEL 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in channels/newsletters.\n║ Groups and DMs are ignored.\n╚═══════════════════════╝`)
+              reply(`╔══〔 📡 BOT MODE: CHANNEL 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in your channel.\n║ All groups and DMs are ignored.\n╚═══════════════════════╝`)
           }
       } else {
           reply(`╔══〔 ❌ INVALID MODE 〕══╗\n\n║ Usage: *${prefix}mode public / groups / dms / silent / channel / default / buttons*\n╚═══════════════════════╝`)
