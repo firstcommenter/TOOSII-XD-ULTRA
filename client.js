@@ -754,14 +754,14 @@ const reply = (teks) => {
     if (!teks && teks !== 0) return
     const _t = typeof teks === 'string' ? teks.trim() : String(teks)
     if (!_t) return
-    X.sendMessage(from, { text: _t }, { quoted: m })
+    X.sendMessage(from, { text: _t, contextInfo: { externalAdReply: { title: global.botname || 'TOOSII-XD ULTRA', body: global.ownername || 'Toosii Tech', sourceUrl: global.groupLink || global.wagc || '', mediaType: 1, renderLargerThumbnail: false } } }, { quoted: m })
 }
 
 const reply2 = (teks) => {
     if (!teks && teks !== 0) return
     const _t = typeof teks === 'string' ? teks.trim() : String(teks)
     if (!_t) return
-    X.sendMessage(from, { text: _t }, { quoted: m })
+    X.sendMessage(from, { text: _t, contextInfo: { externalAdReply: { title: global.botname || 'TOOSII-XD ULTRA', body: global.ownername || 'Toosii Tech', sourceUrl: global.groupLink || global.wagc || '', mediaType: 1, renderLargerThumbnail: false } } }, { quoted: m })
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Function Area
