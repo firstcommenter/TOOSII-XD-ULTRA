@@ -8220,7 +8220,7 @@ case 'apk': {
             } catch (_e2) {}
         }
         if (!_apkResults?.length) return reply(`❌ No APK found for "${text}". Try: https://apkpure.com/search?q=${encodeURIComponent(text)}`)
-        let _msg = `╔══〔 📦 APK SEARCH: ${text} 〕══╗\n\n╚═══════════════════════╝`
+        let _msg = `╔══〔 📦 APK SEARCH: ${text} 〕══╗\n\n`
         for (let [i, a] of _apkResults.entries()) {
             _msg += `\n${i+1}. *${a.name}*`
             if (a.package) _msg += ` (${a.package})`
@@ -9163,7 +9163,7 @@ print('ok')
                 _fd.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
                 _fd.append('size', 'auto')
                 const _rbRes = await axios.post('https://api.remove.bg/v1.0/removebg', _fd, {
-                    headers: { ..._fd.getHeaders(), 'X-Api-Key': _rbKey },
+                    headers: { 'X-Api-Key': _rbKey },
                     responseType: 'arraybuffer', timeout: 30000
                 })
                 if (_rbRes.status === 200) _result = Buffer.from(_rbRes.data)
@@ -9179,7 +9179,7 @@ print('ok')
                 const _fd4 = new FormData()
                 _fd4.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
                 const _cdRes = await axios.post('https://clipdrop-api.co/remove-background/v1', _fd4, {
-                    headers: { ..._fd4.getHeaders(), 'x-api-key': _cdKey },
+                    headers: { 'x-api-key': _cdKey },
                     responseType: 'arraybuffer', timeout: 30000
                 })
                 if (_cdRes.status === 200) _result = Buffer.from(_cdRes.data)
@@ -9212,7 +9212,7 @@ case 'upscale': {
             const _form = new _fd()
             _form.append('file', _hdBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
             const { data: _w } = await axios.post('https://api.deepai.org/api/waifu2x', _form, {
-                headers: { ..._form.getHeaders(), 'api-key': 'quickstart-QUdJIGlzIGF3ZXNvbWU=' },
+                headers: { 'api-key': 'quickstart-QUdJIGlzIGF3ZXNvbWU=' },
                 timeout: 40000
             })
             if (_w?.output_url) _hdOutUrl = _w.output_url
@@ -11800,7 +11800,7 @@ case 'sportcat': {
             _catMap[_t] = (_catMap[_t] || 0) + 1
         }
         const _sportIcon = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋', badminton: '🏸', tabletennis: '🏓', snooker: '🎱' }
-        let _msg = `╔══〔 🏅 SPORTS CATEGORIES 〕══╗\n\n\n╚═══════════════════════╝`
+        let _msg = `╔══〔 🏅 SPORTS CATEGORIES 〕══╗\n\n`
         for (let [_cat, _cnt] of Object.entries(_catMap).sort((a,b) => b[1]-a[1])) {
             _msg += `  ${_sportIcon[_cat] || '🏅'} *${_cat}* — ${_cnt} match${_cnt!==1?'es':''}\n`
         }
