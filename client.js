@@ -580,20 +580,6 @@ if (!X._botSentTracked) {
                 if (_isEmptyVal(_ear.title)) _ear.title = global.botname || 'TOOSII-XD ULTRA'
                 if (_isEmptyVal(_ear.body))  _ear.body  = 'WhatsApp Bot'
             }
-            // ── Auto-inject group link on all outgoing text/caption messages ──────────
-            if ((_msgPayload.text || _msgPayload.caption) && !_msgPayload.interactiveMessage && !_msgPayload.react) {
-                if (!_msgPayload.contextInfo) _msgPayload.contextInfo = {}
-                if (!_msgPayload.contextInfo.externalAdReply) {
-                    _msgPayload.contextInfo.externalAdReply = {
-                        title: global.botname || 'TOOSII-XD ULTRA',
-                        body: global.ownername || 'Toosii Tech',
-                        sourceUrl: global.groupLink || '',
-                        mediaType: 1,
-                        renderLargerThumbnail: false
-                    }
-                }
-            }
-        }
         // ───────────────────────────────────────────────────────────────────
         const _sent = await _origSM(..._smArgs)
         if (_sent?.key?.id) {
