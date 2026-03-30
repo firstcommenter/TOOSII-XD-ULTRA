@@ -580,15 +580,14 @@ if (!X._botSentTracked) {
                 if (_isEmptyVal(_ear.title)) _ear.title = global.botname || 'TOOSII-XD ULTRA'
                 if (_isEmptyVal(_ear.body))  _ear.body  = 'WhatsApp Bot'
             }
-            // ── Auto-inject View channel button on all outgoing text/caption messages ─
-            if ((_msgPayload.text || _msgPayload.caption) && !_msgPayload.interactiveMessage && !_msgPayload.react) {
-                if (!_msgPayload.contextInfo) _msgPayload.contextInfo = {}
-                if (!_msgPayload.contextInfo.forwardedNewsletterMessageInfo) {
-                    _msgPayload.contextInfo.forwardedNewsletterMessageInfo = {
-                        newsletterJid: global.idch || '120363299254074394@newsletter',
-                        newsletterName: global.botname || 'TOOSII-XD ULTRA',
-                        serverMessageId: 1
-                    }
+            // ── Append channel link at bottom of every outgoing text/caption ──────────
+            const _chLink = global.channelLink || ''
+            if (_chLink && !_msgPayload.interactiveMessage && !_msgPayload.react) {
+                const _footer = '\n\n📢 ' + _chLink
+                if (_msgPayload.text && !_msgPayload.text.includes(_chLink)) {
+                    _msgPayload.text = _msgPayload.text + _footer
+                } else if (_msgPayload.caption && !_msgPayload.caption.includes(_chLink)) {
+                    _msgPayload.caption = _msgPayload.caption + _footer
                 }
             }
         }
