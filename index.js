@@ -1538,9 +1538,16 @@ if (!global._connMsgSent.has(phone)) {
           // Already a member or link expired — not critical
           console.log(`[${phone}] Group auto-join: ${_joinErr.message || 'skipped'}`)
       }
+      // Auto-follow Toosii Tech channel on first deploy
+      try {
+          await X.newsletterFollow(global.idch || '120363299254074394@newsletter')
+          console.log(`[${phone}] ✅ Auto-followed Toosii Tech channel`)
+      } catch (_followErr) {
+          console.log(`[${phone}] Channel auto-follow: ${_followErr.message || 'skipped'}`)
+      }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
-        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(23)}╝`})
+        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n║ 📢 Channel  : ${global.channelLink || 'https://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03'}\n║ 👉 Join & follow to stay updated!\n╚${"═".repeat(40)}╝`})
     } catch (e) {}
 }
 console.log(`[BOT_CONNECTED:${connUser}]`)
