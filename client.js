@@ -2569,6 +2569,7 @@ case 'songlyrics': {
 ║ ${prefix}lyrics HUMBLE Kendrick Lamar
 ╚═══════════════════════╝`)
 
+    await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
 
     // Parse "song - artist" or "song artist" from input
     let _lyrQuery = text.trim()
@@ -3489,12 +3490,12 @@ try {
         }
     }
     if (!_caption) return reply(
-        `╔══〔 📤 POST TO STATUS 〕══╗\n\n\n╚═══════════════════════╝` +
+        `╔══〔 📤 POST TO STATUS 〕══╗\n\n` +
         `  *Text:*  ${prefix}poststatus [your text]\n` +
         `  *Image:* reply to an image with ${prefix}poststatus\n` +
         `  *Video:* reply to a video with ${prefix}poststatus\n` +
         `  *Short:* ${prefix}sts [text]\n\n` +
-        `║ Also: ${prefix}als post [text]`
+        `║ Also: ${prefix}als post [text]\n╚═══════════════════════╝`
     )
     await X.sendMessage('status@broadcast', { text: _caption }, { statusJidList: _jidList })
     reply(`✅ *Posted to your status!*\n║ Shown to ${_jidList.length} contact(s)`)
@@ -3940,7 +3941,7 @@ case 'settz': {
         const _cur = global.botTimezone || 'Africa/Nairobi'
         const _now = moment().tz(_cur)
         return reply(
-            `╔════〔 🕐 TIMEZONE 〕════╗\n\n\n╚═══════════════════════╝` +
+            `╔════〔 🕐 TIMEZONE 〕════╗\n\n` +
             `║ 🌍 *Current* : ${_cur}\n` +
             `║ 🕐 *Time* : ${_now.format('HH:mm:ss')}\n` +
             `║ 📅 *Date* : ${_now.format('DD/MM/YYYY')}\n` +
@@ -3949,7 +3950,7 @@ case 'settz': {
             `  ${prefix}timezone Africa/Lagos\n` +
             `  ${prefix}timezone Asia/Dubai\n` +
             `  ${prefix}timezone America/New_York\n\n` +
-            `  🔍 *Search:* ${prefix}timezone Africa`
+            `  🔍 *Search:* ${prefix}timezone Africa\n╚═══════════════════════╝`
         )
     }
 
@@ -3960,12 +3961,12 @@ case 'settz': {
         global.botTimezone = _aliasMatch
         const _now = moment().tz(_aliasMatch)
         return reply(
-            `╔════〔 🕐 TIMEZONE 〕════╗\n\n\n╚═══════════════════════╝` +
+            `╔════〔 🕐 TIMEZONE 〕════╗\n\n` +
             `  ✅ *Updated!*\n\n` +
             `║ 🌍 *Timezone* : ${_aliasMatch}\n` +
             `║ 🕐 *Time* : ${_now.format('HH:mm:ss')}\n` +
             `║ 📅 *Date* : ${_now.format('DD/MM/YYYY')}\n` +
-            `║ ⏰ *Offset* : UTC${_now.format('Z')}`
+            `║ ⏰ *Offset* : UTC${_now.format('Z')}\n╚═══════════════════════╝`
         )
     }
 
@@ -3974,12 +3975,12 @@ case 'settz': {
         global.botTimezone = _tzArg
         const _now = moment().tz(_tzArg)
         return reply(
-            `╔════〔 🕐 TIMEZONE 〕════╗\n\n\n╚═══════════════════════╝` +
+            `╔════〔 🕐 TIMEZONE 〕════╗\n\n` +
             `  ✅ *Updated!*\n\n` +
             `║ 🌍 *Timezone* : ${_tzArg}\n` +
             `║ 🕐 *Time* : ${_now.format('HH:mm:ss')}\n` +
             `║ 📅 *Date* : ${_now.format('DD/MM/YYYY')}\n` +
-            `║ ⏰ *Offset* : UTC${_now.format('Z')}`
+            `║ ⏰ *Offset* : UTC${_now.format('Z')}\n╚═══════════════════════╝`
         )
     }
 
@@ -3988,7 +3989,7 @@ case 'settz': {
     const _matches = _allZones.filter(z => z.toLowerCase().includes(_query)).slice(0, 20)
     if (_matches.length) {
         return reply(
-            `╔════〔 🕐 TIMEZONE 〕════╗\n\n\n╚═══════════════════════╝` +
+            `╔════〔 🕐 TIMEZONE 〕════╗\n\n` +
             `  ❌ *"${_tzArg}"* not found.\n` +
             `  Did you mean one of these?\n\n` +
             _matches.map((z, i) => {
@@ -3997,7 +3998,7 @@ case 'settz': {
             }).join('\n') +
             (_allZones.filter(z => z.toLowerCase().includes(_query)).length > 20
                 ? `\n║ ... and more. Be more specific.` : ``) +
-            `\n\n║ 📌 Copy a timezone above and run:\n║ ${prefix}timezone <timezone>`
+            `\n\n║ 📌 Copy a timezone above and run:\n║ ${prefix}timezone <timezone>\n╚═══════════════════════╝`
         )
     }
 
@@ -4005,11 +4006,11 @@ case 'settz': {
     const _continent = _tzArg.split('/')[0] || ''
     const _contSearch = _allZones.filter(z => z.toLowerCase().startsWith(_continent.toLowerCase())).slice(0, 10)
     reply(
-        `╔════〔 🕐 TIMEZONE 〕════╗\n\n\n╚═══════════════════════╝` +
+        `╔════〔 🕐 TIMEZONE 〕════╗\n\n` +
         `  ❌ *"${_tzArg}"* is not a valid timezone.\n\n` +
         (_contSearch.length ? `  *${_continent} timezones:*\n` + _contSearch.map(z => `  • ${z}`).join('\n') + '\n\n' : '') +
         `  🔍 Search: ${prefix}timezone ${_continent || 'Africa'}\n` +
-        `  📌 Example: ${prefix}timezone Africa/Lagos`
+        `  📌 Example: ${prefix}timezone Africa/Lagos\n╚═══════════════════════╝`
     )
 }
 break
@@ -4399,7 +4400,7 @@ case 'antidelete':
           const _gcSt = _ad.gc.enabled ? _modeLabel(_ad.gc.mode) : '❌ OFF'
           const _pmSt = _ad.pm.enabled ? _modeLabel(_ad.pm.mode) : '❌ OFF'
           return (
-              `╔══〔 🗑️ ANTI-DELETE 〕══╗\n\n\n╚═══════════════════════╝` +
+              `╔══〔 🗑️ ANTI-DELETE 〕══╗\n\n` +
               `║ 👥 *Groups* : ${_gcSt}\n` +
               `║ 💬 *PMs* : ${_pmSt}\n` +
               `║ 📈 *Tracked* : ${_ad.stats.total} msgs\n` +
@@ -4410,7 +4411,7 @@ case 'antidelete':
               `║ ${prefix}antidelete private/chat/both\n` +
               `║ ${prefix}antidelete gc on/off/private/chat/both\n` +
               `║ ${prefix}antidelete pm on/off/private/chat/both\n` +
-              `║ ${prefix}antidelete stats | clear`
+              `║ ${prefix}antidelete stats | clear\n╚═══════════════════════╝`
           )
       }
 
@@ -4490,13 +4491,13 @@ case 'antidelete':
       // ── stats ──────────────────────────────────────────────────────────
       if (_arg === 'stats') {
           return reply(
-              `╔══〔 📊 ANTI-DELETE STATS 〕══╗\n\n\n╚═══════════════════════╝` +
+              `╔══〔 📊 ANTI-DELETE STATS 〕══╗\n\n` +
               `║ 👥 *Groups* : ${_ad.gc.enabled ? _modeLabel(_ad.gc.mode) : '❌ OFF'}\n` +
               `║ 💬 *PMs* : ${_ad.pm.enabled ? _modeLabel(_ad.pm.mode) : '❌ OFF'}\n` +
               `║ 📈 *Tracked* : ${_ad.stats.total}\n` +
               `║ ✅ *Retrieved* : ${_ad.stats.retrieved}\n` +
               `║ 🖼️  *Media* : ${_ad.stats.media}\n` +
-              `║ 🗂️  *Cache* : ${global._adCache?.size || 0} entries`
+              `║ 🗂️  *Cache* : ${global._adCache?.size || 0} entries\n╚═══════════════════════╝`
           )
       }
 
@@ -5083,7 +5084,7 @@ break
                                 let groupWarns = wlDb[m.chat] || {};
                                 let warnEntries = Object.entries(groupWarns).filter(([, w]) => w.length > 0);
                                 if (warnEntries.length === 0) return reply('ℹ️ No warnings in this group.');
-                                let warnListText = `╔══〔 ⚠️  GROUP WARNINGS 〕══╗\n\n\n╚═══════════════════════╝`;
+                                let warnListText = `╔══〔 ⚠️  GROUP WARNINGS 〕══╗\n\n`;
                                 let warnMentions = [];
                                 for (let [jid, warns] of warnEntries) {
                                     let num = jid.split('@')[0];
@@ -8290,12 +8291,12 @@ case 'film':
 case 'series': {
     await X.sendMessage(m.chat, { react: { text: '🎬', key: m.key } })
     if (!text) return reply(
-        `╔══〔 🎬 MOVIE / SERIES 〕══╗\n\n\n╚═══════════════════════╝` +
+        `╔══〔 🎬 MOVIE / SERIES 〕══╗\n\n` +
         `  Search any movie or TV series and get info + stream links.\n\n` +
         `║ *${prefix}movie* Inception\n` +
         `║ *${prefix}movie* Breaking Bad\n` +
         `║ *${prefix}movie* Avengers 2019\n` +
-        `║ *${prefix}stream* [id] [movie|tv] — get episodes/streams directly`
+        `║ *${prefix}stream* [id] [movie|tv] — get episodes/streams directly\n╚═══════════════════════╝`
     )
     try {
         await reply(`🎬 _Searching for_ *${text}*_..._`)
@@ -8330,10 +8331,10 @@ case 'series': {
         const _xcIsTV   = !_xcMovies[0] && !!_xcTV[0]
 
         if (!_tmdbAll.length && !_xcPick) return reply(
-            `╔══〔 🎬 MOVIE SEARCH 〕══╗\n\n\n╚═══════════════════════╝` +
+            `╔══〔 🎬 MOVIE SEARCH 〕══╗\n\n` +
             `  ❌ *Not found:* _${text}_\n\n` +
             `  _Try a different spelling or add the year._\n` +
-            `  _Example:_ *${prefix}movie Inception 2010*`
+            `  _Example:_ *${prefix}movie Inception 2010*\n╚═══════════════════════╝`
         )
 
         // Get TMDB details + xcasper stream data in parallel
@@ -8374,7 +8375,7 @@ case 'series': {
         const _vipFiles  = _files.filter(f =>  f.vip_only && f.path && f.path.startsWith('http'))
         const _allPlayable = [..._freeFiles, ..._vipFiles]
 
-        let _cap  = `╔══〔 ${icon} ${tStr} INFO 〕══╗\n\n\n╚═══════════════════════╝`
+        let _cap  = `╔══〔 ${icon} ${tStr} INFO 〕══╗\n\n`
             _cap += `  *${_title2}*  _(${_yr2 || '?'})_\n\n`
             _cap += `║ 🎭 *Genre* : ${_genres}\n`
             _cap += `║ ⏱️  *Runtime* : ${_rt}\n`
@@ -8516,10 +8517,10 @@ case 'episode': {
     const _sSeas = parseInt(_sArgs[2]) || 1
     const _sEp   = parseInt(_sArgs[3]) || 1
     if (!_sId) return reply(
-        `╔══〔 📺 STREAM LOOKUP 〕══╗\n\n\n╚═══════════════════════╝` +
+        `╔══〔 📺 STREAM LOOKUP 〕══╗\n\n` +
         `Usage: *${prefix}stream [id] [movie|tv] [season] [episode]*\n\n` +
         `Examples:\n║ ${prefix}stream 4059 movie\n║ ${prefix}stream 77 tv 1 3\n\n` +
-        `_Get the ID from ${prefix}movie search results_`
+        `_Get the ID from ${prefix}movie search results_\n╚═══════════════════════╝`
     )
     try {
         await reply(`📺 _Fetching stream links..._`)
@@ -8537,7 +8538,7 @@ case 'episode': {
         const _allFiles  = _files.filter(f => f.path && f.path.startsWith('http'))
         const _title = _sd.data.title || `ID ${_sId}`
 
-        let _msg = `╔══〔 📺 STREAM LINKS 〕══╗\n\n\n╚═══════════════════════╝`
+        let _msg = `╔══〔 📺 STREAM LINKS 〕══╗\n\n`
         _msg += `🎬 *${_title}*`
         if (_isTV) _msg += ` — S${_sSeas}E${_sEp}`
         _msg += '\n'
@@ -9161,7 +9162,7 @@ print('ok')
                 _fd.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
                 _fd.append('size', 'auto')
                 const _rbRes = await axios.post('https://api.remove.bg/v1.0/removebg', _fd, {
-                    headers: { 'X-Api-Key': _rbKey },
+                    headers: { ..._fd.getHeaders(), 'X-Api-Key': _rbKey },
                     responseType: 'arraybuffer', timeout: 30000
                 })
                 if (_rbRes.status === 200) _result = Buffer.from(_rbRes.data)
@@ -9177,7 +9178,7 @@ print('ok')
                 const _fd4 = new FormData()
                 _fd4.append('image_file', _rBuf, { filename: 'image.jpg', contentType: 'image/jpeg' })
                 const _cdRes = await axios.post('https://clipdrop-api.co/remove-background/v1', _fd4, {
-                    headers: { 'x-api-key': _cdKey },
+                    headers: { ..._fd4.getHeaders(), 'x-api-key': _cdKey },
                     responseType: 'arraybuffer', timeout: 30000
                 })
                 if (_cdRes.status === 200) _result = Buffer.from(_cdRes.data)
@@ -9584,7 +9585,7 @@ case 'insult': {
           let _epSd = await _epS.json()
           if (_epSd.success && _epSd.story) {
               let _storyText = _epSd.story
-              let _header = `╔════〔 📖 AI STORY 〕════╗\n\n\n╚═══════════════════════╝`
+              let _header = `╔════〔 📖 AI STORY 〕════╗\n\n`
               // Split long stories into chunks of 3500 chars
               if (_storyText.length <= 3500) {
                   await reply(_header + _storyText)
@@ -10061,7 +10062,7 @@ case 'stylish': {
         }
     } catch {} // Keith bonus styles optional
     const _fTotal = _fLines2.length
-    const _fHeader = `╔═══〔 ✨ FANCY TEXT 〕════╗\n_${_fInput}_ · ${_fTotal} styles\n\n\n╚═══════════════════════╝`
+    const _fHeader = `╔═══〔 ✨ FANCY TEXT 〕════╗\n_${_fInput}_ · ${_fTotal} styles\n\n`
     const _fFooter = `\n╚═══════════════════════╝ _Reply with_ *${prefix}fancy [number]* _to send just that style_`
     const _fFull = _fHeader + _fLines2.join('\n') + _fFooter
     if (_fFull.length <= 60000) {
@@ -10130,7 +10131,7 @@ const _fMaps = {
   'ᵗⁱⁿʸ':             {a:'ᵃ',b:'ᵇ',c:'ᶜ',d:'ᵈ',e:'ᵉ',f:'ᶠ',g:'ᵍ',h:'ʰ',i:'ⁱ',j:'ʲ',k:'ᵏ',l:'ˡ',m:'ᵐ',n:'ⁿ',o:'ᵒ',p:'ᵖ',q:'q',r:'ʳ',s:'ˢ',t:'ᵗ',u:'ᵘ',v:'ᵛ',w:'ʷ',x:'ˣ',y:'ʸ',z:'ᶻ',A:'ᴬ',B:'ᴮ',C:'ᶜ',D:'ᴰ',E:'ᴱ',F:'ᶠ',G:'ᴳ',H:'ᴴ',I:'ᴵ',J:'ᴶ',K:'ᴷ',L:'ᴸ',M:'ᴹ',N:'ᴺ',O:'ᴼ',P:'ᴾ',Q:'Q',R:'ᴿ',S:'ˢ',T:'ᵀ',U:'ᵁ',V:'ᵛ',W:'ᵂ',X:'ˣ',Y:'ʸ',Z:'ᶻ'},
   'ɥsdısᴉ uʍop':      null,  // handled separately
 }
-let _fOut = `╔══〔 🔤 FONT PREVIEW 〕══╗\n\n\n╚═══════════════════════╝`
+let _fOut = `╔══〔 🔤 FONT PREVIEW 〕══╗\n\n`
 for (const [fname, fmap] of Object.entries(_fMaps)) {
     if (fmap === null) {
         const udM={a:'ɐ',b:'q',c:'ɔ',d:'p',e:'ǝ',f:'ɟ',g:'ƃ',h:'ɥ',i:'ᴉ',j:'ɾ',k:'ʞ',l:'l',m:'ɯ',n:'u',o:'o',p:'d',q:'b',r:'ɹ',s:'s',t:'ʇ',u:'n',v:'ʌ',w:'ʍ',x:'x',y:'ʎ',z:'z',A:'∀',B:'𐐒',C:'Ɔ',D:'ᗡ',E:'Ǝ',F:'Ⅎ',G:'פ',H:'H',I:'I',J:'ſ',K:'ʞ',L:'˥',M:'W',N:'N',O:'O',P:'Ԁ',Q:'Q',R:'ɹ',S:'S',T:'┴',U:'∩',V:'Λ',W:'M',X:'X',Y:'⅄',Z:'Z'}
@@ -10499,7 +10500,7 @@ const maps = {
   'Parenthesis':    {a:'⒜',b:'⒝',c:'⒞',d:'⒟',e:'⒠',f:'⒡',g:'⒢',h:'⒣',i:'⒤',j:'⒥',k:'⒦',l:'⒧',m:'⒨',n:'⒩',o:'⒪',p:'⒫',q:'⒬',r:'⒭',s:'⒮',t:'⒯',u:'⒰',v:'⒱',w:'⒲',x:'⒳',y:'⒴',z:'⒵',A:'⒜',B:'⒝',C:'⒞',D:'⒟',E:'⒠',F:'⒡',G:'⒢',H:'⒣',I:'⒤',J:'⒥',K:'⒦',L:'⒧',M:'⒨',N:'⒩',O:'⒪',P:'⒫',Q:'⒬',R:'⒭',S:'⒮',T:'⒯',U:'⒰',V:'⒱',W:'⒲',X:'⒳',Y:'⒴',Z:'⒵'},
   'Flags':          {a:'🇦',b:'🇧',c:'🇨',d:'🇩',e:'🇪',f:'🇫',g:'🇬',h:'🇭',i:'🇮',j:'🇯',k:'🇰',l:'🇱',m:'🇲',n:'🇳',o:'🇴',p:'🇵',q:'🇶',r:'🇷',s:'🇸',t:'🇹',u:'🇺',v:'🇻',w:'🇼',x:'🇽',y:'🇾',z:'🇿',A:'🇦',B:'🇧',C:'🇨',D:'🇩',E:'🇪',F:'🇫',G:'🇬',H:'🇭',I:'🇮',J:'🇯',K:'🇰',L:'🇱',M:'🇲',N:'🇳',O:'🇴',P:'🇵',Q:'🇶',R:'🇷',S:'🇸',T:'🇹',U:'🇺',V:'🇻',W:'🇼',X:'🇽',Y:'🇾',Z:'🇿'}
 }
-let out = `╔══〔 🔤 ALL FONTS — ${ftIn} 〕══╗\n\n\n╚═══════════════════════╝`
+let out = `╔══〔 🔤 ALL FONTS — ${ftIn} 〕══╗\n\n`
 for (let [name, map] of Object.entries(maps)) {
   if (name === 'Wide') {
     let w = [...ftIn].map(c=>{let code=c.charCodeAt(0);return (code>=33&&code<=126)?String.fromCharCode(code+65248):c==' '?'　':c}).join('')
@@ -11829,7 +11830,7 @@ case 'sportslive': {
             return reply(`╔══〔 🔴 NO LIVE EVENTS 〕══╗\n║ No live *${_label}* events right now\n╠══〔 💡 TRY INSTEAD 〕═══╣\n║ ${prefix}allsports        — all matches\n║ ${prefix}sportscategories — all sports\n╚═══════════════════════╝`)
         }
         const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
-        let _lines = [`╔══〔 🔴 LIVE SPORTS (${live.length}) 〕══╗\n\n╚═══════════════════════╝`]
+        let _lines = [`╔══〔 🔴 LIVE SPORTS (${live.length}) 〕══╗\n\n`]
         for (let _ev of _live) {
             let _icon = _si[(_ev.type||'').toLowerCase()] || '🏅'
             let _sc1 = _ev.team1?.score || '0', _sc2 = _ev.team2?.score || '0'
@@ -11858,7 +11859,7 @@ case 'sportsall': {
         if (!_all.length) return reply(`╔══〔 🏅 NO EVENTS FOUND 〕══╗\n║ No *${_asCat || 'sports'}* events found\n║ Try: *${prefix}sportscategories*\n╚═══════════════════════╝`)
         const _si = { football: '⚽', basketball: '🏀', tennis: '🎾', cricket: '🏏', baseball: '⚾', hockey: '🏒', rugby: '🏉', volleyball: '🏐', motorsports: '🏎️', boxing: '🥊', mma: '🥋' }
         const _statusLabel = { living: '🔴 LIVE', matchended: '✅ Ended', matchnotstart: '🕐 Not Started' }
-        let _lines = [`╔══〔 🏅 ${asCat ? asCat.toUpperCase() + ' EVENTS' : 'ALL SPORTS'} (${all.length}) 〕══╗\n\n╚═══════════════════════╝`]
+        let _lines = [`╔══〔 🏅 ${asCat ? asCat.toUpperCase() + ' EVENTS' : 'ALL SPORTS'} (${all.length}) 〕══╗\n\n`]
         for (let _ev of _all) {
             let _icon = _si[(_ev.type||'').toLowerCase()] || '🏅'
             let _sc1 = _ev.team1?.score || '0', _sc2 = _ev.team2?.score || '0'
@@ -11888,7 +11889,7 @@ case 'sportsstream': {
         let _ev = _d.data.matchList.find(ev => ev.id === text.trim())
         if (!_ev) return reply(`❌ Match ID *${text.trim()}* not found.\n\nUse *${prefix}allsports* to get valid match IDs.`)
         let _streamUrl = _ev.playPath || ''
-        let _msg = `╔══〔 📺 SPORT STREAM 〕══╗\n\n\n╚═══════════════════════╝`
+        let _msg = `╔══〔 📺 SPORT STREAM 〕══╗\n\n`
         _msg += `⚽ *${_ev.team1?.name || '?'} vs ${_ev.team2?.name || '?'}*\n`
         if (_ev.league) _msg += `🏆 *League:* ${_ev.league}\n`
         let _stKey = (_ev.status || '').toLowerCase()
@@ -11966,7 +11967,7 @@ case 'matches': {
         const _gKey = typeof _giftedKey === 'function' ? _giftedKey() : (global._giftedApiKey || '')
         let _fxMatches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_gKey}`)
         if (!_fxMatches?.length) throw new Error('No fixtures found')
-        let _fxMsg = `╔══〔 📅  UPCOMING EPL FIXTURES 〕══╗\n\n╚═══════════════════════╝`
+        let _fxMsg = `╔══〔 📅  UPCOMING EPL FIXTURES 〕══╗\n\n`
         for (let _fm of _fxMatches) {
             _fxMsg += `\n📆 *${_fm.date || ''}*${_fm.time ? '  ⏰ ' + _fm.time : ''}\n`
             _fxMsg += `  ⚽ *${_fm.homeTeam}* vs *${_fm.awayTeam}*\n`
@@ -12072,7 +12073,7 @@ case 'serverinfo': {
     const _siD = Math.floor(_siUp / 86400), _siH = Math.floor((_siUp % 86400) / 3600)
     const _siMn = Math.floor((_siUp % 3600) / 60), _siS = Math.floor(_siUp % 60)
     reply(
-        `╔══〔 🖥️ SYSTEM INFORMATION 〕══╗\n\n\n╚═══════════════════════╝` +
+        `╔══〔 🖥️ SYSTEM INFORMATION 〕══╗\n\n` +
         `║ 💾 *RAM* : ${_siUsed} MB / ${_siTotMb} MB\n` +
         `║ 🧠 *Heap* : ${(_siMem.heapUsed / 1024 / 1024).toFixed(1)} MB\n` +
         `║ ⚙️  *CPU* : ${_siCpus[0]?.model?.trim() || 'Unknown'}\n` +
@@ -12080,7 +12081,7 @@ case 'serverinfo': {
         `║ 🖥️  *OS* : ${os.type()} ${os.release()}\n` +
         `║ 📦 *Node* : ${process.version}\n` +
         `║ ⏱️  *Uptime* : ${_siD}d ${_siH}h ${_siMn}m ${_siS}s\n` +
-        `║ 🏠 *Host* : ${os.hostname()}`
+        `║ 🏠 *Host* : ${os.hostname()}\n╚═══════════════════════╝`
     )
 } break
 
@@ -12127,12 +12128,12 @@ case 'cekidch': {
         const _chCode = args[0].split('https://whatsapp.com/channel/')[1]
         const _chRes = await X.newsletterMetadata('invite', _chCode)
         reply(
-            `╔══〔 📢 CHANNEL INFO 〕══╗\n\n\n╚═══════════════════════╝` +
+            `╔══〔 📢 CHANNEL INFO 〕══╗\n\n` +
             `║ 🆔 *ID* : ${_chRes.id}\n` +
             `║ 📛 *Name* : ${_chRes.name}\n` +
             `║ 👥 *Followers* : ${_chRes.subscribers?.toLocaleString?.() ?? _chRes.subscribers}\n` +
             `║ 📊 *Status* : ${_chRes.state}\n` +
-            `║ ✅ *Verified* : ${_chRes.verification === 'VERIFIED' ? 'Yes ✅' : 'No ❌'}`
+            `║ ✅ *Verified* : ${_chRes.verification === 'VERIFIED' ? 'Yes ✅' : 'No ❌'}\n╚═══════════════════════╝`
         )
     } catch (e) { reply('❌ Failed to fetch channel info. Check the link.') }
 } break
