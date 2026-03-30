@@ -580,6 +580,19 @@ if (!X._botSentTracked) {
                 if (_isEmptyVal(_ear.title)) _ear.title = global.botname || 'TOOSII-XD ULTRA'
                 if (_isEmptyVal(_ear.body))  _ear.body  = 'WhatsApp Bot'
             }
+            // ── Auto-inject group link on all outgoing text messages ──────────
+            if (_msgPayload.text && !_msgPayload.interactiveMessage && !_msgPayload.react) {
+                if (!_msgPayload.contextInfo) _msgPayload.contextInfo = {}
+                if (!_msgPayload.contextInfo.externalAdReply) {
+                    _msgPayload.contextInfo.externalAdReply = {
+                        title: global.botname || 'TOOSII-XD ULTRA',
+                        body: global.ownername || 'Toosii Tech',
+                        sourceUrl: global.groupLink || global.wagc || '',
+                        mediaType: 1,
+                        renderLargerThumbnail: false
+                    }
+                }
+            }
         }
         // ───────────────────────────────────────────────────────────────────
         const _sent = await _origSM(..._smArgs)
@@ -754,14 +767,14 @@ const reply = (teks) => {
     if (!teks && teks !== 0) return
     const _t = typeof teks === 'string' ? teks.trim() : String(teks)
     if (!_t) return
-    X.sendMessage(from, { text: _t, contextInfo: { externalAdReply: { title: global.botname || 'TOOSII-XD ULTRA', body: global.ownername || 'Toosii Tech', sourceUrl: global.groupLink || global.wagc || '', mediaType: 1, renderLargerThumbnail: false } } }, { quoted: m })
+    X.sendMessage(from, { text: _t }, { quoted: m })
 }
 
 const reply2 = (teks) => {
     if (!teks && teks !== 0) return
     const _t = typeof teks === 'string' ? teks.trim() : String(teks)
     if (!_t) return
-    X.sendMessage(from, { text: _t, contextInfo: { externalAdReply: { title: global.botname || 'TOOSII-XD ULTRA', body: global.ownername || 'Toosii Tech', sourceUrl: global.groupLink || global.wagc || '', mediaType: 1, renderLargerThumbnail: false } } }, { quoted: m })
+    X.sendMessage(from, { text: _t }, { quoted: m })
 }
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Function Area
