@@ -31,6 +31,7 @@ global.typebot = "Multi-Device Bot"
 global.session = "session"
 global.thumb = "https://files.catbox.moe/qbcebp.jpg"
 global.wagc = "https://wa.me/254748340864"
+global.groupLink = "https://chat.whatsapp.com/CwNhH3QNvrVFdcKNgaKg4g"
 global.welcome = false
 global.adminevent = false
 global.fakePresence = 'off'
