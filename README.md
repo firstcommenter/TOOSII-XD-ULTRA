@@ -1,6 +1,6 @@
 <!-- Toosii Tech Brand Header -->
   <p align="center">
-    <img src="https://raw.githubusercontent.com/TOOSII102/toosii-tech-web/main/public/logo.png" width="110" alt="Toosii Tech" style="border-radius:16px;" />
+    <img src="https://raw.githubusercontent.com/TOOSII102/toosii-tech-web/main/public/logo.png" width="180" alt="Toosii Tech" />
   </p>
   <p align="center">
     <a href="https://github.com/TOOSII102">
@@ -22,7 +22,7 @@
     <br/>
 
     <p align="center">
-      <img src="https://files.catbox.moe/qbcebp.jpg" width="220" style="border-radius:20px; box-shadow: 0 0 30px #25D366, 0 0 60px rgba(37,211,102,0.3);" alt="TOOSII-XD ULTRA" />
+      <img src="https://raw.githubusercontent.com/TOOSII102/toosii-tech-web/main/public/logo.png" width="240" style="border-radius:24px; box-shadow: 0 0 40px #25D366, 0 0 80px rgba(37,211,102,0.4);" alt="Toosii Tech — TOOSII-XD ULTRA" />
     </p>
 
     <p align="center">
@@ -439,7 +439,7 @@
   <!-- Toosii Tech Footer -->
   <br/>
   <p align="center">
-    <img src="https://raw.githubusercontent.com/TOOSII102/toosii-tech-web/main/public/logo.png" width="72" alt="Toosii Tech" />
+    <img src="https://raw.githubusercontent.com/TOOSII102/toosii-tech-web/main/public/logo.png" width="100" alt="Toosii Tech" />
     <br/><br/>
     <b>Developed &amp; Maintained by <a href="https://github.com/TOOSII102">Toosii Tech</a></b>
     <br/>
