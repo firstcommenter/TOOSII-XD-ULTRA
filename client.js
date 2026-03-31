@@ -1378,10 +1378,10 @@ reply(`╔══〔 🟢 ONLINE & READY 〕══╗\n\n║ 🤖 *${global.botna
 const isDeployedNumber = m.key.fromMe || senderClean === botClean
 
 if (isCmd && X.public === false && !isDeployedNumber && !isSudo) {
-    return reply('🔒 *Bot is in Private Mode.*\n_Only the bot owner can use commands._\n\n📢 *Join Channel:*\nhttps://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03')
+    return reply('🔒 *Bot is in Private Mode.*\n_Only the owner and sudo users can use commands._\n\n📢 *Join Channel:*\nhttps://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03')
 }
 if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber && !isSudo) {
-    return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner can use commands._')
+    return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner and sudo users can use commands._')
 }
 if (isCmd && global.BOT_MODE === 'groups' && !m.chat.endsWith('@g.us') && !isDeployedNumber) {
     return
@@ -3752,7 +3752,7 @@ case 'private': {
     await X.sendMessage(m.chat, { react: { text: '🔒', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = false
-reply(`╔══〔 🔒 BOT MODE: PRIVATE 〕══╗\n\n║ ✅ *Enabled*\n║ Only *${botClean}* can use commands.\n║ All other users are blocked.\n╚═══════════════════════╝`)
+reply(`╔══〔 🔒 BOT MODE: PRIVATE 〕══╗\n\n║ ✅ *Enabled*\n║ Only *${botClean}* and sudo users can use commands.\n║ All other users are blocked.\n╚═══════════════════════╝`)
 }
 break
 
@@ -7260,7 +7260,7 @@ case 'botmode':
           X.public = false
           global.BOT_MODE = 'silent'
           if (global.BOT_BUTTONS_MODE) {
-              await reply(`╔══〔 🔕 BOT MODE: SILENT 〕══╗\n\n║ ✅ *Activated*\n║ Only the owner can use commands.\n╚═══════════════════════╝`)
+              await reply(`╔══〔 🔕 BOT MODE: SILENT 〕══╗\n\n║ ✅ *Activated*\n║ Only the owner and sudo users can use commands.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
           } else {
               reply(`╔══〔 🔕 BOT MODE: SILENT 〕══╗\n\n║ ✅ *Activated*\n║ Only the owner can use commands.\n╚═══════════════════════╝`)
