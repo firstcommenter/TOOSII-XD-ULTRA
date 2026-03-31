@@ -3,7 +3,11 @@
   "description": "TOOSII-XD ULTRA WhatsApp Multi-Device Bot",
   "repository": "https://github.com/TOOSII102/TOOSII-XD-ULTRA",
   "logo": "https://files.catbox.moe/qbcebp.jpg",
-  "keywords": ["whatsapp", "bot", "multi-device"],
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "multi-device"
+  ],
   "env": {
     "OWNER_NUMBER": {
       "description": "Your WhatsApp number with country code. No + or leading 0. Example: 254748340864",
@@ -27,6 +31,11 @@
     }
   },
   "buildpacks": [
-    { "url": "heroku/nodejs" }
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
   ]
 }
