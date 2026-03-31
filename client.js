@@ -5556,13 +5556,15 @@ case 'telestick': {
   async function telestick(url) {
     let match = url.match(/https:\/\/t\.me\/addstickers\/([^\/\?#]+)/)
     if (!match) return reply(`╔══〔 📋 USAGE 〕══════════╗\n║ *${prefix + command} https://...*\n╚═══════════════════════╝`);
-    let { data: a } = await axios.get(`https://api.telegram.org/bot${(process.env.TELEGRAM_BOT_TOKEN || '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc')}/getStickerSet?name=${match[1]}`)
+    const _tgToken = process.env.TELEGRAM_BOT_TOKEN
+    if (!_tgToken) return reply('⚠️ *TELEGRAM_BOT_TOKEN not set.*\nGet a free token from @BotFather on Telegram → add it as TELEGRAM_BOT_TOKEN in your .env file.')
+    let { data: a } = await axios.get(`https://api.telegram.org/bot${_tgToken}/getStickerSet?name=${match[1]}`)
     let stickers = await Promise.all(a.result.stickers.map(async v => {
-      let { data: b } = await axios.get(`https://api.telegram.org/bot${(process.env.TELEGRAM_BOT_TOKEN || '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc')}/getFile?file_id=${v.file_id}`)
+      let { data: b } = await axios.get(`https://api.telegram.org/bot${_tgToken}/getFile?file_id=${v.file_id}`)
       return {
         emoji: v.emoji,
         is_animated: v.is_animated,
-        image_url: `https://api.telegram.org/file/bot${(process.env.TELEGRAM_BOT_TOKEN || '7935827856:AAGdbLXArulCigWyi6gqR07gi--ZPm7ewhc')}/${b.result.file_path}`
+        image_url: `https://api.telegram.org/file/bot${_tgToken}/${b.result.file_path}`
       }
     }))
     return { name: a.result.name, title: a.result.title, sticker_type: a.result.sticker_type, stickers }
@@ -7744,7 +7746,7 @@ case 'pair': {
           `║\n` +
           `║  Click the link below to get your pairing code:\n` +
           `║\n` +
-          `║  🌐 https://toosii-xd-ultra.onrender.com/pair\n` +
+          `║  🌐 ${global.sessionUrl || 'https://toosii-xd-session-generator-woyo.onrender.com/pair'}\n` +
           `║\n` +
           `║  📱 Enter your WhatsApp number\n` +
           `║  📋 Copy the code shown\n` +
