@@ -872,7 +872,8 @@ if (global.pmBlocker && !m.isGroup && !isOwner && !isBot && !m.key.fromMe) {
 
 if (global.autoReact && m.key && !m.key.fromMe) {
     const _skipReactTypes = ['reactionMessage','protocolMessage','senderKeyDistributionMessage','messageContextInfo']
-    if (!_skipReactTypes.includes(m.mtype)) {
+    const _wouldBlock = !isDeployedNumber && !isSudo && (X.public === false || global.BOT_MODE === 'silent')
+    if (!_skipReactTypes.includes(m.mtype) && !_wouldBlock) {
         try { await X.sendMessage(m.chat, { react: { text: global.autoReactEmoji || '👍', key: m.key } }) } catch {}
     }
 }
