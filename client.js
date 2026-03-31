@@ -1384,10 +1384,11 @@ reply(`╔══〔 🟢 ONLINE & READY 〕══╗\n\n║ 🤖 *${global.botna
 // Public mode:  All users can use non-owner commands normally
 const isDeployedNumber = m.key.fromMe || senderClean === botClean
 
-if (isCmd && X.public === false && !isDeployedNumber && !isSudo) {
+if (isCmd && X.public === false && !isDeployedNumber && !isSudo && !isOwner) {
+      console.log('[PrivateGate] BLOCKED', senderClean, '| isSudo:', isSudo, '| isOwner:', isOwner, '| sudoList:', _sudoMerged)
     return reply('🔒 *Bot is in Private Mode.*\n_Only the owner and sudo users can use commands._\n\n📢 *Join Channel:*\nhttps://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03')
 }
-if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber && !isSudo) {
+if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber && !isSudo && !isOwner) {
     return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner and sudo users can use commands._')
 }
 if (isCmd && global.BOT_MODE === 'groups' && !m.chat.endsWith('@g.us') && !isDeployedNumber) {
