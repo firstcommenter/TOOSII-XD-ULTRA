@@ -324,10 +324,10 @@
 
 <p align="center">
 <a href="https://github.com/TOOSII102/TOOSII-XD-ULTRA/stargazers">
-<img src="https://img.shields.io/github/stars/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=FFD700&logo=github&logoColor=white&label=⭐ Star This Repo" alt="Stars"/>
+<img src="https://img.shields.io/github/stars/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=FFD700&logo=github&logoColor=white&label=Star+This+Repo" alt="Stars"/>
 </a>
 <a href="https://github.com/TOOSII102/TOOSII-XD-ULTRA/fork">
-<img src="https://img.shields.io/github/forks/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=25D366&logo=github&logoColor=white&label=🍴 Fork This Repo" alt="Forks"/>
+<img src="https://img.shields.io/github/forks/TOOSII102/TOOSII-XD-ULTRA?style=for-the-badge&color=25D366&logo=github&logoColor=white&label=Fork+This+Repo" alt="Forks"/>
 </a>
 </p>
 
