@@ -562,7 +562,10 @@ if (!X._botSentTracked) {
             if (v === undefined || v === null) return true
             if (typeof v !== 'string') return false
             const _s = v.trim()
-            return !_s || _s === 'undefined' || _s === 'null'
+            if (!_s || _s === 'undefined' || _s === 'null') return true
+            // Strip zero-width / invisible Unicode chars, then recheck
+            const _vis = _s.replace(/[\u200B-\u200D\uFEFF\u00AD\u2060\u180E\u034F]/g, '').trim()
+            return !_vis
         }
         if (_msgPayload) {
             if ('text' in _msgPayload && _isEmptyVal(_msgPayload.text)) {
