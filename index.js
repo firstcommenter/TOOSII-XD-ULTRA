@@ -1839,11 +1839,9 @@ X.ev.on('call', async (callData) => {
 
   // Download media when messages arrive → store path in cache
   X.ev.on('messages.upsert', async ({ messages: _uMsgs }) => {
-      // Guard — skip media pre-download if antidelete is fully disabled
-      const _adActive = global.adState
-          ? (global.adState.gc?.enabled || global.adState.pm?.enabled)
-          : global.antiDelete
-      if (!_adActive) return
+      // Always pre-download media — adState check removed so images/videos
+      // are saved to disk even when anti-delete is currently toggled off.
+      // This ensures recovery works when anti-delete is turned on later.
       // TTL cleanup — sweep tmp dir, delete files older than 20 min
       try {
           const _adNow = Date.now(); const _adTTL = 20 * 60 * 1000
@@ -2110,7 +2108,10 @@ X.ev.on('call', async (callData) => {
 
                       if (!_sent) {
                           for (const _dest of _targets) {
-                              await X.sendMessage(_dest, { text: `  ⚠️ _${_mKey} could not be retrieved (expired)_` }).catch(() => {})
+                              await X.sendMessage(_dest, {
+                                  text: _header + `\n\n⚠️ _Media could not be recovered (link expired or bot was offline when ${_mKey} was sent)_`,
+                                  mentions: _mentions
+                              }).catch(() => {})
                           }
                       }
                   }
@@ -2131,7 +2132,7 @@ X.ev.on('call', async (callData) => {
   // messages.upsert instead of (or in addition to) messages.update stub type.
   X.ev.on('messages.upsert', async ({ messages: _protoMsgs }) => {
       const _adEnabled2 = global.adState ? (global.adState.gc?.enabled || global.adState.pm?.enabled) : global.antiDelete
-      if (!_adEnabled2) return
+      if (!_adEnabled2) return  // still guard the proto-delete handler — only fires if enabled
       try {
           const _botJid2  = X.decodeJid(X.user.id)
           const _selfJid2 = _botJid2.replace(/:.*@/, '@')
