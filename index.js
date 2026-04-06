@@ -67,27 +67,6 @@ if (!process.env._BOT_CHILD) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 require('dotenv').config()
-
-//━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━//
-// ⚠️  TOOSII-XD ULTRA — PROPRIETARY SOFTWARE
-// Copyright (c) 2024-2026 Toosii Tech. All rights reserved.
-// Unauthorized copying, modification, or redistribution
-// is strictly prohibited. See LICENSE for details.
-//━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━//
-;(function _licenseCheck() {
-  const _credits = ['TOOSII-XD ULTRA', 'Toosii Tech', '254748340864']
-  const _src = require('fs').readFileSync(__filename, 'utf8')
-  const _missing = _credits.filter(c => !_src.includes(c))
-  if (_missing.length) {
-    console.error('\n⛔ LICENSE VIOLATION: Required attribution missing.')
-    console.error('   This software is proprietary. Contact wa.me/254748340864')
-    process.exit(1)
-  }
-  if (!process.env.OWNER_NUMBER && !process.env.SESSION_ID) {
-    console.warn('[WARN] OWNER_NUMBER / SESSION_ID not set in .env — bot may not connect')
-  }
-})()
-
           // ← FIX 1: load .env FIRST so SESSION_ID is available
 require("./setting")
 
