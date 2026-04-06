@@ -3803,16 +3803,17 @@ try {
     }
 
 } catch (e) {
-    let errMsg = (e.message || '').toLowerCase()
-    // Baileys throws this when the request was submitted but approval is pending
-    if (errMsg.includes('membership') || errMsg.includes('approval') || errMsg.includes('pending')) {
-        reply(`╔══〔 📨 REQUEST SENT 〕════╗\n\n║ 🛎️ This group requires admin approval.\n║\n║ Join request has been submitted.\n║ The bot will be added once an admin\n║ approves it.\n╚═══════════════════════╝`)
-    } else if (errMsg.includes('conflict') || errMsg.includes('already')) {
+    // Check HTTP status code first (atassa pattern), then fall back to message text
+    const errCode = e.data || e.output?.statusCode
+    const errMsg  = (e.message || '').toLowerCase()
+    if (errCode === 409 || errMsg.includes('conflict') || errMsg.includes('already')) {
         reply(`╔══〔 ⚠️ ALREADY JOINED 〕══╗\n\n║ The bot is already a member\n║ of that group.\n╚═══════════════════════╝`)
+    } else if (errCode === 400 || errMsg.includes('membership') || errMsg.includes('approval') || errMsg.includes('pending')) {
+        reply(`╔══〔 📨 REQUEST SENT 〕════╗\n\n║ 🛎️ This group requires admin approval.\n║\n║ Join request submitted — the bot\n║ will join once an admin approves.\n╚═══════════════════════╝`)
+    } else if (errCode === 403 || errMsg.includes('forbidden') || errMsg.includes('blocked')) {
+        reply(`╔══〔 🚫 JOIN BLOCKED 〕═══╗\n\n║ The bot is not allowed to\n║ join this group.\n╚═══════════════════════╝`)
     } else if (errMsg.includes('gone') || errMsg.includes('not-authorized') || errMsg.includes('expired')) {
         reply(`╔══〔 ❌ LINK EXPIRED 〕════╗\n\n║ This invite link is invalid or has\n║ been revoked. Ask for a new one.\n╚═══════════════════════╝`)
-    } else if (errMsg.includes('forbidden') || errMsg.includes('blocked')) {
-        reply(`╔══〔 🚫 JOIN BLOCKED 〕═══╗\n\n║ The bot has been blocked from\n║ joining this group.\n╚═══════════════════════╝`)
     } else {
         reply(`╔══〔 ❌ JOIN FAILED 〕════╗\n\n║ ⚠️ ${(e.message || 'Unknown error').slice(0, 120)}\n╚═══════════════════════╝`)
     }
@@ -4853,6 +4854,34 @@ try {
     }
 
     // ── Step 8: Install deps ──────────────────────────────────────────
+    // If pull failed AND reset --hard also failed, try ZIP download as last resort
+    const _needsZip = !pullResult.ok && !(await run(`git rev-parse origin/${branch}`)).ok
+    if (_needsZip) {
+        await reply('⚠️ _Git unavailable — downloading ZIP from GitHub..._')
+        try {
+            const AdmZip  = require('adm-zip')
+            const fse     = require('fs-extra')
+            const _r      = (repoUrl || '').replace('https://github.com/', '')
+            const _zUrl   = 'https://github.com/' + _r + '/archive/' + branch + '.zip'
+            const _zPath  = path.join(__dirname, '_upd' + Date.now() + '.zip')
+            const _exPath = path.join(__dirname, '_upd_ex')
+            const { data: _zData } = await axios.get(_zUrl, { responseType: 'arraybuffer', timeout: 90000, headers: { 'User-Agent': 'TOOSII-XD-ULTRA' } })
+            fse.writeFileSync(_zPath, _zData)
+            new AdmZip(_zPath).extractAllTo(_exPath, true)
+            const _rName   = _r.split('/')[1]
+            const _srcPath = path.join(_exPath, _rName + '-' + branch)
+            fse.copySync(_srcPath, __dirname, { overwrite: true, filter: (src) => {
+                const rel = require('path').relative(_srcPath, src)
+                if (!rel) return true
+                if (rel === '.env' || rel.startsWith('.env')) return false
+                if (rel.startsWith('session') || rel.startsWith('node_modules')) return false
+                return true
+            }})
+            fse.unlinkSync(_zPath)
+            fse.rmSync(_exPath, { recursive: true, force: true })
+            console.log('[update] ZIP fallback succeeded')
+        } catch (_ze) { return reply('❌ ZIP fallback failed: ' + _ze.message.slice(0, 200)) }
+    }
     await run('npm install --production')
 
     // ── Step 9: Done ──────────────────────────────────────────────────
