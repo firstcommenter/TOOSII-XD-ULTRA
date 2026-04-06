@@ -104,7 +104,9 @@ require("./setting")
         'failed to decrypt','session error','session_cipher','libsignal',
         'queue_job','nosuchsession','invalid prekey','invalid message','no senderkey',
         'closing open session','closing session','sessionentry','prekey bundle',
-        'incoming prekey','open session in favor','privsenderkey','__signal_obj__'
+        'incoming prekey','open session in favor','privsenderkey','__signal_obj__',
+        'decrypted message with closed session','in favor of incoming','verifymac',
+        'decryptwithsessions','dodecryptwhispermessage','asyncqueueexecutor','interactive send'
     ]
     const _isNoisy = (s) => {
         const lower = (typeof s === 'string' ? s : String(s)).toLowerCase()
@@ -170,7 +172,7 @@ const path = require('path')
 const fetch = require("node-fetch")
 const moment = require('moment-timezone')  // ← FIX 2: missing import (needed by autoBio)
 const { getBuffer } = require('./library/lib/myfunc')
-const { getGroupMetadata, setupGroupCacheListeners, initializeLidStore } = require('./library/groupCache')
+const { getGroupMetadata, setupGroupCacheListeners, initializeLidStore, isDuplicateEvent } = require('./library/groupCache')
 const { imageToWebp, imageToWebp3, videoToWebp, writeExifImg, writeExifImgAV, writeExifVid } = require('./library/lib/exif')
 
 const c = {
@@ -1650,6 +1652,7 @@ X.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false,
 // Welcome Setting
     X.ev.on('group-participants.update', async (anu) => {
         try {
+            if (isDuplicateEvent(anu.id, anu.action, anu.participants)) return
             let metadata = await getGroupMetadata(X, anu.id)
             if (!metadata) return
             let groupName = metadata.subject || 'the group'
