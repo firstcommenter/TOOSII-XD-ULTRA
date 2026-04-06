@@ -13503,6 +13503,558 @@ case 'savesettings': {
     } catch(_se) { reply('❌ ' + _se.message) }
     break
 }
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Tag Everyone
+case 'everyone':
+case 'tag':
+case 'all':
+case 'mention': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    try {
+        const _meta = await getGroupMetadata(X, from)
+        const _jids = _meta.participants.map(p => p.id)
+        const _mentions = _jids.map(j => '@' + j.split('@')[0]).join(' ')
+        const _msg = q ? q + '\n\n' + _mentions : _mentions
+        await X.sendMessage(from, { text: _msg, mentions: _jids, contextInfo: global.getCtxInfo(_jids) }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Hidden Tag
+case 'hidetag':
+case 'htag':
+case 'hidtag': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    try {
+        const _meta2 = await getGroupMetadata(X, from)
+        const _jids2 = _meta2.participants.map(p => p.id)
+        const _txt = q || m.quoted?.body || '📢 Notice'
+        await X.sendMessage(from, { text: _txt, mentions: _jids2 }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Tag All Members
+case 'tagall':
+case 'mentionall': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    try {
+        const _metaA = await getGroupMetadata(X, from)
+        const _jidsA = _metaA.participants.map(p => p.id)
+        let _text = (q ? q + '\n\n' : '👥 *Everyone is tagged!*\n\n')
+        _text += _jidsA.map(j => '@' + j.split('@')[0]).join('\n')
+        await X.sendMessage(from, { text: _text, mentions: _jidsA, contextInfo: global.getCtxInfo(_jidsA) }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Tag Admins Only
+case 'tagadmins':
+case 'taggcadmins': {
+    if (!isGroup) return reply('❌ Groups only.')
+    await X.sendMessage(m.chat, { react: { text: '👮', key: m.key } })
+    try {
+        const _metaAd = await getGroupMetadata(X, from)
+        const _admJids = _metaAd.participants.filter(p => p.admin).map(p => p.id)
+        if (!_admJids.length) return reply('❌ No admins found.')
+        const _admTxt = (q ? q + '\n\n' : '👮 *Admins tagged!*\n\n') + _admJids.map(j => '@' + j.split('@')[0]).join('\n')
+        await X.sendMessage(from, { text: _admTxt, mentions: _admJids, contextInfo: global.getCtxInfo(_admJids) }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// List Join Requests
+case 'listrequests':
+case 'joinrequests':
+case 'pendingrequests': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isBotAdmin) return reply('❌ Bot must be admin.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+    try {
+        const _reqs = await X.groupRequestParticipantsList(from)
+        if (!_reqs?.length) return reply('📭 No pending join requests.')
+        const _reqTxt = _reqs.map((r,i) => (i+1) + '. +' + r.jid.split('@')[0]).join('\n')
+        reply('📋 *Pending Join Requests (' + _reqs.length + ')*\n\n' + _reqTxt + '\n\nUse .acceptall or .rejectall')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Accept All Join Requests
+case 'acceptall':
+case 'approveall': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isBotAdmin) return reply('❌ Bot must be admin.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
+    try {
+        const _reqs2 = await X.groupRequestParticipantsList(from)
+        if (!_reqs2?.length) return reply('📭 No pending requests.')
+        await X.groupRequestParticipantsUpdate(from, _reqs2.map(r=>r.jid), 'approve')
+        reply('✅ Accepted ' + _reqs2.length + ' join request(s).')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Reject All Join Requests
+case 'rejectall':
+case 'denyall': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isBotAdmin) return reply('❌ Bot must be admin.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
+    try {
+        const _reqs3 = await X.groupRequestParticipantsList(from)
+        if (!_reqs3?.length) return reply('📭 No pending requests.')
+        await X.groupRequestParticipantsUpdate(from, _reqs3.map(r=>r.jid), 'reject')
+        reply('❌ Rejected ' + _reqs3.length + ' join request(s).')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Create New Group
+case 'newgroup':
+case 'creategc': {
+    if (!isOwner) return reply('❌ Owner only.')
+    if (!q) return reply('❌ Usage: .newgroup Group Name')
+    await X.sendMessage(m.chat, { react: { text: '🆕', key: m.key } })
+    try {
+        const _gc = await X.groupCreate(q.trim(), [m.sender])
+        reply('✅ Group *' + q.trim() + '* created!\nID: ' + (_gc.gid||_gc.id||'unknown'))
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Set Group Name
+case 'groupname':
+case 'setgcname':
+case 'gcname': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isBotAdmin) return reply('❌ Bot must be admin.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    if (!q) return reply('❌ Usage: .groupname New Name')
+    await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
+    try {
+        await X.groupUpdateSubject(from, q.trim())
+        reply('✅ Group name changed to *' + q.trim() + '*')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Set Group Description
+case 'gcdesc':
+case 'setgcdesc':
+case 'groupdesc': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isBotAdmin) return reply('❌ Bot must be admin.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
+    try {
+        await X.groupUpdateDescription(from, q || '')
+        reply('✅ Group description ' + (q ? 'updated' : 'cleared') + '.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// List Bot Groups
+case 'mygroups':
+case 'gclist':
+case 'listgroups': {
+    if (!isOwner) return reply('❌ Owner only.')
+    await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+    try {
+        const _gcs = await X.groupFetchAllParticipating()
+        const _gcArr = Object.values(_gcs)
+        if (!_gcArr.length) return reply('📭 Bot is not in any groups.')
+        const _gcTxt = _gcArr.map((g,i)=>(i+1)+'. *'+g.subject+'* ['+( g.participants?.length||0)+' members]').join('\n')
+        reply('📋 *Bot Groups (' + _gcArr.length + ')*\n\n' + _gcTxt)
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// View Once Bypass
+case 'vv':
+case 'viewonce': {
+    if (!isOwner && !isAdmin) return reply('❌ Admins/Owner only.')
+    await X.sendMessage(m.chat, { react: { text: '👁️', key: m.key } })
+    try {
+        const _vvBuf = await X.downloadMediaMessage(m.quoted)
+        const _vvMime = m.quoted?.message?.imageMessage?.mimetype || m.quoted?.message?.videoMessage?.mimetype || 'image/jpeg'
+        const _isVid = _vvMime.startsWith('video')
+        await X.sendMessage(from, {
+            [_isVid ? 'video' : 'image']: _vvBuf,
+            caption: '👁️ View Once revealed', contextInfo: global.getCtxInfo()
+        }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Get LID Info
+case 'getlid': {
+    if (!isOwner) return reply('❌ Owner only.')
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+    try {
+        const _lidTarget = m.quoted ? m.quoted.sender : (q ? q.replace(/[^0-9]/g,'')+'@s.whatsapp.net' : m.sender)
+        const _lidMeta = isGroup ? await getGroupMetadata(X, from) : null
+        const _lidP = _lidMeta?.participants?.find(p => p.id === _lidTarget || p.pn === _lidTarget)
+        reply('🔍 *JID/LID Info*\n\nJID: ' + _lidTarget + '\nLID: ' + (_lidP?.lid||'N/A') + '\nPhone: ' + (_lidP?.pn||_lidTarget.split('@')[0]))
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Sudo Management
+case 'setsudo':
+case 'addsudo': {
+    if (!isOwner) return reply('❌ Owner only.')
+    const _sudoTarget = m.quoted?.sender || (q ? q.replace(/[^0-9]/g,'') : null)
+    if (!_sudoTarget) return reply('❌ Quote a message or provide a number.')
+    const _sudoNum = _sudoTarget.includes('@') ? _sudoTarget.split('@')[0] : _sudoTarget
+    if (!global.sudo) global.sudo = []
+    if (global.sudo.includes(_sudoNum)) return reply('@' + _sudoNum + ' is already a sudo user.', null, [_sudoNum+'@s.whatsapp.net'])
+    global.sudo.push(_sudoNum)
+    try { require('./library/settings').saveSettings() } catch {}
+    reply('✅ @' + _sudoNum + ' added as sudo (sub-owner).', null, [_sudoNum+'@s.whatsapp.net'])
+    break
+}
+case 'delsudo':
+case 'remsudo': {
+    if (!isOwner) return reply('❌ Owner only.')
+    const _delNum = (m.quoted?.sender || (q?q.replace(/[^0-9]/g,''):'')).replace('@s.whatsapp.net','')
+    if (!_delNum) return reply('❌ Quote or provide a number.')
+    if (!global.sudo?.includes(_delNum)) return reply('❌ Not in sudo list.')
+    global.sudo = global.sudo.filter(n => n !== _delNum)
+    try { require('./library/settings').saveSettings() } catch {}
+    reply('✅ @' + _delNum + ' removed from sudo.', null, [_delNum+'@s.whatsapp.net'])
+    break
+}
+case 'getsudo':
+case 'sudolist': {
+    if (!isOwner) return reply('❌ Owner only.')
+    const _sudoList = global.sudo || []
+    if (!_sudoList.length) return reply('📭 No sudo users set.')
+    reply('👑 *Sudo Users (' + _sudoList.length + ')*\n\n' + _sudoList.map((n,i)=>(i+1)+'. @'+n).join('\n'), null, _sudoList.map(n=>n+'@s.whatsapp.net'))
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Check if Number is on WhatsApp
+case 'onwa':
+case 'isonwa':
+case 'checkwa': {
+    if (!q) return reply('❌ Usage: .onwa 254XXXXXXXXX')
+    await X.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+    try {
+        const _waNum = q.replace(/[^0-9]/g,'') + '@s.whatsapp.net'
+        const _waCheck = await X.onWhatsApp(_waNum)
+        const _isOnWa = _waCheck?.[0]?.exists
+        reply('📱 *WhatsApp Check*\n\n+' + q.replace(/[^0-9]/g,'') + ' is ' + (_isOnWa ? '✅ on WhatsApp' : '❌ NOT on WhatsApp'))
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Export Group Contacts as VCF
+case 'vcf':
+case 'exportcontacts':
+case 'contacts': {
+    if (!isGroup) return reply('❌ Groups only.')
+    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
+    await X.sendMessage(m.chat, { react: { text: '📇', key: m.key } })
+    try {
+        const _vcfMeta = await getGroupMetadata(X, from)
+        const _gcSubj = _vcfMeta.subject || 'Group'
+        let _vcf = '', _idx = 1
+        for (const _p of _vcfMeta.participants) {
+            const _pjid = _p.pn || _p.jid || _p.id
+            if (!_pjid?.includes('@s.whatsapp.net')) continue
+            const _pid = _pjid.split('@')[0]
+            _vcf += 'BEGIN:VCARD\nVERSION:3.0\nFN:[' + (_idx++) + '] +' + _pid + '\nTEL;type=CELL;waid=' + _pid + ':+' + _pid + '\nEND:VCARD\n'
+        }
+        if (!_vcf) return reply('❌ No valid contacts found.')
+        await X.sendMessage(from, {
+            document: Buffer.from(_vcf.trim(), 'utf-8'), mimetype: 'text/vcard',
+            fileName: _gcSubj + '.vcf',
+            caption: '📇 *' + _gcSubj + '*\nContacts: ' + (_idx-1),
+            contextInfo: global.getCtxInfo()
+        }, { quoted: m })
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Screenshot URL (Mobile/Tablet/Desktop)
+case 'ssphone':
+case 'mobiless': {
+    await X.sendMessage(m.chat, { react: { text: '📱', key: m.key } })
+    if (!q) return reply('❌ Usage: .ssphone https://example.com')
+    try {
+        const _ss1 = await require('axios').get(GTAPI+'/api/tools/ssphone?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        await X.sendMessage(from, { image: Buffer.from(_ss1.data), caption: '📱 *Mobile Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
+    break
+}
+case 'sstab':
+case 'tabletss': {
+    await X.sendMessage(m.chat, { react: { text: '📟', key: m.key } })
+    if (!q) return reply('❌ Usage: .sstab https://example.com')
+    try {
+        const _ss2 = await require('axios').get(GTAPI+'/api/tools/sstab?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        await X.sendMessage(from, { image: Buffer.from(_ss2.data), caption: '📟 *Tablet Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
+    break
+}
+case 'sspc':
+case 'desktopss': {
+    await X.sendMessage(m.chat, { react: { text: '🖥️', key: m.key } })
+    if (!q) return reply('❌ Usage: .sspc https://example.com')
+    try {
+        const _ss3 = await require('axios').get(GTAPI+'/api/tools/sspc?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        await X.sendMessage(from, { image: Buffer.from(_ss3.data), caption: '🖥️ *Desktop Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Create QR Code
+case 'createqr':
+case 'toqr':
+case 'qrcode':
+case 'makeqr': {
+    await X.sendMessage(m.chat, { react: { text: '📱', key: m.key } })
+    const _qrText = q || m.quoted?.body
+    if (!_qrText) return reply('❌ Usage: .createqr Your text or link here')
+    try {
+        const _qrRes = await require('axios').get(GTAPI+'/api/tools/createqr?apikey='+_giftedKey()+'&query='+encodeURIComponent(_qrText), { responseType: 'arraybuffer', timeout: 20000 })
+        await X.sendMessage(from, { image: Buffer.from(_qrRes.data), caption: '📱 *QR Code*\n📝 ' + _qrText.slice(0,80) + (_qrText.length>80?'...':''), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ QR generation failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Text to Picture
+case 'ttp':
+case 'textpic': {
+    await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
+    if (!q) return reply('❌ Usage: .ttp Your text here')
+    try {
+        const _ttpRes = await require('axios').get(GTAPI+'/api/tools/ttp?apikey='+_giftedKey()+'&query='+encodeURIComponent(q), { responseType: 'arraybuffer', timeout: 20000 })
+        await X.sendMessage(from, { image: Buffer.from(_ttpRes.data), caption: '🖼️ ' + q.slice(0,60), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ TTP failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Fancy Text
+case 'fancy':
+case 'fancytext': {
+    await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
+    if (!q) return reply('❌ Usage: .fancy Your text')
+    try {
+        const _fRes = await giftedFetch(GTAPI+'/api/tools/fancy?apikey={KEY}&query='+encodeURIComponent(q))
+        if (!_fRes?.result) return reply('❌ No results from API.')
+        const _fOut = Array.isArray(_fRes.result) ? _fRes.result.join('\n') : String(_fRes.result)
+        reply('✨ *Fancy Text*\n\n' + _fOut)
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Word Definition
+case 'define':
+case 'definition':
+case 'meaning': {
+    await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
+    if (!q) return reply('❌ Usage: .define word')
+    try {
+        const _dRes = await giftedFetch(GTAPI+'/api/tools/define?apikey={KEY}&query='+encodeURIComponent(q))
+        if (!_dRes?.result) return reply('❌ No definition found for *' + q + '*')
+        const _dOut = typeof _dRes.result==='object' ? JSON.stringify(_dRes.result,null,2).slice(0,1500) : String(_dRes.result)
+        reply('📖 *' + q.toUpperCase() + '*\n\n' + _dOut)
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Emoji Mix
+case 'emojimix':
+case 'mixemoji': {
+    await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
+    if (!q || !q.includes(' ')) return reply('❌ Usage: .emojimix 😀 😂')
+    const [_e1, _e2] = q.trim().split(/\s+/)
+    try {
+        const _emRes = await require('axios').get(GTAPI+'/api/tools/emojimix?apikey='+_giftedKey()+'&emoji1='+encodeURIComponent(_e1)+'&emoji2='+encodeURIComponent(_e2), { responseType: 'arraybuffer', timeout: 15000 })
+        await X.sendMessage(from, { image: Buffer.from(_emRes.data), caption: '🎨 *Emoji Mix* ' + _e1 + ' + ' + _e2, contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Emoji mix failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Notes System
+case 'addnote':
+case 'savenote': {
+    if (!q) return reply('❌ Usage: .addnote Your note text')
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
+    try {
+        const { addNote } = require('./library/notes')
+        const _nCount = addNote(m.sender, q)
+        reply('📝 Note #' + _nCount + ' saved!\n\n"' + q.slice(0,100) + (q.length>100?'...':'') + '"')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'getnotes':
+case 'notes':
+case 'mynotes': {
+    await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+    try {
+        const { getNotes } = require('./library/notes')
+        const _notes = getNotes(m.sender)
+        if (!_notes.length) return reply('📭 You have no saved notes.\n\nUse .addnote <text> to save one.')
+        const _nList = _notes.map((n,i)=>'*#'+(i+1)+'* '+n.text.slice(0,80)+(n.text.length>80?'...:':'')).join('\n')
+        reply('📋 *Your Notes (' + _notes.length + ')*\n\n' + _nList + '\n\nUse .getnote <number> for full text')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'getnote': {
+    const _gn = parseInt(q)
+    if (!_gn) return reply('❌ Usage: .getnote <number>')
+    await X.sendMessage(m.chat, { react: { text: '📄', key: m.key } })
+    try {
+        const { getNote } = require('./library/notes')
+        const _note = getNote(m.sender, _gn)
+        if (!_note) return reply('❌ Note #' + _gn + ' not found. Use .notes to see your notes.')
+        reply('📄 *Note #' + _gn + '*\n\n' + _note.text + '\n\n_Saved: ' + new Date(_note.created).toLocaleString() + '_')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'updatenote':
+case 'editnote': {
+    const _unParts = (q||'').split(' ')
+    const _unNum = parseInt(_unParts[0])
+    const _unText = _unParts.slice(1).join(' ')
+    if (!_unNum || !_unText) return reply('❌ Usage: .updatenote <number> New text')
+    await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
+    try {
+        const { updateNote } = require('./library/notes')
+        const _ok = updateNote(m.sender, _unNum, _unText)
+        reply(_ok ? '✅ Note #' + _unNum + ' updated!' : '❌ Note #' + _unNum + ' not found.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'delnote':
+case 'deletenote': {
+    const _dn = parseInt(q)
+    if (!_dn) return reply('❌ Usage: .delnote <number>')
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
+    try {
+        const { deleteNote } = require('./library/notes')
+        const _ok2 = deleteNote(m.sender, _dn)
+        reply(_ok2 ? '✅ Note #' + _dn + ' deleted.' : '❌ Note #' + _dn + ' not found.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'delallnotes':
+case 'clearnotes': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
+    try {
+        const { deleteAllNotes } = require('./library/notes')
+        const _cnt = deleteAllNotes(m.sender)
+        reply(_cnt > 0 ? '✅ Deleted ' + _cnt + ' note(s).' : '📭 You had no notes to delete.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Spotify Downloader
+case 'spotify':
+case 'spotifydl':
+case 'spoti': {
+    await X.sendMessage(m.chat, { react: { text: '🎧', key: m.key } })
+    if (!q) return reply('❌ Usage: .spotify <URL or song name>')
+    try {
+        const _spRes = await giftedFetch(GTAPI+'/api/download/spotifydl?apikey={KEY}&url='+encodeURIComponent(q))
+        if (!_spRes?.result?.download_url) throw new Error(_spRes?.message || 'No download URL returned')
+        const { title, download_url } = _spRes.result
+        await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (title||q) + '*...' })
+        const _spBuf = await require('axios').get(download_url, { responseType: 'arraybuffer', timeout: 60000 }).then(r => Buffer.from(r.data))
+        await X.sendMessage(from, { audio: _spBuf, mimetype: 'audio/mpeg', ptt: false, contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Spotify failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// YouTube Video Downloader
+case 'ytv':
+case 'ytvideo':
+case 'ydl': {
+    await X.sendMessage(m.chat, { react: { text: '📽️', key: m.key } })
+    if (!q) return reply('❌ Usage: .ytv <video URL or title>')
+    try {
+        const _ytvRes = await giftedFetch(GTAPI+'/api/download/youtubevideo?apikey={KEY}&url='+encodeURIComponent(q))
+        if (!_ytvRes?.result?.download_url) throw new Error(_ytvRes?.message || 'No download URL')
+        const { title, download_url, duration } = _ytvRes.result
+        await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (title||q) + '* ' + (duration?'('+duration+')':'') })
+        const _ytvBuf = await require('axios').get(download_url, { responseType: 'arraybuffer', timeout: 120000 }).then(r=>Buffer.from(r.data))
+        await X.sendMessage(from, { video: _ytvBuf, mimetype: 'video/mp4', caption: '🎬 *' + (title||q) + '*' + (duration?'\n⏱ '+duration:'') + '\n\n> ' + global.botname, contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ YouTube video failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Google Drive Downloader
+case 'gdrive':
+case 'googledrive':
+case 'gdl': {
+    await X.sendMessage(m.chat, { react: { text: '📁', key: m.key } })
+    if (!q) return reply('❌ Usage: .gdrive <Google Drive link>')
+    if (!q.includes('drive.google.com') && !q.includes('docs.google.com')) return reply('❌ Provide a valid Google Drive link.')
+    try {
+        const _gdRes = await giftedFetch(GTAPI+'/api/download/gdrive?apikey={KEY}&url='+encodeURIComponent(q))
+        if (!_gdRes?.result?.download_url) throw new Error(_gdRes?.message || 'No download URL')
+        const { name, download_url, size, mime } = _gdRes.result
+        await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (name||'file') + '* from Google Drive...' })
+        const _gdBuf = await require('axios').get(download_url, { responseType: 'arraybuffer', timeout: 120000 }).then(r=>Buffer.from(r.data))
+        await X.sendMessage(from, { document: _gdBuf, fileName: name||'gdrive_file', mimetype: mime||'application/octet-stream', caption: '📁 *' + (name||'Google Drive File') + '*' + (size ? '\n📦 ' + size : ''), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ GDrive failed: ' + _e.message) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Mediafire Downloader
+case 'mediafire':
+case 'mf':
+case 'mediafiredl': {
+    await X.sendMessage(m.chat, { react: { text: '🔥', key: m.key } })
+    if (!q) return reply('❌ Usage: .mediafire <Mediafire link>')
+    if (!q.includes('mediafire.com')) return reply('❌ Provide a valid Mediafire link.')
+    try {
+        const _mfRes = await giftedFetch(GTAPI+'/api/download/mediafiredl?apikey={KEY}&url='+encodeURIComponent(q))
+        if (!_mfRes?.result?.download_url) throw new Error(_mfRes?.message || 'No download URL')
+        const { name, download_url, size, mime } = _mfRes.result
+        await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (name||'file') + '* from Mediafire...' })
+        const _mfBuf = await require('axios').get(download_url, { responseType: 'arraybuffer', timeout: 120000 }).then(r=>Buffer.from(r.data))
+        await X.sendMessage(from, { document: _mfBuf, fileName: name||'mediafire_file', mimetype: mime||'application/octet-stream', caption: '🔥 *' + (name||'Mediafire File') + '*' + (size?'\n📦 '+size:''), contextInfo: global.getCtxInfo() }, { quoted: m })
+    } catch(_e) { reply('❌ Mediafire failed: ' + _e.message) }
+    break
+}
 } catch (err) {
   let errMsg = (err.message || '').toLowerCase()
   let errStack = err.stack || err.message || util.format(err)
