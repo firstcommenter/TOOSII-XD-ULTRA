@@ -597,8 +597,8 @@ if (!X._botSentTracked) {
     }
 }
 const from = m.key.remoteJid
-// Never process bot's own sent messages — prevents self-reply loops
-if (m.key.fromMe) return
+// Skip bot's own sent messages (prevents self-reply loops) but allow owner via linked device
+if (m.key.fromMe && global._botSentIds?.has(m.key.id)) return
 var body = (m.mtype === 'interactiveResponseMessage') ? JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id : (m.mtype === 'conversation') ? m.message.conversation : (m.mtype == 'imageMessage') ? m.message.imageMessage.caption : (m.mtype == 'videoMessage') ? m.message.videoMessage.caption : (m.mtype == 'extendedTextMessage') ? m.message.extendedTextMessage.text : (m.mtype == 'buttonsResponseMessage') ? m.message.buttonsResponseMessage.selectedButtonId : (m.mtype == 'listResponseMessage') ? m.message.listResponseMessage.singleSelectReply.selectedRowId : (m.mtype == 'templateButtonReplyMessage') ? m.message.templateButtonReplyMessage.selectedId : (m.mtype == 'messageContextInfo') ? (m.message.buttonsResponseMessage?.selectedButtonId || m.message.listResponseMessage?.singleSelectReply?.selectedRowId || m.text) : ""
 body = body || m.body || m.text || ""
 //━━━━━━━━━━━━━━━━━━━━━━━━//
