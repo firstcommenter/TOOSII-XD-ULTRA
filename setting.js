@@ -83,6 +83,12 @@ global.author = "© Toosii Tech"
 // Social Links
 global.telegram = "https://t.me/toosiitech"
 global.sessionUrl = process.env.SESSION_URL || "https://toosii-xd-session-generator-woyo.onrender.com/pair"
+
+// Your WhatsApp Channel JID — paste the JID of your channel here
+// Format: 120363XXXXXXXXXX@newsletter
+// To find it: open your channel on WhatsApp → Copy link → paste here and extract the ID
+global.channelJid  = process.env.CHANNEL_JID || ""   // e.g. "120363123456789@newsletter"
+global.channelLink = process.env.CHANNEL_LINK || ""  // e.g. "https://whatsapp.com/channel/ABC123"
 global.ownerNumber = "+254748340864"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Respon Message
