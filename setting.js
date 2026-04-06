@@ -16,9 +16,9 @@ or removal of credits is strictly prohibited.
 //═════════════════════════════════//
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Owner Setting - DO NOT MODIFY
-global.owner = ["254748340864",]
+global.owner = [process.env.OWNER_NUMBER?.replace(/\D/g,'') || "254748340864"]
 global.ownername = "Toosii Tech"
-global._protectedOwner = "254748340864"
+global._protectedOwner = process.env.OWNER_NUMBER?.replace(/\D/g,'') || "254748340864"
 global._protectedBrand = "TOOSII-XD ULTRA"
 global._protectedAuthor = "Toosii Tech"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -70,7 +70,7 @@ global.antiDemote = false
 global.menuThumb = ''
 global.botTimezone = 'Africa/Nairobi'
 global.botPic = ''
-global.botUrl = 'https://wa.me/254748340864'
+global.botUrl = 'https://wa.me/' + (process.env.OWNER_NUMBER?.replace(/\D/g,'') || '254748340864')
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // GitHub Repo URL (used by .update command — set this to your repo)
 global.repoUrl = 'https://github.com/TOOSII102/TOOSII-XD-ULTRA'
@@ -83,7 +83,7 @@ global.author = "© Toosii Tech"
 // Social Links
 global.telegram = "https://t.me/toosiitech"
 global.sessionUrl = process.env.SESSION_URL || "https://toosii-xd-session-generator-woyo.onrender.com/pair"
-global.ownerNumber = "+254748340864"
+global.ownerNumber = "+" + (process.env.OWNER_NUMBER?.replace(/\D/g,'') || "254748340864")
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Respon Message
 global.mess = {
