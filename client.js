@@ -13803,6 +13803,81 @@ case 'contacts': {
     break
 }
 
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Notes System
+case 'addnote':
+case 'savenote': {
+    if (!q) return reply('❌ Usage: .addnote Your note text')
+    await X.sendMessage(m.chat, { react: { text: '📝', key: m.key } })
+    try {
+        const { addNote } = require('./library/notes')
+        const _nCount = addNote(m.sender, q)
+        reply('📝 Note #' + _nCount + ' saved!\n\n"' + q.slice(0,100) + (q.length>100?'...':'') + '"')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'getnotes':
+case 'notes':
+case 'mynotes': {
+    await X.sendMessage(m.chat, { react: { text: '📋', key: m.key } })
+    try {
+        const { getNotes } = require('./library/notes')
+        const _notes = getNotes(m.sender)
+        if (!_notes.length) return reply('📭 You have no saved notes.\n\nUse .addnote <text> to save one.')
+        const _nList = _notes.map((n,i)=>'*#'+(i+1)+'* '+n.text.slice(0,80)+(n.text.length>80?'...:':'')).join('\n')
+        reply('📋 *Your Notes (' + _notes.length + ')*\n\n' + _nList + '\n\nUse .getnote <number> for full text')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'getnote': {
+    const _gn = parseInt(q)
+    if (!_gn) return reply('❌ Usage: .getnote <number>')
+    await X.sendMessage(m.chat, { react: { text: '📄', key: m.key } })
+    try {
+        const { getNote } = require('./library/notes')
+        const _note = getNote(m.sender, _gn)
+        if (!_note) return reply('❌ Note #' + _gn + ' not found. Use .notes to see your notes.')
+        reply('📄 *Note #' + _gn + '*\n\n' + _note.text + '\n\n_Saved: ' + new Date(_note.created).toLocaleString() + '_')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'updatenote':
+case 'editnote': {
+    const _unParts = (q||'').split(' ')
+    const _unNum = parseInt(_unParts[0])
+    const _unText = _unParts.slice(1).join(' ')
+    if (!_unNum || !_unText) return reply('❌ Usage: .updatenote <number> New text')
+    await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
+    try {
+        const { updateNote } = require('./library/notes')
+        const _ok = updateNote(m.sender, _unNum, _unText)
+        reply(_ok ? '✅ Note #' + _unNum + ' updated!' : '❌ Note #' + _unNum + ' not found.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'delnote':
+case 'deletenote': {
+    const _dn = parseInt(q)
+    if (!_dn) return reply('❌ Usage: .delnote <number>')
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
+    try {
+        const { deleteNote } = require('./library/notes')
+        const _ok2 = deleteNote(m.sender, _dn)
+        reply(_ok2 ? '✅ Note #' + _dn + ' deleted.' : '❌ Note #' + _dn + ' not found.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+case 'delallnotes':
+case 'clearnotes': {
+    await X.sendMessage(m.chat, { react: { text: '🗑️', key: m.key } })
+    try {
+        const { deleteAllNotes } = require('./library/notes')
+        const _cnt = deleteAllNotes(m.sender)
+        reply(_cnt > 0 ? '✅ Deleted ' + _cnt + ' note(s).' : '📭 You had no notes to delete.')
+    } catch(_e) { reply('❌ ' + _e.message) }
+    break
+}
+
 } catch (err) {
   let errMsg = (err.message || '').toLowerCase()
   let errStack = err.stack || err.message || util.format(err)
