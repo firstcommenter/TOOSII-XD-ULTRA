@@ -4749,30 +4749,8 @@ case 'sendupdate': {
 
     if (!_chJid) return reply(`❌ *Could not resolve Channel JID*\n\nCheck that *channelLink* in setting.js is correct:\n${_chLink || 'not set'}`)
 
-    const _announcement =
-`🤖 *TOOSII-XD ULTRA — Bot Update*
-
-New update is now live with the following improvements:
-
-✅ *Anti-Delete Fixed* — Deleted images, videos, audio, docs & stickers now recovered and sent back together with the notification in one clean message
-
-✅ *Notification Redesigned* — Cleaner, structured format showing who deleted, who sent it, and the exact time
-
-✅ *Crash Protection* — Bot fully crash-proof with layered error handling across all commands
-
-✅ *Dead Commands Removed* — .block, .unblock, .listblock removed (WhatsApp no longer supports them)
-
-━━━━━━━━━━━━━━━━━━━━━━
-
-📲 *How to update your bot:*
-
-Simply send this in your bot chat:
-
-    *.update*
-
-Your bot will automatically pull the latest version from GitHub and restart with all improvements applied.
-
-━━━━━━━━━━━━━━━━━━━━━━`
+    const _announcement = q?.trim()
+    if (!_announcement) return reply(`╔══〔 📢 ANNOUNCE 〕══╗\n\n║ *Usage:* ${prefix}announce [message]\n║\n║ *Example:*\n║ ${prefix}announce Hello everyone! 🎉\n║ New update is live, use .update now!\n╚═══════════════════════╝`)
 
     try {
         // global.getCtxInfo() — adds native "View Channel" footer button
