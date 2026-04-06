@@ -13438,30 +13438,6 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
     }
 }
 
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Fetch / Test API
-case 'fetch':
-case 'testapi':
-case 'curl': {
-    await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
-    if (!q) return reply('❌ Provide a URL.\n\nUsage: .fetch https://api.example.com')
-    // Strip invisible chars, take first word only (avoid space-caused Invalid URL)
-    let _url = q.replace(/[\u200b-\u200d\u2060\ufeff\u00a0]/g,'').trim().split(/\s+/)[0]
-    if (!_url.startsWith('http')) _url = 'https://' + _url
-    try {
-        const _fetchRes = await require('node-fetch')(_url, { timeout: 30000,
-            headers: { 'User-Agent': 'TOOSII-XD-ULTRA/2.0' } })
-        const _ct = _fetchRes.headers.get('content-type') || ''
-        let _body = await _fetchRes.text()
-        let _disp = _body
-        if (_ct.includes('json') || _body.trimStart().startsWith('{') || _body.trimStart().startsWith('[')) {
-            try { _disp = JSON.stringify(JSON.parse(_body), null, 2) } catch {}
-        }
-        const _out = _disp.length > 3000 ? _disp.slice(0, 3000) + '\n\n[...truncated]' : _disp
-        await reply(`🌐 *URL:* ${_url}\n📊 *Status:* ${_fetchRes.status}\n📄 *Type:* ${_ct.split(';')[0]}\n\n\`\`\`\n${_out}\n\`\`\``)
-    } catch (_fe) { reply('❌ Fetch failed: ' + (_fe.message || _fe)) }
-    break
-}
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // GitHub Repo Downloader
