@@ -4730,6 +4730,59 @@ process.exit(0)
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Update Command — fully functional with step-by-step feedback
+case 'announce':
+case 'sendupdate': {
+    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
+    if (!isOwner) return reply(mess.OnlyOwner)
+    const _chJid  = global.channelJid
+    const _chLink = global.channelLink || global.sessionUrl
+    if (!_chJid) return reply(`❌ *Channel JID not set!*\n\nAdd this to *setting.js*:\nglobal.channelJid = "120363XXXXXXXXXX@newsletter"`)
+
+    const _announcement =
+`🤖 *TOOSII-XD ULTRA — Bot Update*
+
+New update is now live with the following improvements:
+
+✅ *Anti-Delete Fixed* — Deleted images, videos, audio, docs & stickers now recovered and sent back together with the notification in one clean message
+
+✅ *Notification Redesigned* — Cleaner, structured format showing who deleted, who sent it, and the exact time
+
+✅ *Crash Protection* — Bot fully crash-proof with layered error handling across all commands
+
+✅ *Dead Commands Removed* — .block, .unblock, .listblock removed (WhatsApp no longer supports them)
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+📲 *How to update your bot:*
+
+Simply send this in your bot chat:
+
+    *.update*
+
+Your bot will automatically pull the latest version from GitHub and restart with all improvements applied.
+
+━━━━━━━━━━━━━━━━━━━━━━`
+
+    try {
+        await X.sendMessage(_chJid, {
+            text: _announcement,
+            footer: `⚡ TOOSII-XD ULTRA  •  wa.me/254748340864`,
+            contextInfo: {
+                externalAdReply: {
+                    title: 'TOOSII-XD ULTRA Updates',
+                    body: 'Tap to join the official channel',
+                    sourceUrl: _chLink || 'https://wa.me/254748340864',
+                    mediaType: 1,
+                    renderLargerThumbnail: false
+                }
+            }
+        })
+        reply(`✅ *Update announcement sent to your channel!*`)
+    } catch (e) {
+        reply(`❌ Failed to send: ${e.message}\n\nMake sure *channelJid* is correct in setting.js`)
+    }
+} break
+
 case 'update': {
     await X.sendMessage(m.chat, { react: { text: '⬆️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
@@ -4789,7 +4842,7 @@ try {
 
     if (localCommit.stdout && remoteCommit.stdout && localCommit.stdout === remoteCommit.stdout) {
         const lastLog = await run('git log -1 --format="%s | %cr" HEAD')
-        return reply(`╔══〔 ✅ ALREADY UP TO DATE 〕══╗\n\n║ 🌿 *Branch* : ${branch}\n║ 🔖 *Commit* : ${localHash}\n║ 📝 ${(lastLog.stdout || 'N/A').slice(0,80)}\n╚═══════════════════════╝`)
+        return reply(`╔══〔 ✅ ALREADY UP TO DATE 〕══╗\n\n║ 🌿 *Branch* : ${branch}\n║ 🔖 *Commit* : ${localHash}\n║ 📝 ${(lastLog.stdout || 'N/A').slice(0,80)}\n╚═══════════════════════╝\n\n_Use .announce to post the update notice to your channel_`)
     }
 
     // ── Step 6: Get changelog ─────────────────────────────────────────
