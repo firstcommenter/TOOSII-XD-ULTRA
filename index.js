@@ -1896,8 +1896,11 @@ X.ev.on('call', async (callData) => {
           for (const update of updates) {
               if (!update.update) continue
               const _stubType = update.update.messageStubType
-              const _isRevoke = _stubType === 1 ||
+              // Baileys 6.7.x: delete-for-everyone = messageStubType===1 AND message===null
+              const _isRevoke = (
+                  (_stubType === 1 && update.update.message === null) ||
                   (proto?.WebMessageInfo?.StubType?.REVOKE && _stubType === proto.WebMessageInfo.StubType.REVOKE)
+              )
               if (!_isRevoke) continue
 
               const _chatJid   = update.key.remoteJid
@@ -2003,21 +2006,49 @@ X.ev.on('call', async (callData) => {
                   const _mType  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
                                   .find(k => _msg[k])
 
-                  // ── Notification ─────────────────────────────────────────────────
-                  const _notif =
-                      `╔══════〔 🗑️ ANTI-DELETE 〕══════╗\n║ 🗑️ Deleted by : ${_delDisplay}\n` + (!_sameDeleter ? `║ 📤 Sender    : ${_origDisplay}\n` : ``) + `║ 🕐 Time      : ${_ts}\n` +
-                      `  *DELETED MESSAGE:*\n` +
-                      (_body ? `  ${_body}` : _mType ? `  [${_mType.replace('Message','')}]` : `  [no content]`)
+                  // ── Resolve chat name ────────────────────────────────────────────
+                  let _chatName = _chatJid
+                  try {
+                      if (_chatJid.endsWith('@g.us')) {
+                          const _meta = await X.groupMetadata(_chatJid).catch(() => null)
+                          _chatName = _meta?.subject || _chatJid.split('@')[0]
+                      } else {
+                          _chatName = 'Private Chat'
+                      }
+                  } catch {}
 
-                  for (const _dest of _targets) {
-                      await X.sendMessage(_dest, {
-                          text: _notif,
-                          mentions: [...new Set([_deleterJid, _origSenderJid].filter(Boolean))]
-                      }).catch(() => {})
+                  // ── Notification — attachment-style format ────────────────────────
+                  const _now2      = new Date()
+                  const _timeSent  = _now2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                  const _dateSent  = _now2.toLocaleDateString('en-GB')
+                  const _senderNum = _origSenderJid.split('@')[0].replace(/\D/g,'')
+                  const _delNum    = _deleterJid.split('@')[0].replace(/\D/g,'')
+
+                  const _header =
+`🗑️ *DELETED MESSAGE*
+━━━━━━━━━━━━━━━━━━━━━━
+💬 *Chat:* ${_chatName}
+👤 *Sent by:* @${_senderNum}
+🕐 *Time:* ${_timeSent}
+📅 *Date:* ${_dateSent}
+❌ *Deleted by:* @${_delNum}
+━━━━━━━━━━━━━━━━━━━━━━`
+
+                  const _mentions = [...new Set([_origSenderJid, _deleterJid].filter(Boolean))]
+
+                  if (!_mType) {
+                      // Text-only deleted message
+                      for (const _dest of _targets) {
+                          await X.sendMessage(_dest, {
+                              text: _header + (_body ? `\n\n💬 *Message:* ${_body}` : ''),
+                              mentions: _mentions
+                          }).catch(() => {})
+                      }
                   }
 
                   // ── Forward media ───────────────────────────────────────────────
                   if (_mType && _original) {
+                      // Send header first for media messages
                       const _mObj    = _msg[_mType]
                       const _mKey    = _mType.replace('Message', '')
                       const _mime    = _mObj?.mimetype || ''
@@ -2030,14 +2061,18 @@ X.ev.on('call', async (callData) => {
                       if (_cachedPath && fs.existsSync(_cachedPath)) {
                           try {
                               const _buf = fs.readFileSync(_cachedPath)
+                              const _cap = _header + (_body ? `\n\n📝 *Caption:* ${_body}` : '')
                               const _so =
-                                  _mType === 'imageMessage'    ? { image: _buf, caption: _body || '', mimetype: _mime || 'image/jpeg' } :
-                                  _mType === 'videoMessage'    ? { video: _buf, caption: _body || '', mimetype: _mime || 'video/mp4'  } :
+                                  _mType === 'imageMessage'    ? { image: _buf, caption: _cap, mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                  _mType === 'videoMessage'    ? { video: _buf, caption: _cap, mimetype: _mime || 'video/mp4', mentions: _mentions } :
                                   _mType === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
-                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
+                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', caption: _header } :
                                   _mType === 'stickerMessage'  ? { sticker: _buf } : null
                               if (_so) {
                                   for (const _dest of _targets) await X.sendMessage(_dest, _so).catch(() => {})
+                                  if (_mType === 'audioMessage' || _mType === 'stickerMessage') {
+                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _header + (_mType === 'stickerMessage' ? '\n\n💬 *Message:* [Sticker]' : ''), mentions: _mentions }).catch(() => {})
+                                  }
                                   _sent = true
                               }
                               fs.unlinkSync(_cachedPath)  // clean up after send
