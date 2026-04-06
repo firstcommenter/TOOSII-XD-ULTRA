@@ -1719,26 +1719,54 @@ const textmakerMenu = `
     if (!_thumbBuf) _thumbBuf = fs.readFileSync(path.join(__dirname, 'media', 'thumb.png'))
   } catch {}
 
-  await X.sendMessage(
-    m.chat,
-    {
-      text: fullMenu,
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        mentionedJid: [sender],
-        externalAdReply: {
-          title: "TOOSII-XD ULTRA",
-          body: "Toosii Tech",
-          thumbnail: _thumbBuf || undefined,
-          sourceUrl: global.groupLink || global.wagc || '',
-          mediaType: 1,
-          renderLargerThumbnail: true
-        }
+  // Resolve channel JID for "View Channel" footer button
+  let _menuChJid  = global.channelJid
+  let _menuChName = global.botName || botname || 'TOOSII-XD ULTRA'
+  if (!_menuChJid && global.channelLink?.includes('/channel/')) {
+    try {
+      const _mInvCode = global.channelLink.split('/channel/')[1].split('?')[0].trim()
+      const _mMeta    = await X.newsletterMetadata('invite', _mInvCode).catch(() => null)
+      if (_mMeta?.id)   { _menuChJid  = _mMeta.id; global.channelJid = _menuChJid }
+      if (_mMeta?.name)   _menuChName = _mMeta.name
+    } catch {}
+  }
+
+  const _menuCtx = {
+    forwardingScore: 999,
+    isForwarded: true,
+    mentionedJid: [sender],
+    ...(_menuChJid ? {
+      forwardedNewsletterMessageInfo: {
+        newsletterJid  : _menuChJid,
+        newsletterName : _menuChName,
+        serverMessageId: -1
       }
-    },
-    { quoted: m }
-  );
+    } : {
+      externalAdReply: {
+        title: "TOOSII-XD ULTRA",
+        body: "Toosii Tech",
+        sourceUrl: global.channelLink || global.groupLink || global.wagc || '',
+        mediaType: 1,
+        renderLargerThumbnail: true
+      }
+    })
+  }
+
+  // Send as image+caption if thumbnail available (shows image AND "View Channel" button)
+  // Otherwise send as plain text with "View Channel" button
+  if (_thumbBuf) {
+    await X.sendMessage(
+      m.chat,
+      { image: _thumbBuf, caption: fullMenu, contextInfo: _menuCtx },
+      { quoted: m }
+    )
+  } else {
+    await X.sendMessage(
+      m.chat,
+      { text: fullMenu, contextInfo: _menuCtx },
+      { quoted: m }
+    )
+  };
 }
 break;
 
