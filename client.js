@@ -4766,16 +4766,16 @@ Your bot will automatically pull the latest version from GitHub and restart with
     try {
         await X.sendMessage(_chJid, {
             text: _announcement,
-            footer: `⚡ TOOSII-XD ULTRA  •  wa.me/254748340864`,
-            contextInfo: {
-                externalAdReply: {
-                    title: 'TOOSII-XD ULTRA Updates',
-                    body: 'Tap to join the official channel',
-                    sourceUrl: _chLink || 'https://wa.me/254748340864',
-                    mediaType: 1,
-                    renderLargerThumbnail: false
+            footer: '⚡ TOOSII-XD ULTRA  •  Official Bot Channel',
+            templateButtons: [
+                {
+                    index: 1,
+                    urlButton: {
+                        displayText: '📺 View Channel',
+                        url: _chLink || 'https://wa.me/254748340864'
+                    }
                 }
-            }
+            ]
         })
         reply(`✅ *Update announcement sent to your channel!*`)
     } catch (e) {
