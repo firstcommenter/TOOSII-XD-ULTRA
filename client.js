@@ -13456,7 +13456,7 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
         }
     }
 }
-
+break
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // GitHub Repo Downloader
