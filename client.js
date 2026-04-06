@@ -13443,7 +13443,6 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
 case 'fetch':
 case 'testapi':
 case 'curl': {
-    if (!isOwner && !isSudo) return reply('❌ Owner/Sudo only.')
     await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
     if (!q) return reply('❌ Provide a URL.\n\nUsage: .fetch https://api.example.com')
     // Strip invisible chars, take first word only (avoid space-caused Invalid URL)
