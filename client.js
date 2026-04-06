@@ -4780,40 +4780,46 @@ Your bot will automatically pull the latest version from GitHub and restart with
 ━━━━━━━━━━━━━━━━━━━━━━`
 
     try {
-        // Fetch channel metadata for the native "View Channel" card
+        // Pull channel name + thumbnail from newsletter metadata
+        let _chName  = 'TOOSII-XD ULTRA Updates'
         let _chThumb = null
         try {
             const _invCode2 = _chLink?.split('/channel/')?.[1]?.split('?')[0]?.trim()
             const _chMeta   = _invCode2
                 ? await X.newsletterMetadata('invite', _invCode2).catch(() => X.newsletterMetadata('jid', _chJid).catch(() => null))
                 : await X.newsletterMetadata('jid', _chJid).catch(() => null)
+            if (_chMeta?.name)    _chName = _chMeta.name
             if (_chMeta?.picture) {
-                const _thumbRes = await fetch(_chMeta.picture).catch(() => null)
-                if (_thumbRes?.ok) {
-                    const _thumbBuf = await _thumbRes.arrayBuffer()
-                    _chThumb = Buffer.from(_thumbBuf)
-                }
+                const _tr = await fetch(_chMeta.picture).catch(() => null)
+                if (_tr?.ok) _chThumb = Buffer.from(await _tr.arrayBuffer())
             }
         } catch {}
 
-        await X.sendMessage(_chJid, {
-            text: _announcement,
-            footer: '⚡ TOOSII-XD ULTRA  •  Official Bot Channel',
-            contextInfo: {
-                externalAdReply: {
-                    title: 'TOOSII-XD ULTRA Updates',
-                    body: 'Tap to view the official channel',
-                    sourceUrl: _chLink || `https://whatsapp.com/channel/${_chJid.replace('@newsletter','')}`,
-                    mediaType: 1,
-                    renderLargerThumbnail: false,
-                    showAdAttribution: false,
-                    ...(_chThumb ? { thumbnail: _chThumb } : {})
-                }
+        // Build native newsletterAdminInviteMessage — this renders the real "View Channel" button
+        const { generateWAMessageFromContent, proto } = require('gifted-baileys')
+
+        const _msgContent = proto.Message.fromObject({
+            newsletterAdminInviteMessage: {
+                newsletterJid : _chJid,
+                newsletterName: _chName,
+                caption       : _announcement,
+                inviteExpiration: 0,
+                ...(_chThumb ? { thumbnail: _chThumb } : {})
             }
         })
-        reply(`✅ *Update announcement sent to your channel!*`)
+
+        // Send to the current chat so the owner sees the card with "View Channel"
+        const _waMsg = generateWAMessageFromContent(m.chat, _msgContent, { userJid: X.user.id })
+        await X.relayMessage(m.chat, _waMsg.message, { messageId: _waMsg.key.id })
+
+        // Also post plain text to the channel itself so subscribers are notified
+        await X.sendMessage(_chJid, {
+            text: _announcement + `\n\n⚡ _TOOSII-XD ULTRA  •  Official Bot Channel_`
+        }).catch(() => {}) // don't block if channel post fails
+
+        reply(`✅ *Announcement sent!*\nSubscribers will see the update — tap *View Channel* on the card above.`)
     } catch (e) {
-        reply(`❌ Failed to send: ${e.message}\n\nMake sure *channelJid* is correct in setting.js`)
+        reply(`❌ Failed to send: ${e.message}\n\nMake sure *channelJid* is set correctly in setting.js`)
     }
 } break
 
