@@ -7215,8 +7215,14 @@ case 'menuimage': {
             reply('✅ *Menu image updated!* It will now show in .menu')
         } catch(e) { reply('❌ Error: ' + e.message) }
     } else if (args[0]) {
-        global.menuThumb = args[0]
-        reply(`✅ *Menu image URL set.*`)
+        try {
+            const _miUrlBuf = await getBuffer(args[0])
+            if (!_miUrlBuf || _miUrlBuf.length < 100) throw new Error('Failed to download image from URL')
+            const _miPath = path.join(__dirname, 'media', 'menu_thumb.jpg')
+            fs.writeFileSync(_miPath, _miUrlBuf)
+            global.menuThumb = _miPath
+            reply('✅ *Menu image updated from URL!* It will now show in .menu and .pair and persist after restart.')
+        } catch(e) { reply('❌ Could not download image from that URL: ' + e.message) }
     } else reply(`Reply to an image or provide URL: ${prefix}menuimage [url]`)
 } break
 
@@ -7791,19 +7797,39 @@ await X.groupLeave(m.chat)
 
 case 'pair': {
       await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
-      await reply(
+      const _pairText =
           `╔══〔 🔗 PAIRING SITE 〕══╗\n` +
           `║\n` +
           `║  Click the link below to get your pairing code:\n` +
           `║\n` +
-          `║  🌐 ${global.sessionUrl || 'https://toosii-xd-session-generator-woyo.onrender.com/pair'}\n` +
+          `║  🌐 ${global.sessionUrl || 'https://toosiitechdevelopertools.zone.id/session'}\n` +
           `║\n` +
           `║  📱 Enter your WhatsApp number\n` +
           `║  📋 Copy the code shown\n` +
           `║  🔗 WhatsApp → Linked Devices → Link with phone number\n` +
           `║\n` +
           `╚═══════════════════════╝`
-      )
+      // Use menu thumbnail if set, otherwise send plain text
+      let _pairThumb = null
+      try {
+          const _savedThumb = path.join(__dirname, 'media', 'menu_thumb.jpg')
+          if (global.menuThumb) {
+              if (/^https?:\/\//.test(global.menuThumb)) {
+                  _pairThumb = await getBuffer(global.menuThumb).catch(() => null)
+              } else if (fs.existsSync(global.menuThumb)) {
+                  _pairThumb = fs.readFileSync(global.menuThumb)
+              }
+          }
+          if (!_pairThumb && fs.existsSync(_savedThumb)) {
+              _pairThumb = fs.readFileSync(_savedThumb)
+          }
+          if (!_pairThumb) _pairThumb = fs.readFileSync(path.join(__dirname, 'media', 'thumb.png'))
+      } catch {}
+      if (_pairThumb) {
+          await X.sendMessage(m.chat, { image: _pairThumb, caption: _pairText, contextInfo: global.getCtxInfo([sender]) }, { quoted: m })
+      } else {
+          await reply(_pairText)
+      }
   } break
 
 case 'clear': {
