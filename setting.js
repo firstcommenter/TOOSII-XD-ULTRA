@@ -82,7 +82,7 @@ global.author = "© Toosii Tech"
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Social Links
 global.telegram = "https://t.me/toosiitech"
-global.sessionUrl = process.env.SESSION_URL || "https://toosii-xd-session-generator-woyo.onrender.com/pair"
+global.sessionUrl = process.env.SESSION_URL || "https://toosiitechdevelopertools.zone.id/session"
 
 // Your WhatsApp Channel JID — paste the JID of your channel here
 // Format: 120363XXXXXXXXXX@newsletter
