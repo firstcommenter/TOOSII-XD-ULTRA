@@ -48,11 +48,7 @@ const ownerMenu = `
 
   ╠═══〔 🚫 PROTECTION 〕═══╣
   ║ .anticall
-  ║ .pmblocker
-  ║ .block
-  ║ .unblock
-  ║ .listblock
-
+  ║ .pmblocker  ║ .unblock
   ╠═══〔 🔄 AUTOMATION 〕═══╣
   ║ .autoread
   ║ .chatbot
