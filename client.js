@@ -863,6 +863,9 @@ if (isCmd && command) {
     }
 }
 
+// Sync X.public from saved botPublicMode (ensures mode survives restarts)
+if (typeof global.botPublicMode !== 'undefined') X.public = (global.botPublicMode !== false)
+
 if (global.pmBlocker && !m.isGroup && !isOwner && !isBot && !m.key.fromMe) {
     return  // pmBlocker: silently ignore PMs (updateBlockStatus removed — not supported by WhatsApp)
 }
@@ -3765,6 +3768,8 @@ case 'private': {
     await X.sendMessage(m.chat, { react: { text: '🔒', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = false
+global.botPublicMode = false
+try { require('./library/settings').saveSettings() } catch {}
 reply(`╔══〔 🔒 BOT MODE: PRIVATE 〕══╗\n\n║ ✅ *Enabled*\n║ Only *${botClean}* and sudo users can use commands.\n║ All other users are blocked.\n╚═══════════════════════╝`)
 }
 break
@@ -3773,6 +3778,8 @@ case 'public': {
     await X.sendMessage(m.chat, { react: { text: '🔓', key: m.key } })
 if (!isDeployedNumber) return reply(mess.OnlyOwner)
 X.public = true
+global.botPublicMode = true
+try { require('./library/settings').saveSettings() } catch {}
 reply(`╔══〔 🌐 BOT MODE: PUBLIC 〕══╗\n\n║ ✅ *Enabled*\n║ All users can use bot commands.\n║ Owner-only commands still restricted.\n╚═══════════════════════╝`)
 }
 break
@@ -7272,6 +7279,8 @@ case 'botmode':
       } else if (modeArg === 'public') {
           X.public = true
           global.BOT_MODE = 'public'
+          global.botPublicMode = true
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 🌐 BOT MODE: PUBLIC 〕══╗\n\n║ ✅ *Activated*\n║ All users can use bot commands.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -7281,6 +7290,8 @@ case 'botmode':
       } else if (modeArg === 'default') {
           X.public = true
           global.BOT_MODE = 'public'
+          global.botPublicMode = true
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 📝 BOT MODE: DEFAULT 〕══╗\n\n║ ✅ *Activated*\n║ All users can use bot commands.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -7290,6 +7301,8 @@ case 'botmode':
       } else if (modeArg === 'private' || modeArg === 'silent') {
           X.public = false
           global.BOT_MODE = 'silent'
+          global.botPublicMode = false
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 🔕 BOT MODE: SILENT 〕══╗\n\n║ ✅ *Activated*\n║ Only the owner and sudo users can use commands.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -7299,6 +7312,8 @@ case 'botmode':
       } else if (modeArg === 'groups') {
           X.public = true
           global.BOT_MODE = 'groups'
+          global.botPublicMode = true
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 👥 BOT MODE: GROUPS 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in group chats.\n║ Private messages are ignored.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -7308,6 +7323,8 @@ case 'botmode':
       } else if (modeArg === 'dms') {
           X.public = true
           global.BOT_MODE = 'dms'
+          global.botPublicMode = true
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 💬 BOT MODE: DMs 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in private chats.\n║ Group messages are ignored.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -7317,6 +7334,8 @@ case 'botmode':
       } else if (modeArg === 'channel') {
           X.public = true
           global.BOT_MODE = 'channel'
+          global.botPublicMode = true
+          try { require('./library/settings').saveSettings() } catch {}
           if (global.BOT_BUTTONS_MODE) {
               await reply(`╔══〔 📡 BOT MODE: CHANNEL 〕══╗\n\n║ ✅ *Activated*\n║ Bot responds only in channels/newsletters.\n║ Groups and DMs are ignored.\n╚═══════════════════════╝`)
               await _sendBtnPanel()
@@ -12219,8 +12238,8 @@ case 'onlygc': {
     await X.sendMessage(m.chat, { react: { text: '👥', key: m.key } })
     if (!isOwner) return reply(mess.OnlyOwner)
     const _ogArg = (args[0] || '').toLowerCase()
-    if (_ogArg === 'on') { global.onlyGroup = true; reply('✅ *Only Group mode ON* — bot will only respond in groups.') }
-    else if (_ogArg === 'off') { global.onlyGroup = false; reply('✅ *Only Group mode OFF*') }
+    if (_ogArg === 'on') { global.onlyGroup = true; try { require('./library/settings').saveSettings() } catch {}; reply('✅ *Only Group mode ON* — bot will only respond in groups.') }
+    else if (_ogArg === 'off') { global.onlyGroup = false; try { require('./library/settings').saveSettings() } catch {}; reply('✅ *Only Group mode OFF*') }
     else reply(`╔══〔 👥 ONLY GROUP MODE 〕══╗\n║ 📊 *Status* : ${global.onlyGroup ? '✅ ON' : '❌ OFF'}\n║ Usage: *${prefix}onlygroup on/off*\n╚═══════════════════════╝`)
 } break
 
