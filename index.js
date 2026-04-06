@@ -66,8 +66,7 @@ if (!process.env._BOT_CHILD) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-require('dotenv').config()
-          // ← FIX 1: load .env FIRST so SESSION_ID is available
+require('dotenv').config()          // ← FIX 1: load .env FIRST so SESSION_ID is available
 require("./setting")
 
 // ── Suppress libsignal / gifted-baileys internal session state dumps ──────────
@@ -2005,21 +2004,20 @@ X.ev.on('call', async (callData) => {
                   const _mType  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
                                   .find(k => _msg[k])
 
-                  // ── Premium notification structure ───────────────────────────────
+                  // ── Notification (original format) ──────────────────────────────
+                  const _notif =
+                      `╔══════〔 🗑️ ANTI-DELETE 〕══════╗\n║ 🗑️ Deleted by : ${_delDisplay}\n` +
+                      (!_sameDeleter ? `║ 📤 Sender    : ${_origDisplay}\n` : ``) +
+                      `║ 🕐 Time      : ${_ts}\n` +
+                      `  *DELETED MESSAGE:*`
+
                   const _mentions = [...new Set([_deleterJid, _origSenderJid].filter(Boolean))]
 
-                  const _notif =
-                      `╭━━━━〔 🗑️ *ANTI-DELETE* 〕━━━━╮\n` +
-                      `│  ❌ *Deleted by:* ${_delDisplay}\n` +
-                      (!_sameDeleter ? `│  📤 *Sent by:* ${_origDisplay}\n` : ``) +
-                      `│  🕐 *Time:* ${_ts}\n` +
-                      `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`
-
                   if (!_mType) {
-                      // Text-only — notification + body together
+                      // Text-only — send notification + message body together
                       for (const _dest of _targets) {
                           await X.sendMessage(_dest, {
-                              text: _notif + `\n📩 *DELETED MESSAGE:*\n` + (_body ? _body : `_(no content)_`),
+                              text: _notif + (_body ? `\n  ${_body}` : `\n  [no content]`),
                               mentions: _mentions
                           }).catch(() => {})
                       }
@@ -2027,79 +2025,63 @@ X.ev.on('call', async (callData) => {
 
                   // ── Forward media ───────────────────────────────────────────────
                   if (_mType && _original) {
-                      const _mObj       = _msg[_mType]
-                      const _mKey       = _mType.replace('Message', '')
-                      const _mime       = _mObj?.mimetype || ''
-                      const _isPtt      = !!_msg.audioMessage?.ptt
+                      // Send header first for media messages
+                      const _mObj    = _msg[_mType]
+                      const _mKey    = _mType.replace('Message', '')
+                      const _mime    = _mObj?.mimetype || ''
+                      const _isPtt   = !!_msg.audioMessage?.ptt
                       const _cachedPath = _entry?._mediaPath
-                      // Caption used for image / video / document (supports caption)
-                      const _cap = _notif + `\n📩 *DELETED MESSAGE:*` + (_body ? `\n${_body}` : '')
-                      // For audio & sticker WhatsApp has no caption — send notification
-                      // as text first, then immediately send the media so they appear together
-                      const _sendNoCaption = async (_mediaMsg) => {
-                          for (const _dest of _targets) {
-                              await X.sendMessage(_dest, { text: _cap, mentions: _mentions }).catch(() => {})
-                              await X.sendMessage(_dest, _mediaMsg).catch(() => {})
-                          }
-                      }
 
                       let _sent = false
 
-                      // ── 1) Pre-downloaded file from disk (most reliable) ──────────
+                      // 1) Use pre-downloaded file from disk (most reliable)
                       if (_cachedPath && fs.existsSync(_cachedPath)) {
                           try {
                               const _buf = fs.readFileSync(_cachedPath)
-                              if (_mType === 'imageMessage') {
-                                  for (const _dest of _targets) await X.sendMessage(_dest, { image: _buf, caption: _cap, mimetype: _mime || 'image/jpeg', mentions: _mentions }).catch(() => {})
-                                  _sent = true
-                              } else if (_mType === 'videoMessage') {
-                                  for (const _dest of _targets) await X.sendMessage(_dest, { video: _buf, caption: _cap, mimetype: _mime || 'video/mp4', mentions: _mentions }).catch(() => {})
-                                  _sent = true
-                              } else if (_mType === 'documentMessage') {
-                                  for (const _dest of _targets) await X.sendMessage(_dest, { document: _buf, caption: _cap, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', mentions: _mentions }).catch(() => {})
-                                  _sent = true
-                              } else if (_mType === 'audioMessage') {
-                                  await _sendNoCaption({ audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt })
-                                  _sent = true
-                              } else if (_mType === 'stickerMessage') {
-                                  await _sendNoCaption({ sticker: _buf })
+                              // Build caption: notification header + original caption if any
+                              const _mediaCap = _notif + (_body ? `\n  ${_body}` : '')
+                              const _so =
+                                  _mType === 'imageMessage'    ? { image: _buf, caption: _mediaCap, mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                  _mType === 'videoMessage'    ? { video: _buf, caption: _mediaCap, mimetype: _mime || 'video/mp4', mentions: _mentions } :
+                                  _mType === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
+                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', caption: _notif } :
+                                  _mType === 'stickerMessage'  ? { sticker: _buf } : null
+                              if (_so) {
+                                  for (const _dest of _targets) await X.sendMessage(_dest, _so).catch(() => {})
+                                  if (_mType === 'audioMessage' || _mType === 'stickerMessage') {
+                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _notif, mentions: _mentions }).catch(() => {})
+                                  }
                                   _sent = true
                               }
-                              try { fs.unlinkSync(_cachedPath) } catch {}
-                          } catch (_fe) { console.log('[Anti-Delete] disk send failed:', _fe.message) }
+                              fs.unlinkSync(_cachedPath)  // clean up after send
+                          } catch (_fe) { console.log('[Anti-Delete] file send failed:', _fe.message) }
                       }
 
-                      // ── 2) Forward cached WAMessage — notification sent first ─────
+                      // 2) Forward the cached message object — send notification first
                       if (!_sent) {
                           try {
                               for (const _dest of _targets) {
-                                  await X.sendMessage(_dest, { text: _cap, mentions: _mentions }).catch(() => {})
+                                  await X.sendMessage(_dest, { text: _notif, mentions: _mentions }).catch(() => {})
                                   await X.sendMessage(_dest, { forward: _original }).catch(() => {})
                               }
                               _sent = true
                           } catch (_ff) { console.log('[Anti-Delete] forward failed:', _ff.message) }
                       }
 
-                      // ── 3) Re-download from WhatsApp CDN ─────────────────────────
+                      // 3) Re-download from WhatsApp CDN
                       if (!_sent) {
                           try {
                               const _path2 = await _dlMedia(_mObj, _mKey, `${Date.now()}_retry.${_mime.split('/')[1] || 'bin'}`)
                               if (_path2) {
                                   const _buf2 = fs.readFileSync(_path2)
-                                  if (_mType === 'imageMessage') {
-                                      for (const _dest of _targets) await X.sendMessage(_dest, { image: _buf2, caption: _cap, mimetype: _mime || 'image/jpeg', mentions: _mentions }).catch(() => {})
-                                      _sent = true
-                                  } else if (_mType === 'videoMessage') {
-                                      for (const _dest of _targets) await X.sendMessage(_dest, { video: _buf2, caption: _cap, mimetype: _mime || 'video/mp4', mentions: _mentions }).catch(() => {})
-                                      _sent = true
-                                  } else if (_mType === 'documentMessage') {
-                                      for (const _dest of _targets) await X.sendMessage(_dest, { document: _buf2, caption: _cap, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', mentions: _mentions }).catch(() => {})
-                                      _sent = true
-                                  } else if (_mType === 'audioMessage') {
-                                      await _sendNoCaption({ audio: _buf2, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt })
-                                      _sent = true
-                                  } else if (_mType === 'stickerMessage') {
-                                      await _sendNoCaption({ sticker: _buf2 })
+                                  const _so2 =
+                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'video/mp4', mentions: _mentions } :
+                                      _mType === 'audioMessage'    ? { audio: _buf2, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
+                                      _mType === 'documentMessage' ? { document: _buf2, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
+                                      _mType === 'stickerMessage'  ? { sticker: _buf2 } : null
+                                  if (_so2) {
+                                      for (const _dest of _targets) await X.sendMessage(_dest, _so2).catch(() => {})
                                       _sent = true
                                   }
                                   try { fs.unlinkSync(_path2) } catch {}
@@ -2107,11 +2089,10 @@ X.ev.on('call', async (callData) => {
                           } catch (_re) { console.log('[Anti-Delete] CDN re-download failed:', _re.message) }
                       }
 
-                      // ── All fallbacks failed ──────────────────────────────────────
                       if (!_sent) {
                           for (const _dest of _targets) {
                               await X.sendMessage(_dest, {
-                                  text: _notif + `\n📩 *DELETED MESSAGE:* [${_mKey}]\n\n⚠️ _Content could not be recovered (link expired or bot was offline)_`,
+                                  text: _notif + `\n\n⚠️ _Media could not be recovered (link expired or bot was offline when the ${_mKey} was sent)_`,
                                   mentions: _mentions
                               }).catch(() => {})
                           }
