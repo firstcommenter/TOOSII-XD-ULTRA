@@ -4780,46 +4780,50 @@ Your bot will automatically pull the latest version from GitHub and restart with
 ━━━━━━━━━━━━━━━━━━━━━━`
 
     try {
-        // Pull channel name + thumbnail from newsletter metadata
-        let _chName  = 'TOOSII-XD ULTRA Updates'
-        let _chThumb = null
+        // Resolve channel name from metadata
+        let _chName = global.botName || 'TOOSII-XD ULTRA'
         try {
             const _invCode2 = _chLink?.split('/channel/')?.[1]?.split('?')[0]?.trim()
             const _chMeta   = _invCode2
-                ? await X.newsletterMetadata('invite', _invCode2).catch(() => X.newsletterMetadata('jid', _chJid).catch(() => null))
+                ? await X.newsletterMetadata('invite', _invCode2).catch(() => null)
                 : await X.newsletterMetadata('jid', _chJid).catch(() => null)
-            if (_chMeta?.name)    _chName = _chMeta.name
-            if (_chMeta?.picture) {
-                const _tr = await fetch(_chMeta.picture).catch(() => null)
-                if (_tr?.ok) _chThumb = Buffer.from(await _tr.arrayBuffer())
-            }
+            if (_chMeta?.name) _chName = _chMeta.name
         } catch {}
 
-        // Build native newsletterAdminInviteMessage — this renders the real "View Channel" button
-        const { generateWAMessageFromContent, proto } = require('gifted-baileys')
-
-        const _msgContent = proto.Message.fromObject({
-            newsletterAdminInviteMessage: {
-                newsletterJid : _chJid,
-                newsletterName: _chName,
-                caption       : _announcement,
-                inviteExpiration: 0,
-                ...(_chThumb ? { thumbnail: _chThumb } : {})
+        // ✅ Correct pattern from gifted-baileys:
+        // forwardedNewsletterMessageInfo inside contextInfo gives the native "View Channel" footer button
+        await X.sendMessage(m.chat, {
+            text: _announcement,
+            footer: `⚡ TOOSII-XD ULTRA  •  Official Bot Channel`,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid    : _chJid,
+                    newsletterName   : _chName,
+                    serverMessageId  : -1
+                }
             }
         })
 
-        // Send to the current chat so the owner sees the card with "View Channel"
-        const _waMsg = generateWAMessageFromContent(m.chat, _msgContent, { userJid: X.user.id })
-        await X.relayMessage(m.chat, _waMsg.message, { messageId: _waMsg.key.id })
-
-        // Also post plain text to the channel itself so subscribers are notified
+        // Also post to the channel itself so subscribers get notified
         await X.sendMessage(_chJid, {
-            text: _announcement + `\n\n⚡ _TOOSII-XD ULTRA  •  Official Bot Channel_`
-        }).catch(() => {}) // don't block if channel post fails
+            text: _announcement,
+            footer: `⚡ TOOSII-XD ULTRA  •  Official Bot Channel`,
+            contextInfo: {
+                forwardingScore: 1,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid    : _chJid,
+                    newsletterName   : _chName,
+                    serverMessageId  : -1
+                }
+            }
+        }).catch(e => console.error('Channel post failed:', e.message))
 
-        reply(`✅ *Announcement sent!*\nSubscribers will see the update — tap *View Channel* on the card above.`)
+        reply(`✅ *Announcement sent!*\nCheck the message above — you should see *View Channel* in the footer.`)
     } catch (e) {
-        reply(`❌ Failed to send: ${e.message}\n\nMake sure *channelJid* is set correctly in setting.js`)
+        reply(`❌ Failed: ${e.message}`)
     }
 } break
 
