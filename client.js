@@ -4764,18 +4764,34 @@ Your bot will automatically pull the latest version from GitHub and restart with
 ━━━━━━━━━━━━━━━━━━━━━━`
 
     try {
+        // Fetch channel metadata for the native "View Channel" card
+        let _chThumb = null
+        try {
+            const _chMeta = await X.newsletterMetadata('invite', _chJid.replace('@newsletter',''))
+                .catch(() => X.newsletterMetadata('jid', _chJid).catch(() => null))
+            if (_chMeta?.picture) {
+                const _thumbRes = await fetch(_chMeta.picture).catch(() => null)
+                if (_thumbRes?.ok) {
+                    const _thumbBuf = await _thumbRes.arrayBuffer()
+                    _chThumb = Buffer.from(_thumbBuf)
+                }
+            }
+        } catch {}
+
         await X.sendMessage(_chJid, {
             text: _announcement,
             footer: '⚡ TOOSII-XD ULTRA  •  Official Bot Channel',
-            templateButtons: [
-                {
-                    index: 1,
-                    urlButton: {
-                        displayText: '📺 View Channel',
-                        url: _chLink || 'https://wa.me/254748340864'
-                    }
+            contextInfo: {
+                externalAdReply: {
+                    title: 'TOOSII-XD ULTRA Updates',
+                    body: 'Tap to view the official channel',
+                    sourceUrl: _chLink || `https://whatsapp.com/channel/${_chJid.replace('@newsletter','')}`,
+                    mediaType: 1,
+                    renderLargerThumbnail: false,
+                    showAdAttribution: false,
+                    ...(_chThumb ? { thumbnail: _chThumb } : {})
                 }
-            ]
+            }
         })
         reply(`✅ *Update announcement sent to your channel!*`)
     } catch (e) {
