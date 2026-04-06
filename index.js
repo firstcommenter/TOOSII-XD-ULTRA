@@ -2005,20 +2005,21 @@ X.ev.on('call', async (callData) => {
                   const _mType  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
                                   .find(k => _msg[k])
 
-                  // ── Notification (original format) ──────────────────────────────
-                  const _notif =
-                      `╔══════〔 🗑️ ANTI-DELETE 〕══════╗\n║ 🗑️ Deleted by : ${_delDisplay}\n` +
-                      (!_sameDeleter ? `║ 📤 Sender    : ${_origDisplay}\n` : ``) +
-                      `║ 🕐 Time      : ${_ts}\n` +
-                      `  *DELETED MESSAGE:*`
-
+                  // ── Premium notification structure ───────────────────────────────
                   const _mentions = [...new Set([_deleterJid, _origSenderJid].filter(Boolean))]
 
+                  const _notif =
+                      `╭━━━━〔 🗑️ *ANTI-DELETE* 〕━━━━╮\n` +
+                      `│  ❌ *Deleted by:* ${_delDisplay}\n` +
+                      (!_sameDeleter ? `│  📤 *Sent by:* ${_origDisplay}\n` : ``) +
+                      `│  🕐 *Time:* ${_ts}\n` +
+                      `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`
+
                   if (!_mType) {
-                      // Text-only — send notification + message body together
+                      // Text-only — notification + body together
                       for (const _dest of _targets) {
                           await X.sendMessage(_dest, {
-                              text: _notif + (_body ? `\n  ${_body}` : `\n  [no content]`),
+                              text: _notif + `\n📩 *DELETED MESSAGE:*\n` + (_body ? _body : `_(no content)_`),
                               mentions: _mentions
                           }).catch(() => {})
                       }
@@ -2039,8 +2040,8 @@ X.ev.on('call', async (callData) => {
                       if (_cachedPath && fs.existsSync(_cachedPath)) {
                           try {
                               const _buf = fs.readFileSync(_cachedPath)
-                              // Build caption: notification header + original caption if any
-                              const _mediaCap = _notif + (_body ? `\n  ${_body}` : '')
+                              // Caption = premium header + deleted message label + original body
+                              const _mediaCap = _notif + `\n📩 *DELETED MESSAGE:*` + (_body ? `\n${_body}` : '')
                               const _so =
                                   _mType === 'imageMessage'    ? { image: _buf, caption: _mediaCap, mimetype: _mime || 'image/jpeg', mentions: _mentions } :
                                   _mType === 'videoMessage'    ? { video: _buf, caption: _mediaCap, mimetype: _mime || 'video/mp4', mentions: _mentions } :
@@ -2050,7 +2051,7 @@ X.ev.on('call', async (callData) => {
                               if (_so) {
                                   for (const _dest of _targets) await X.sendMessage(_dest, _so).catch(() => {})
                                   if (_mType === 'audioMessage' || _mType === 'stickerMessage') {
-                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _notif, mentions: _mentions }).catch(() => {})
+                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _notif + `\n📩 *DELETED MESSAGE:* [${_mKey}]`, mentions: _mentions }).catch(() => {})
                                   }
                                   _sent = true
                               }
@@ -2073,8 +2074,8 @@ X.ev.on('call', async (callData) => {
                               if (_path2) {
                                   const _buf2 = fs.readFileSync(_path2)
                                   const _so2 =
-                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'image/jpeg', mentions: _mentions } :
-                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'video/mp4', mentions: _mentions } :
+                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _notif + `\n📩 *DELETED MESSAGE:*` + (_body ? `\n${_body}` : ''), mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _notif + `\n📩 *DELETED MESSAGE:*` + (_body ? `\n${_body}` : ''), mimetype: _mime || 'video/mp4', mentions: _mentions } :
                                       _mType === 'audioMessage'    ? { audio: _buf2, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
                                       _mType === 'documentMessage' ? { document: _buf2, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
                                       _mType === 'stickerMessage'  ? { sticker: _buf2 } : null
@@ -2090,7 +2091,7 @@ X.ev.on('call', async (callData) => {
                       if (!_sent) {
                           for (const _dest of _targets) {
                               await X.sendMessage(_dest, {
-                                  text: _header + `\n\n⚠️ _Media could not be recovered (link expired or bot was offline when ${_mKey} was sent)_`,
+                                  text: _notif + `\n\n⚠️ _Media could not be recovered — link expired or bot was offline when the ${_mKey} was sent._`,
                                   mentions: _mentions
                               }).catch(() => {})
                           }
