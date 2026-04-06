@@ -13441,9 +13441,11 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
 case 'fetch':
 case 'testapi':
 case 'curl': {
+    if (!isOwner && !isSudo) return reply('❌ Owner/Sudo only.')
     await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
     if (!q) return reply('❌ Provide a URL.\n\nUsage: .fetch https://api.example.com')
-    let _url = q.replace(/[\u200b-\u200d\u2060\ufeff\u00a0]/g,'').trim()
+    // Strip invisible chars, take first word only (avoid space-caused Invalid URL)
+    let _url = q.replace(/[\u200b-\u200d\u2060\ufeff\u00a0]/g,'').trim().split(/\s+/)[0]
     if (!_url.startsWith('http')) _url = 'https://' + _url
     try {
         const _fetchRes = await require('node-fetch')(_url, { timeout: 30000,
