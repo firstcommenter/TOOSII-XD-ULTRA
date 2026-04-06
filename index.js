@@ -170,6 +170,7 @@ const path = require('path')
 const fetch = require("node-fetch")
 const moment = require('moment-timezone')  // ← FIX 2: missing import (needed by autoBio)
 const { getBuffer } = require('./library/lib/myfunc')
+const { getGroupMetadata, setupGroupCacheListeners, initializeLidStore } = require('./library/groupCache')
 const { imageToWebp, imageToWebp3, videoToWebp, writeExifImg, writeExifImgAV, writeExifVid } = require('./library/lib/exif')
 
 const c = {
@@ -1070,7 +1071,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                     let asmAction = global.antiStatusMentionAction || 'warn'
                     for (let gJid of groupsMentioned) {
                         try {
-                            let gMeta = await X.groupMetadata(gJid).catch(() => null)
+                            let gMeta = await getGroupMetadata(X, gJid)
                             if (!gMeta) {
                                 await X.sendMessage(alertJid, { text: `╔══〔 ⚠️ ANTI-STATUS MENTION 〕══╗\n\n║ 👤 +${mentioner} tagged a group in status.\n║ 🏘️ Group: ${gJid}\n║ Bot is not a member of this group.\n╚═══════════════════════╝` })
                                 continue
@@ -1125,7 +1126,7 @@ if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                             const allGroups = Object.values(store?.chats?.all?.() || {}).filter(c => c.id && c.id.endsWith('@g.us'))
                             for (const gc of allGroups) {
                                 try {
-                                    let gMeta = await X.groupMetadata(gc.id).catch(() => null)
+                                    let gMeta = await getGroupMetadata(X, gc.id)
                                     if (!gMeta) continue
                                     let isMember = gMeta.participants.some(p => p.id.split(':')[0].split('@')[0] === mentioner)
                                     if (!isMember) continue
@@ -1243,7 +1244,7 @@ if (global.statusMentionDeleteList && mek.message && !mek.key.fromMe) {
         let flaggedList = global.statusMentionDeleteList[chat] || []
         if (flaggedList.includes(senderJid)) {
             try {
-                let groupMeta = await X.groupMetadata(chat).catch(() => null)
+                let groupMeta = await getGroupMetadata(X, chat)
                 let isBotAdmin = groupMeta && groupMeta.participants.some(p => {
                     let isBot = areJidsSameUser(p.id, X.user.id) || (X.user?.lid && areJidsSameUser(p.id, X.user.lid))
                     return isBot && (p.admin === 'admin' || p.admin === 'superadmin')
@@ -1304,7 +1305,7 @@ if (mek.message && !mek.key.fromMe) {
                 const _acNum     = _acSender.replace('@s.whatsapp.net','').replace('@lid','').split(':')[0]
                 const _acIsOwner = global.owner.includes(_acNum) || mek.key.fromMe
                 if (!_acIsOwner) {
-                    const _acMeta    = await X.groupMetadata(_acChat)
+                    const _acMeta    = await getGroupMetadata(X, _acChat)
                     const _acMember  = _acMeta.participants.find(p => areJidsSameUser(p.id, _acSender))
                     const _acIsAdmin = _acMember?.admin === 'admin' || _acMember?.admin === 'superadmin'
                     const _acBotAdm  = _acMeta.participants.some(p => {
@@ -1558,6 +1559,10 @@ if (!global._connMsgSent.has(phone)) {
           // Already a member or link expired — not critical
           console.log(`[${phone}] Group auto-join: ${_joinErr.message || 'skipped'}`)
       }
+      // ── Group cache + LID store init (atassa pattern) ─────────────────────
+      setupGroupCacheListeners(X)
+      initializeLidStore(X).catch(e => console.log('[groupCache] init: ' + e.message))
+
       // Auto-follow Toosii Tech channel on first deploy
       try {
           await X.newsletterFollow(global.idch || '120363299254074394@newsletter')
@@ -1645,7 +1650,7 @@ X.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false,
 // Welcome Setting
     X.ev.on('group-participants.update', async (anu) => {
         try {
-            let metadata = await X.groupMetadata(anu.id).catch(() => null)
+            let metadata = await getGroupMetadata(X, anu.id)
             if (!metadata) return
             let groupName = metadata.subject || 'the group'
             let totalMembers = metadata.participants.length
@@ -2374,7 +2379,12 @@ if (m.isGroup) m.participant = X.decodeJid(m.key.participant) || ''
 if (m.message) {
 m.mtype = getContentType(m.message)
 m.msg = (m.mtype == 'viewOnceMessage' ? m.message[m.mtype]?.message?.[getContentType(m.message[m.mtype]?.message)] : m.message[m.mtype]) || {}
-m.body = m.message.conversation || m.msg?.caption || m.msg?.text || (m.mtype == 'listResponseMessage') && m.msg?.singleSelectReply?.selectedRowId || (m.mtype == 'buttonsResponseMessage') && m.msg?.selectedButtonId || (m.mtype == 'viewOnceMessage') && m.msg?.caption || m.text || ''
+m.body = m.message.conversation || m.msg?.caption || m.msg?.text ||
+    (m.mtype == 'listResponseMessage'        && m.msg?.singleSelectReply?.selectedRowId) ||
+    (m.mtype == 'buttonsResponseMessage'     && m.msg?.selectedButtonId)                 ||
+    (m.mtype == 'templateButtonReplyMessage' && m.msg?.selectedId)                       ||
+    (m.mtype == 'interactiveResponseMessage' && (() => { try { return JSON.parse(m.msg?.nativeFlowResponseMessage?.paramsJson)?.id } catch { return m.msg?.body?.text } })()) ||
+    (m.mtype == 'viewOnceMessage'            && m.msg?.caption) || m.text || ''
 let quoted = m.quoted = m.msg?.contextInfo ? m.msg.contextInfo.quotedMessage : null
 m.mentionedJid = m.msg?.contextInfo ? m.msg.contextInfo.mentionedJid : []
 if (m.quoted) {
