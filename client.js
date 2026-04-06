@@ -1719,51 +1719,18 @@ const textmakerMenu = `
     if (!_thumbBuf) _thumbBuf = fs.readFileSync(path.join(__dirname, 'media', 'thumb.png'))
   } catch {}
 
-  // Resolve channel JID for "View Channel" footer button
-  let _menuChJid  = global.channelJid
-  let _menuChName = global.botName || botname || 'TOOSII-XD ULTRA'
-  if (!_menuChJid && global.channelLink?.includes('/channel/')) {
-    try {
-      const _mInvCode = global.channelLink.split('/channel/')[1].split('?')[0].trim()
-      const _mMeta    = await X.newsletterMetadata('invite', _mInvCode).catch(() => null)
-      if (_mMeta?.id)   { _menuChJid  = _mMeta.id; global.channelJid = _menuChJid }
-      if (_mMeta?.name)   _menuChName = _mMeta.name
-    } catch {}
-  }
-
-  const _menuCtx = {
-    forwardingScore: 999,
-    isForwarded: true,
-    mentionedJid: [sender],
-    ...(_menuChJid ? {
-      forwardedNewsletterMessageInfo: {
-        newsletterJid  : _menuChJid,
-        newsletterName : _menuChName,
-        serverMessageId: -1
-      }
-    } : {
-      externalAdReply: {
-        title: "TOOSII-XD ULTRA",
-        body: "Toosii Tech",
-        sourceUrl: global.channelLink || global.groupLink || global.wagc || '',
-        mediaType: 1,
-        renderLargerThumbnail: true
-      }
-    })
-  }
-
-  // Send as image+caption if thumbnail available (shows image AND "View Channel" button)
-  // Otherwise send as plain text with "View Channel" button
+  // Send menu — image+caption if thumb available, plain text otherwise
+  // global.getCtxInfo() adds the native "View Channel" footer button automatically
   if (_thumbBuf) {
     await X.sendMessage(
       m.chat,
-      { image: _thumbBuf, caption: fullMenu, contextInfo: _menuCtx },
+      { image: _thumbBuf, caption: fullMenu, contextInfo: global.getCtxInfo([sender]) },
       { quoted: m }
     )
   } else {
     await X.sendMessage(
       m.chat,
-      { text: fullMenu, contextInfo: _menuCtx },
+      { text: fullMenu, contextInfo: global.getCtxInfo([sender]) },
       { quoted: m }
     )
   };
@@ -4808,48 +4775,25 @@ Your bot will automatically pull the latest version from GitHub and restart with
 ━━━━━━━━━━━━━━━━━━━━━━`
 
     try {
-        // Resolve channel name from metadata
-        let _chName = global.botName || 'TOOSII-XD ULTRA'
-        try {
-            const _invCode2 = _chLink?.split('/channel/')?.[1]?.split('?')[0]?.trim()
-            const _chMeta   = _invCode2
-                ? await X.newsletterMetadata('invite', _invCode2).catch(() => null)
-                : await X.newsletterMetadata('jid', _chJid).catch(() => null)
-            if (_chMeta?.name) _chName = _chMeta.name
-        } catch {}
+        // global.getCtxInfo() — adds native "View Channel" footer button
+        // channelJid is already resolved at bot startup, so this works immediately
+        const _annCtx = global.getCtxInfo()
 
-        // ✅ Correct pattern from gifted-baileys:
-        // forwardedNewsletterMessageInfo inside contextInfo gives the native "View Channel" footer button
+        // Show the announcement card in the current chat so owner can see "View Channel"
         await X.sendMessage(m.chat, {
             text: _announcement,
-            footer: `⚡ TOOSII-XD ULTRA  •  Official Bot Channel`,
-            contextInfo: {
-                forwardingScore: 1,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid    : _chJid,
-                    newsletterName   : _chName,
-                    serverMessageId  : -1
-                }
-            }
+            footer: '⚡ TOOSII-XD ULTRA  •  Official Bot Channel',
+            contextInfo: _annCtx
         })
 
-        // Also post to the channel itself so subscribers get notified
+        // Also post to the channel itself so subscribers are notified
         await X.sendMessage(_chJid, {
             text: _announcement,
-            footer: `⚡ TOOSII-XD ULTRA  •  Official Bot Channel`,
-            contextInfo: {
-                forwardingScore: 1,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid    : _chJid,
-                    newsletterName   : _chName,
-                    serverMessageId  : -1
-                }
-            }
+            footer: '⚡ TOOSII-XD ULTRA  •  Official Bot Channel',
+            contextInfo: _annCtx
         }).catch(e => console.error('Channel post failed:', e.message))
 
-        reply(`✅ *Announcement sent!*\nCheck the message above — you should see *View Channel* in the footer.`)
+        reply(`✅ *Announcement sent!*\nYou should see *View Channel* in the footer of the message above.`)
     } catch (e) {
         reply(`❌ Failed: ${e.message}`)
     }
