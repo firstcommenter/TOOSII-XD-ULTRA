@@ -13360,7 +13360,74 @@ teks = e
 } finally {
 const _evalStr = require('util').format(teks); if (_evalStr && _evalStr !== 'undefined' && _evalStr !== 'null') await reply(_evalStr)
 }
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Fetch / Test API
+case 'fetch':
+case 'testapi':
+case 'curl': {
+    await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
+    if (!q) return reply('❌ Provide a URL.\n\nUsage: .fetch https://api.example.com')
+    let _url = q.trim()
+    if (!_url.startsWith('http')) _url = 'https://' + _url
+    try {
+        const _fetchRes = await require('node-fetch')(_url, { timeout: 30000,
+            headers: { 'User-Agent': 'TOOSII-XD-ULTRA/2.0' } })
+        const _ct = _fetchRes.headers.get('content-type') || ''
+        let _body = await _fetchRes.text()
+        let _disp = _body
+        if (_ct.includes('json') || _body.trimStart().startsWith('{') || _body.trimStart().startsWith('[')) {
+            try { _disp = JSON.stringify(JSON.parse(_body), null, 2) } catch {}
+        }
+        const _out = _disp.length > 3000 ? _disp.slice(0, 3000) + '\n\n[...truncated]' : _disp
+        await reply(`🌐 *URL:* ${_url}\n📊 *Status:* ${_fetchRes.status}\n📄 *Type:* ${_ct.split(';')[0]}\n\n\`\`\`\n${_out}\n\`\`\``)
+    } catch (_fe) { reply('❌ Fetch failed: ' + (_fe.message || _fe)) }
+    break
+}
 
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// GitHub Repo Downloader
+case 'gitclone':
+case 'github':
+case 'repodl': {
+    await X.sendMessage(m.chat, { react: { text: '📦', key: m.key } })
+    if (!q) return reply('❌ Provide a GitHub repo URL.\n\nUsage: .gitclone https://github.com/user/repo')
+    const _gitMatch = q.match(/github\.com\/([^\/\s]+)\/([^\/\s]+)/i)
+    if (!_gitMatch) return reply('❌ Invalid GitHub URL.')
+    const [, _ghu, _ghr] = _gitMatch
+    const _repoName = _ghr.replace(/\.git$/, '')
+    try {
+        const _apiRes = await require('node-fetch')(`https://api.github.com/repos/${_ghu}/${_repoName}`, {
+            headers: { 'User-Agent': 'TOOSII-XD-ULTRA', Accept: 'application/vnd.github.v3+json' }
+        })
+        if (!_apiRes.ok) return reply(`❌ Repo not found: ${_ghu}/${_repoName}`)
+        const _rd = await _apiRes.json()
+        const _branch = _rd.default_branch || 'main'
+        const _zipUrl = `https://github.com/${_ghu}/${_repoName}/archive/refs/heads/${_branch}.zip`
+        await X.sendMessage(m.chat, { text: `⬇️ Downloading *${_ghu}/${_repoName}* (@${_branch})...\n⭐ Stars: ${_rd.stargazers_count} | 🍴 Forks: ${_rd.forks_count}` })
+        const _zipRes = await require('node-fetch')(_zipUrl, { timeout: 60000 })
+        if (!_zipRes.ok) return reply('❌ Failed to download ZIP')
+        const _zipBuf = Buffer.from(await _zipRes.arrayBuffer())
+        await X.sendMessage(m.chat, {
+            document: _zipBuf,
+            fileName: `${_repoName}-${_branch}.zip`,
+            mimetype: 'application/zip',
+            caption: `📦 *${_ghu}/${_repoName}*\n🌿 Branch: ${_branch}\n📦 Size: ${(_zipBuf.length/1024).toFixed(1)}KB\n📝 ${_rd.description || 'No description'}`,
+            contextInfo: global.getCtxInfo()
+        }, { quoted: m })
+    } catch (_ge) { reply('❌ Error: ' + (_ge.message || _ge)) }
+    break
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━//
+// Save Settings Persistently
+case 'savesettings': {
+    if (!isOwner) return reply('❌ Owner only.')
+    try {
+        require('./library/settings').saveSettings()
+        reply('✅ Settings saved — will survive restarts.\n\nTo restore automatically, they load on every startup.')
+    } catch(_se) { reply('❌ ' + _se.message) }
+    break
+}
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Tag Everyone
 case 'everyone':
@@ -13733,7 +13800,6 @@ case 'clearnotes': {
     break
 }
 
-
 }
 
 if (budy.startsWith('$')) {
@@ -13808,77 +13874,6 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
             console.log('[AI-Mode] Error:', _modeErr.message || _modeErr)
         }
     }
-}
-}
-
-
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Fetch / Test API
-case 'fetch':
-case 'testapi':
-case 'curl': {
-    await X.sendMessage(m.chat, { react: { text: '🌐', key: m.key } })
-    if (!q) return reply('❌ Provide a URL.\n\nUsage: .fetch https://api.example.com')
-    let _url = q.trim()
-    if (!_url.startsWith('http')) _url = 'https://' + _url
-    try {
-        const _fetchRes = await require('node-fetch')(_url, { timeout: 30000,
-            headers: { 'User-Agent': 'TOOSII-XD-ULTRA/2.0' } })
-        const _ct = _fetchRes.headers.get('content-type') || ''
-        let _body = await _fetchRes.text()
-        let _disp = _body
-        if (_ct.includes('json') || _body.trimStart().startsWith('{') || _body.trimStart().startsWith('[')) {
-            try { _disp = JSON.stringify(JSON.parse(_body), null, 2) } catch {}
-        }
-        const _out = _disp.length > 3000 ? _disp.slice(0, 3000) + '\n\n[...truncated]' : _disp
-        await reply(`🌐 *URL:* ${_url}\n📊 *Status:* ${_fetchRes.status}\n📄 *Type:* ${_ct.split(';')[0]}\n\n\`\`\`\n${_out}\n\`\`\``)
-    } catch (_fe) { reply('❌ Fetch failed: ' + (_fe.message || _fe)) }
-    break
-}
-
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// GitHub Repo Downloader
-case 'gitclone':
-case 'github':
-case 'repodl': {
-    await X.sendMessage(m.chat, { react: { text: '📦', key: m.key } })
-    if (!q) return reply('❌ Provide a GitHub repo URL.\n\nUsage: .gitclone https://github.com/user/repo')
-    const _gitMatch = q.match(/github\.com\/([^\/\s]+)\/([^\/\s]+)/i)
-    if (!_gitMatch) return reply('❌ Invalid GitHub URL.')
-    const [, _ghu, _ghr] = _gitMatch
-    const _repoName = _ghr.replace(/\.git$/, '')
-    try {
-        const _apiRes = await require('node-fetch')(`https://api.github.com/repos/${_ghu}/${_repoName}`, {
-            headers: { 'User-Agent': 'TOOSII-XD-ULTRA', Accept: 'application/vnd.github.v3+json' }
-        })
-        if (!_apiRes.ok) return reply(`❌ Repo not found: ${_ghu}/${_repoName}`)
-        const _rd = await _apiRes.json()
-        const _branch = _rd.default_branch || 'main'
-        const _zipUrl = `https://github.com/${_ghu}/${_repoName}/archive/refs/heads/${_branch}.zip`
-        await X.sendMessage(m.chat, { text: `⬇️ Downloading *${_ghu}/${_repoName}* (@${_branch})...\n⭐ Stars: ${_rd.stargazers_count} | 🍴 Forks: ${_rd.forks_count}` })
-        const _zipRes = await require('node-fetch')(_zipUrl, { timeout: 60000 })
-        if (!_zipRes.ok) return reply('❌ Failed to download ZIP')
-        const _zipBuf = Buffer.from(await _zipRes.arrayBuffer())
-        await X.sendMessage(m.chat, {
-            document: _zipBuf,
-            fileName: `${_repoName}-${_branch}.zip`,
-            mimetype: 'application/zip',
-            caption: `📦 *${_ghu}/${_repoName}*\n🌿 Branch: ${_branch}\n📦 Size: ${(_zipBuf.length/1024).toFixed(1)}KB\n📝 ${_rd.description || 'No description'}`,
-            contextInfo: global.getCtxInfo()
-        }, { quoted: m })
-    } catch (_ge) { reply('❌ Error: ' + (_ge.message || _ge)) }
-    break
-}
-
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Save Settings Persistently
-case 'savesettings': {
-    if (!isOwner) return reply('❌ Owner only.')
-    try {
-        require('./library/settings').saveSettings()
-        reply('✅ Settings saved — will survive restarts.\n\nTo restore automatically, they load on every startup.')
-    } catch(_se) { reply('❌ ' + _se.message) }
-    break
 }
 } catch (err) {
   let errMsg = (err.message || '').toLowerCase()
