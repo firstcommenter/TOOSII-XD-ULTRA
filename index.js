@@ -129,9 +129,11 @@ require("./setting")
     const _origWarn  = console.warn.bind(console)
     const _origError = console.error.bind(console)
     const _origLog   = console.log.bind(console)
+    const _origInfo  = console.info.bind(console)
     console.warn  = (...args) => { if (!_noisy(args)) _origWarn(...args)  }
     console.error = (...args) => { if (!_noisy(args)) _origError(...args) }
     console.log   = (...args) => { if (!_noisy(args)) _origLog(...args)   }
+    console.info  = (...args) => { if (!_noisy(args)) _origInfo(...args)  }
     // ── Override process.stdout.write to catch pino & direct writes ───────────
     const _origStdout = process.stdout.write.bind(process.stdout)
     const _origStderr = process.stderr.write.bind(process.stderr)
@@ -1397,6 +1399,9 @@ return (withoutContact ? '' : v.name) || v.subject || v.verifiedName || PhoneNum
 X.public = true
 
 X.serializeM = (m) => smsg(X, m, store);
+const _MAX_RECONNECT = 50
+const _reconnectCount = new Map()
+
 X.ev.on('connection.update', async (update) => {
 const { connection, lastDisconnect } = update;
 if (connection === "close") {
@@ -1411,13 +1416,29 @@ try {
 } catch(e) {}
 setTimeout(() => connectSession(phone), 3000)
   } else if (reason === DisconnectReason.connectionClosed) {
-console.log(`[${phone}] Connection closed, reconnecting...`);
-if (activeSessions.has(phone)) activeSessions.get(phone).status = 'reconnecting'
-setTimeout(() => connectSession(phone), 3000);
+const _rc1 = (_reconnectCount.get(phone) || 0) + 1
+_reconnectCount.set(phone, _rc1)
+if (_rc1 > _MAX_RECONNECT) {
+    console.log(`[${phone}] Max reconnect (${_MAX_RECONNECT}) reached — stopping.`)
+    if (activeSessions.has(phone)) activeSessions.get(phone).status = 'disconnected'
+} else {
+    const _d1 = Math.min(3000 * Math.pow(1.5, _rc1 - 1), 120000)
+    console.log(`[${phone}] Connection closed, retry ${_rc1}/${_MAX_RECONNECT} in ${Math.round(_d1/1000)}s`)
+    if (activeSessions.has(phone)) activeSessions.get(phone).status = 'reconnecting'
+    setTimeout(() => connectSession(phone), _d1)
+}
   } else if (reason === DisconnectReason.connectionLost) {
-console.log(`[${phone}] Connection lost, reconnecting...`);
-if (activeSessions.has(phone)) activeSessions.get(phone).status = 'reconnecting'
-setTimeout(() => connectSession(phone), 3000);
+const _rc2 = (_reconnectCount.get(phone) || 0) + 1
+_reconnectCount.set(phone, _rc2)
+if (_rc2 > _MAX_RECONNECT) {
+    console.log(`[${phone}] Max reconnect (${_MAX_RECONNECT}) reached — stopping.`)
+    if (activeSessions.has(phone)) activeSessions.get(phone).status = 'disconnected'
+} else {
+    const _d2 = Math.min(3000 * Math.pow(1.5, _rc2 - 1), 120000)
+    console.log(`[${phone}] Connection lost, retry ${_rc2}/${_MAX_RECONNECT} in ${Math.round(_d2/1000)}s`)
+    if (activeSessions.has(phone)) activeSessions.get(phone).status = 'reconnecting'
+    setTimeout(() => connectSession(phone), _d2)
+}
   } else if (reason === DisconnectReason.connectionReplaced) {
 // 515 = a newer WhatsApp client connected with the same session.
 // First 515: wait 10s and attempt ONE reconnect — this handles an internal
@@ -1504,6 +1525,7 @@ if (activeSessions.has(phone)) activeSessions.get(phone).status = 'reconnecting'
 setTimeout(() => connectSession(phone), 10000);
   }
 } else if (connection === "open") {
+_reconnectCount.delete(phone)
 // Reset 401 retry counter — connection is healthy again.
 // Prevents Signal noise from a previous command accumulating toward the wipe threshold.
 if (global._logout401 && global._logout401[phone]) delete global._logout401[phone]
