@@ -112,3 +112,6 @@ console.log(`Update File 📁 : ${__filename}`)
 delete require.cache[file]
 require(file)
 })
+
+// ── Restore saved settings (overrides defaults above if previously changed) ──
+try { require('./library/settings').loadSettings() } catch(e) {}
