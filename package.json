@@ -39,7 +39,9 @@
     "similarity": "^1.2.1",
     "wa-sticker-formatter": "^4.4.4",
     "yargs": "^18.0.0",
-    "yt-search": "^2.13.1"
+    "yt-search": "^2.13.1",
+    "node-cache": "^5.1.2",
+    "adm-zip": "^0.5.16"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
