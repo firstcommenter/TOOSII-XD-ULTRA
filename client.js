@@ -66,6 +66,9 @@ const util = require('util')
       const keys = raw.split(',').map(k => k.trim()).filter(Boolean)
       return [...new Set([...keys, 'gifted'])]
   })()
+  // Configurable API base — set GIFTED_API_URL in .env to override without code changes
+  const _GTAPI = (process.env.GIFTED_API_URL || 'https://api.giftedtech.co.ke').replace(/\/$/, '')
+
   let _giftedIdx = 0
   // Returns next key in round-robin order
   function _giftedKey() {
@@ -204,7 +207,7 @@ const util = require('util')
       if (_kl) { try { const _kd = await _keithFetch(`/${_kl}/standings`); const _kt = _kd?.standings || _kd; if (Array.isArray(_kt) && _kt.length) return _kt } catch {} }
       // GiftedTech fallback
       try {
-          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const d = await giftedFetch(`${_GTAPI}/api/football/${gtPath}/standings?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const t = d?.result?.standings || d?.result; if (Array.isArray(t) && t.length) return t
       } catch {}
       return (await _espnStandings(league)) || (await _tsdbStandings(league)) || (await _fdStandings(league))
@@ -238,7 +241,7 @@ const util = require('util')
       const _kl = _KEITH_LEAGUES[league]
       if (_kl) { try { const _kd = await _keithFetch(`/${_kl}/scorers`); const _ks = _kd?.topScorers || _kd?.scorers || _kd; if (Array.isArray(_ks) && _ks.length) return _ks } catch {} }
       try {
-          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/${gtPath}/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const d = await giftedFetch(`${_GTAPI}/api/football/${gtPath}/scorers?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const sc = d?.result?.topScorers || d?.result?.scorers || d?.result; if (Array.isArray(sc) && sc.length) return sc
       } catch {}
       return (await _espnScorers(league)) || (await _fdScorers(league))
@@ -302,7 +305,7 @@ const util = require('util')
       } catch {}
       // Source 2: GiftedTech
       try {
-          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/livescore?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const d = await giftedFetch(`${_GTAPI}/api/football/livescore?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const m = d?.result?.matches || d?.result; if (Array.isArray(m) && m.length) return { source: 'GiftedTech', matches: m }
       } catch {}
       // Source 3: ESPN across top leagues (live events)
@@ -341,7 +344,7 @@ const util = require('util')
       } catch {}
       // Source 2: GiftedTech
       try {
-          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/news?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const d = await giftedFetch(`${_GTAPI}/api/football/news?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const a = d?.result?.items || d?.result; if (Array.isArray(a) && a.length) return a
       } catch {}
       // Source 3: ESPN soccer RSS
@@ -379,7 +382,7 @@ const util = require('util')
       } catch {}
       // Source 2: GiftedTech
       try {
-          const d = await giftedFetch(`https://api.giftedtech.co.ke/api/football/predictions?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
+          const d = await giftedFetch(`${_GTAPI}/api/football/predictions?apikey=gifted`, { signal: AbortSignal.timeout(20000) })
           const p = Array.isArray(d?.result) ? d.result : (d?.result?.items||[]); if (p.length) return p
       } catch {}
       // Source 3: Footystats upcoming (unofficial, no key for basic access)
@@ -493,14 +496,14 @@ async function _runAI(systemPrompt, userMsg, maxTokens = 1500) {
 
     // 1. GiftedTech GPT-4o — embed system into q for persona compliance
     try {
-        const _r = await fetch(`https://api.giftedtech.co.ke/api/ai/gpt4o?apikey=${_giftedKey()}&q=${_fullQ}`, { signal: AbortSignal.timeout(22000) })
+        const _r = await fetch(`${_GTAPI}/api/ai/gpt4o?apikey=${_giftedKey()}&q=${_fullQ}`, { signal: AbortSignal.timeout(22000) })
         const _d = await _r.json()
         if (_d?.success && _d?.result && String(_d.result).trim().length > 2) return String(_d.result).trim()
     } catch {}
 
     // 2. GiftedTech Gemini — embed system into q
     try {
-        const _r2 = await fetch(`https://api.giftedtech.co.ke/api/ai/gemini?apikey=${_giftedKey()}&q=${_fullQ}`, { signal: AbortSignal.timeout(22000) })
+        const _r2 = await fetch(`${_GTAPI}/api/ai/gemini?apikey=${_giftedKey()}&q=${_fullQ}`, { signal: AbortSignal.timeout(22000) })
         const _d2 = await _r2.json()
         if (_d2?.success && _d2?.result && String(_d2.result).trim().length > 2) return String(_d2.result).trim()
     } catch {}
@@ -1803,7 +1806,7 @@ case 'ig':
       // Source 3: GiftedTech instadl
       if (!_igUrl) {
         try {
-          let _gtIg = await fetch(`https://api.giftedtech.co.ke/api/download/instadl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+          let _gtIg = await fetch(`${_GTAPI}/api/download/instadl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
           let _gtIgd = await _gtIg.json()
           console.log('[ig] gifted:', _gtIgd.success)
           if (_gtIgd.success && _gtIgd.result?.download_url) _igUrl = _gtIgd.result.download_url
@@ -1853,7 +1856,7 @@ break
       // Source 2: GiftedTech twitter
       if (!_twUrl) {
         try {
-          const _gtTw = await fetch(`https://api.giftedtech.co.ke/api/download/twitter?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+          const _gtTw = await fetch(`${_GTAPI}/api/download/twitter?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
           const _gtTwd = await _gtTw.json()
           console.log('[tw] gifted:', _gtTwd.success)
           if (_gtTwd.success && _gtTwd.result?.videoUrls?.length) {
@@ -2283,7 +2286,7 @@ if (!text) return reply(`╔══〔 📘 FACEBOOK DL 〕════╗\n\n║
         // Source 3: GiftedTech fbdl
         if (!_fbUrl) {
           try {
-            let _gt = await fetch(`https://api.giftedtech.co.ke/api/download/fbdl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+            let _gt = await fetch(`${_GTAPI}/api/download/fbdl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
             let _gtd = await _gt.json()
             console.log('[fb] giftedtech: success=', _gtd.success)
             if (_gtd.success && _gtd.result) {
@@ -2374,7 +2377,7 @@ case 'ytplay': {
         // Method 1: GiftedTech API — 128kbps, direct download URL
         if (!audioUrl && !audioPath) {
             try {
-                let res = await fetch(`https://api.giftedtech.co.ke/api/download/ytmp3?apikey=${_giftedKey()}&quality=128kbps&url=${encodeURIComponent(firstVideo.url)}`, {
+                let res = await fetch(`${_GTAPI}/api/download/ytmp3?apikey=${_giftedKey()}&quality=128kbps&url=${encodeURIComponent(firstVideo.url)}`, {
                     signal: AbortSignal.timeout(30000)
                 })
                 let data = await res.json()
@@ -2612,7 +2615,7 @@ case 'songlyrics': {
 
     // ── Source 0: GiftedTech lyrics API ─────────────────────────────
     try {
-        let _gt = await fetch(`https://api.giftedtech.co.ke/api/search/lyrics?apikey=${_giftedKey()}&query=${encodeURIComponent(_lyrQuery)}`, { signal: AbortSignal.timeout(15000) })
+        let _gt = await fetch(`${_GTAPI}/api/search/lyrics?apikey=${_giftedKey()}&query=${encodeURIComponent(_lyrQuery)}`, { signal: AbortSignal.timeout(15000) })
         let _gtd = await _gt.json()
         if (_gtd.success && _gtd.result?.lyrics) {
             _lyrResult = { lyrics: _gtd.result.lyrics, title: _gtd.result.title || _lyrSong, artist: _gtd.result.artist || _lyrArtist, image: _gtd.result.image }
@@ -3022,7 +3025,7 @@ break
           let _atBuf = null
           // Method 1: GiftedTech ATTP API
           try {
-              const _gt = await fetch(`https://api.giftedtech.co.ke/api/sticker/attp?apikey=${_giftedKey()}&text=${encodeURIComponent(_atText)}`, { signal: AbortSignal.timeout(25000) })
+              const _gt = await fetch(`${_GTAPI}/api/sticker/attp?apikey=${_giftedKey()}&text=${encodeURIComponent(_atText)}`, { signal: AbortSignal.timeout(25000) })
               if (_gt.ok) {
                   const _ct = _gt.headers.get('content-type') || ''
                   if (_ct.includes('image') || _ct.includes('octet')) {
@@ -8080,7 +8083,7 @@ if (!text.match(/youtu/gi)) {
 let videoUrl = null, videoPath = null
 // Method 1: GiftedTech API — direct 720p MP4 URL
 try {
-    let res = await fetch(`https://api.giftedtech.co.ke/api/download/savetubemp4?apikey=${_giftedKey()}&url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(30000) })
+    let res = await fetch(`${_GTAPI}/api/download/savetubemp4?apikey=${_giftedKey()}&url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(30000) })
     let data = await res.json()
     console.log('[video] giftedtech: success=', data.success)
     if (data.success && data.result?.download_url) videoUrl = data.result.download_url
@@ -8152,7 +8155,7 @@ let vid = search.all.find(v => v.type === 'video') || search.all[0]
 let audioUrl = null, audioPath = null
 // Method 1: GiftedTech API
 try {
-    let res = await fetch(`https://api.giftedtech.co.ke/api/download/ytmp3?apikey=${_giftedKey()}&quality=128kbps&url=${encodeURIComponent(vid.url)}`, { signal: AbortSignal.timeout(30000) })
+    let res = await fetch(`${_GTAPI}/api/download/ytmp3?apikey=${_giftedKey()}&quality=128kbps&url=${encodeURIComponent(vid.url)}`, { signal: AbortSignal.timeout(30000) })
     let data = await res.json()
     if (data.success && data.result?.download_url) audioUrl = data.result.download_url
 } catch (e1) { console.log('[ytdocplay] giftedtech:', e1.message) }
@@ -8225,7 +8228,7 @@ let vid = search.all.find(v => v.type === 'video') || search.all[0]
 let videoUrl = null, videoPath = null
 // Method 1: GiftedTech API
 try {
-    let res = await fetch(`https://api.giftedtech.co.ke/api/download/ytv?apikey=${_giftedKey()}&url=${encodeURIComponent(vid.url)}`, { signal: AbortSignal.timeout(30000) })
+    let res = await fetch(`${_GTAPI}/api/download/ytv?apikey=${_giftedKey()}&url=${encodeURIComponent(vid.url)}`, { signal: AbortSignal.timeout(30000) })
     let data = await res.json()
     if (data.success && data.result?.download_url) videoUrl = data.result.download_url
 } catch (e1) { console.log('[ytdocvideo] giftedtech:', e1.message) }
@@ -8714,7 +8717,7 @@ if (!audioUrl || !audioUrl.startsWith('http')) throw new Error('Failed to upload
 // Method 1: GiftedTech Shazam API
 let shazamResult = null
 try {
-    let _gtSh = await fetch(`https://api.giftedtech.co.ke/api/search/shazam?apikey=${_giftedKey()}&url=${encodeURIComponent(audioUrl)}`, { signal: AbortSignal.timeout(30000) })
+    let _gtSh = await fetch(`${_GTAPI}/api/search/shazam?apikey=${_giftedKey()}&url=${encodeURIComponent(audioUrl)}`, { signal: AbortSignal.timeout(30000) })
     let _gtShD = await _gtSh.json()
     if (_gtShD.success && _gtShD.result) shazamResult = _gtShD.result
 } catch {}
@@ -9007,7 +9010,7 @@ try {
     } catch {}
     // Method 2: GiftedTech totext (tries the URL against their API)
     if (!_tcText) try {
-        const _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/totext?apikey=${_giftedKey()}&url=${encodeURIComponent(_tcUrl)}`, { signal: AbortSignal.timeout(30000) })
+        const _gtRes = await fetch(`${_GTAPI}/api/tools/totext?apikey=${_giftedKey()}&url=${encodeURIComponent(_tcUrl)}`, { signal: AbortSignal.timeout(30000) })
         const _gtData = await _gtRes.json()
         if (_gtData?.success && typeof _gtData.result === 'string' && _gtData.result.trim().length > 2) _tcText = _gtData.result.trim()
     } catch {}
@@ -9224,7 +9227,7 @@ try {
             const _catUrl = await CatBox(_tmpG)
             try { require('fs').unlinkSync(_tmpG) } catch {}
             if (_catUrl) {
-                const _gtRes = await fetch(`https://api.giftedtech.co.ke/api/tools/removebgv2?apikey=${_giftedKey()}&url=${encodeURIComponent(_catUrl)}`, { signal: AbortSignal.timeout(45000) })
+                const _gtRes = await fetch(`${_GTAPI}/api/tools/removebgv2?apikey=${_giftedKey()}&url=${encodeURIComponent(_catUrl)}`, { signal: AbortSignal.timeout(45000) })
                 const _ctype = _gtRes.headers.get('content-type') || ''
                 if (_ctype.includes('image')) {
                     // Direct image response
@@ -9688,7 +9691,7 @@ case 'insult': {
         const _inkd = await _keithFetch('/fun/insult')
         if (typeof _inkd === 'string') _inTxt = _inkd; else if (_inkd?.insult) _inTxt = _inkd.insult; else if (_inkd?.result) _inTxt = typeof _inkd.result === 'string' ? _inkd.result : _inkd.result?.insult
         if (!_inTxt) {
-            let _ingr = await fetch(`https://api.giftedtech.co.ke/api/fun/insult?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            let _ingr = await fetch(`${_GTAPI}/api/fun/insult?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             let _ingd = await _ingr.json()
             if (_ingd.success && _ingd.result) _inTxt = _ingd.result
         }
@@ -9735,7 +9738,7 @@ reply(`╔═════〔 💘 FLIRT 〕══════╗\n\n║ ${flirts
 case 'shayari': {
     await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
 try {
-    let _gs = await fetch(`https://api.giftedtech.co.ke/api/fun/shayari?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+    let _gs = await fetch(`${_GTAPI}/api/fun/shayari?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _gsd = await _gs.json()
     if (_gsd.success && _gsd.result) return reply(`╔════〔 📜 SHAYARI 〕═════╗\n\n║ ${_gsd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -9746,7 +9749,7 @@ reply(`╔════〔 📜 SHAYARI 〕═════╗\n\n║ ${shayaris[M
 case 'goodnight': {
     await X.sendMessage(m.chat, { react: { text: '🌙', key: m.key } })
 try {
-    let _ggn = await fetch(`https://api.giftedtech.co.ke/api/fun/goodnight?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+    let _ggn = await fetch(`${_GTAPI}/api/fun/goodnight?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _ggnd = await _ggn.json()
     if (_ggnd.success && _ggnd.result) return reply(`╔═══〔 🌙 GOOD NIGHT 〕═══╗\n\n║ ${_ggnd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -9757,7 +9760,7 @@ reply(`╔═══〔 🌙 GOOD NIGHT 〕═══╗\n\n║ ${gn[Math.floor(Ma
 case 'roseday': {
     await X.sendMessage(m.chat, { react: { text: '🌹', key: m.key } })
 try {
-    let _gr = await fetch(`https://api.giftedtech.co.ke/api/fun/roseday?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+    let _gr = await fetch(`${_GTAPI}/api/fun/roseday?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
     let _grd = await _gr.json()
     if (_grd.success && _grd.result) return reply(`╔════〔 🌹 ROSE DAY 〕════╗\n\n║ ${_grd.result}\n╚═══════════════════════╝`)
 } catch {}
@@ -9819,7 +9822,7 @@ case 'jokes': {
         else if (typeof _jkkd === 'string') _jkTxt = _jkkd
         // GiftedTech fallback
         if (!_jkTxt) {
-            let _jkgr = await fetch(`https://api.giftedtech.co.ke/api/fun/joke?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            let _jkgr = await fetch(`${_GTAPI}/api/fun/joke?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             let _jkgd = await _jkgr.json()
             if (_jkgd.success && _jkgd.result) _jkTxt = _jkgd.result
         }
@@ -9871,7 +9874,7 @@ case 'randomfact': {
         if (typeof _ftkd === 'string') _ftTxt = _ftkd; else if (_ftkd?.fact) _ftTxt = _ftkd.fact; else if (_ftkd?.result) _ftTxt = typeof _ftkd.result === 'string' ? _ftkd.result : _ftkd.result.fact
         // GiftedTech fallback
         if (!_ftTxt) {
-            let _ftgr = await fetch(`https://api.giftedtech.co.ke/api/fun/fact?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            let _ftgr = await fetch(`${_GTAPI}/api/fun/fact?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             let _ftgd = await _ftgr.json()
             if (_ftgd.success && _ftgd.result) _ftTxt = _ftgd.result
         }
@@ -9900,7 +9903,7 @@ case 'neko': {
         }
         // Source 3: GiftedTech
         if (!nekoUrl) {
-            const _gn = await fetch(`https://api.giftedtech.co.ke/api/anime/neko?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            const _gn = await fetch(`${_GTAPI}/api/anime/neko?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             const _gnd = await _gn.json()
             if (_gnd.success && _gnd.result) nekoUrl = _gnd.result
         }
@@ -9927,7 +9930,7 @@ case 'waifu': {
         }
         // Source 3: GiftedTech
         if (!waifuUrl) {
-            const _gw = await fetch(`https://api.giftedtech.co.ke/api/anime/waifu?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            const _gw = await fetch(`${_GTAPI}/api/anime/waifu?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             const _gwd = await _gw.json()
             if (_gwd.success && _gwd.result) waifuUrl = _gwd.result
         }
@@ -11131,7 +11134,7 @@ case 'shorten': {
         if (_sukd?.shortened) _suUrl = _sukd.shortened
         // GiftedTech fallback
         if (!_suUrl) {
-            let _sugr = await fetch(`https://api.giftedtech.co.ke/api/tools/tinyurl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(12000) })
+            let _sugr = await fetch(`${_GTAPI}/api/tools/tinyurl?apikey=${_giftedKey()}&url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(12000) })
             let _sugd = await _sugr.json()
             if (_sugd.success && _sugd.result) _suUrl = _sugd.result
         }
@@ -11150,7 +11153,7 @@ case 'pickupline': {
         const _plkd = await _keithFetch('/fun/pickuplines')
         if (typeof _plkd === 'string') _plTxt = _plkd; else if (_plkd?.result) _plTxt = _plkd.result
         if (!_plTxt) {
-            let _plr = await fetch(`https://api.giftedtech.co.ke/api/fun/pickupline?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
+            let _plr = await fetch(`${_GTAPI}/api/fun/pickupline?apikey=${_giftedKey()}`, { signal: AbortSignal.timeout(10000) })
             let _pld = await _plr.json()
             if (_pld.success && _pld.result) _plTxt = _pld.result
         }
@@ -11217,7 +11220,7 @@ case 'qrread': {
         } catch {}
         // Source 2: GiftedTech
         if (!qrData) {
-            const _gtR = await fetch(`https://api.giftedtech.co.ke/api/tools/readqr?apikey=${_giftedKey()}&url=${encodeURIComponent(_url)}`, { signal: AbortSignal.timeout(25000) })
+            const _gtR = await fetch(`${_GTAPI}/api/tools/readqr?apikey=${_giftedKey()}&url=${encodeURIComponent(_url)}`, { signal: AbortSignal.timeout(25000) })
             const _gtD = await _gtR.json()
             if (_gtD.success && _gtD.result) qrData = _gtD.result?.qrcode_data || _gtD.result
         }
@@ -11249,13 +11252,13 @@ case 'aiimage': {
         // Source 2: GiftedTech fluximg
         if (!_aiImgUrl) {
             try {
-                const _gtR = await fetch(`https://api.giftedtech.co.ke/api/ai/fluximg?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
+                const _gtR = await fetch(`${_GTAPI}/api/ai/fluximg?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(60000) })
                 const _gtD = await _gtR.json()
                 if (_gtD.success && (_gtD.result?.url || _gtD.result)) _aiImgUrl = _gtD.result?.url || _gtD.result
             } catch {}
         }
         // Source 3: MagicStudio (direct image)
-        if (!_aiImgUrl) _aiImgUrl = `https://api.giftedtech.co.ke/api/ai/magicstudio?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`
+        if (!_aiImgUrl) _aiImgUrl = `${_GTAPI}/api/ai/magicstudio?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`
         await safeSendMedia(m.chat, { image: { url: _aiImgUrl }, caption: `🎨 *AI Generated Image*\n📝 _${text}_` }, {}, { quoted: m })
     } catch(e) { reply('❌ Image generation failed. Try a shorter or different prompt.') }
 } break
@@ -11270,7 +11273,7 @@ case 'aisong': {
     if (!text) return reply(`╔══〔 🎵 AI SONG GENERATOR 〕══╗\n\n║ Usage: *${prefix}songgenerator [describe your song]*\n║ Example: ${prefix}songgenerator Upbeat Afrobeats about success\n╚═══════════════════════╝`)
     try {
         await reply('🎵 _Composing your song with AI, please wait (this may take a while)..._')
-        let r = await fetch(`https://api.giftedtech.co.ke/api/tools/songgenerator?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(120000) })
+        let r = await fetch(`${_GTAPI}/api/tools/songgenerator?apikey=${_giftedKey()}&prompt=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(120000) })
         let d = await r.json()
         if (!d.success || !d.result) throw new Error('Song generation failed')
         let res = d.result
@@ -11423,7 +11426,7 @@ case 'eplupcoming': {
     await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
     try {
         await reply('📅 _Fetching upcoming EPL matches..._')
-        let matches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_giftedKey()}`)
+        let matches = await _getFixtures('epl', `${_GTAPI}/api/football/epl/upcoming?apikey=${_giftedKey()}`)
         if (!matches?.length) throw new Error('No data from any source')
         let msg = `╔══〔 📅 EPL UPCOMING FIXTURES 〕══╗`
         for (let _fm of matches) {
@@ -11491,7 +11494,7 @@ case 'laligaupcoming': {
     await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
     try {
         await reply('📅 _Fetching La Liga matches..._')
-        let matches = await _getFixtures('laliga', `https://api.giftedtech.co.ke/api/football/laliga/upcoming?apikey=${_giftedKey()}`)
+        let matches = await _getFixtures('laliga', `${_GTAPI}/api/football/laliga/upcoming?apikey=${_giftedKey()}`)
         if (!matches?.length) throw new Error('No data from any source')
         let msg = `╔══〔 📅 LA LIGA FIXTURES 〕══╗`
         for (let _fm of matches) {
@@ -11685,7 +11688,7 @@ case 'laligaupcoming': {
         await X.sendMessage(m.chat, { react: { text: '📅', key: m.key } })
         try {
             await reply('📅 _Fetching Ligue 1 matches..._')
-            let matches = await _getFixtures('ligue1', `https://api.giftedtech.co.ke/api/football/ligue1/upcoming?apikey=${_giftedKey()}`)
+            let matches = await _getFixtures('ligue1', `${_GTAPI}/api/football/ligue1/upcoming?apikey=${_giftedKey()}`)
             if (!matches?.length) throw new Error('No data')
             let msg = `╔══〔 📅 LIGUE 1 FIXTURES 〕══╗`
             for (let _fm of matches) {
@@ -12089,7 +12092,7 @@ case 'matches': {
     try {
         await reply('📅 _Fetching upcoming EPL fixtures..._')
         const _gKey = typeof _giftedKey === 'function' ? _giftedKey() : (global._giftedApiKey || '')
-        let _fxMatches = await _getFixtures('epl', `https://api.giftedtech.co.ke/api/football/epl/upcoming?apikey=${_gKey}`)
+        let _fxMatches = await _getFixtures('epl', `${_GTAPI}/api/football/epl/upcoming?apikey=${_gKey}`)
         if (!_fxMatches?.length) throw new Error('No fixtures found')
         let _fxMsg = `╔══〔 📅  UPCOMING EPL FIXTURES 〕══╗\n\n`
         for (let _fm of _fxMatches) {
@@ -13306,7 +13309,7 @@ case 'transcript': {
     // Use AssemblyAI free tier or GiftedTech
     let trResult = null
     try {
-      let _gr = await fetch(`https://api.giftedtech.co.ke/api/tools/speech2text?apikey=${_giftedKey()}&url=${encodeURIComponent(audioUrl)}`, { signal: AbortSignal.timeout(40000) })
+      let _gr = await fetch(`${_GTAPI}/api/tools/speech2text?apikey=${_giftedKey()}&url=${encodeURIComponent(audioUrl)}`, { signal: AbortSignal.timeout(40000) })
       let _gd = await _gr.json()
       if (_gd.success && _gd.result) trResult = _gd.result
     } catch {}
@@ -13807,7 +13810,7 @@ case 'mobiless': {
     await X.sendMessage(m.chat, { react: { text: '📱', key: m.key } })
     if (!q) return reply('❌ Usage: .ssphone https://example.com')
     try {
-        const _ss1 = await require('axios').get(GTAPI+'/api/tools/ssphone?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        const _ss1 = await require('axios').get(_GTAPI+'/api/tools/ssphone?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
         await X.sendMessage(from, { image: Buffer.from(_ss1.data), caption: '📱 *Mobile Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
     break
@@ -13817,7 +13820,7 @@ case 'tabletss': {
     await X.sendMessage(m.chat, { react: { text: '📟', key: m.key } })
     if (!q) return reply('❌ Usage: .sstab https://example.com')
     try {
-        const _ss2 = await require('axios').get(GTAPI+'/api/tools/sstab?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        const _ss2 = await require('axios').get(_GTAPI+'/api/tools/sstab?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
         await X.sendMessage(from, { image: Buffer.from(_ss2.data), caption: '📟 *Tablet Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
     break
@@ -13827,7 +13830,7 @@ case 'desktopss': {
     await X.sendMessage(m.chat, { react: { text: '🖥️', key: m.key } })
     if (!q) return reply('❌ Usage: .sspc https://example.com')
     try {
-        const _ss3 = await require('axios').get(GTAPI+'/api/tools/sspc?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
+        const _ss3 = await require('axios').get(_GTAPI+'/api/tools/sspc?apikey='+_giftedKey()+'&url='+encodeURIComponent(q.trim()), { responseType: 'arraybuffer', timeout: 30000 })
         await X.sendMessage(from, { image: Buffer.from(_ss3.data), caption: '🖥️ *Desktop Screenshot*\n🌐 ' + q.trim(), contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ Screenshot failed: ' + _e.message) }
     break
@@ -13843,7 +13846,7 @@ case 'makeqr': {
     const _qrText = q || m.quoted?.body
     if (!_qrText) return reply('❌ Usage: .createqr Your text or link here')
     try {
-        const _qrRes = await require('axios').get(GTAPI+'/api/tools/createqr?apikey='+_giftedKey()+'&query='+encodeURIComponent(_qrText), { responseType: 'arraybuffer', timeout: 20000 })
+        const _qrRes = await require('axios').get(_GTAPI+'/api/tools/createqr?apikey='+_giftedKey()+'&query='+encodeURIComponent(_qrText), { responseType: 'arraybuffer', timeout: 20000 })
         await X.sendMessage(from, { image: Buffer.from(_qrRes.data), caption: '📱 *QR Code*\n📝 ' + _qrText.slice(0,80) + (_qrText.length>80?'...':''), contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ QR generation failed: ' + _e.message) }
     break
@@ -13856,7 +13859,7 @@ case 'textpic': {
     await X.sendMessage(m.chat, { react: { text: '🖼️', key: m.key } })
     if (!q) return reply('❌ Usage: .ttp Your text here')
     try {
-        const _ttpRes = await require('axios').get(GTAPI+'/api/tools/ttp?apikey='+_giftedKey()+'&query='+encodeURIComponent(q), { responseType: 'arraybuffer', timeout: 20000 })
+        const _ttpRes = await require('axios').get(_GTAPI+'/api/tools/ttp?apikey='+_giftedKey()+'&query='+encodeURIComponent(q), { responseType: 'arraybuffer', timeout: 20000 })
         await X.sendMessage(from, { image: Buffer.from(_ttpRes.data), caption: '🖼️ ' + q.slice(0,60), contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ TTP failed: ' + _e.message) }
     break
@@ -13869,7 +13872,7 @@ case 'fancytext': {
     await X.sendMessage(m.chat, { react: { text: '✨', key: m.key } })
     if (!q) return reply('❌ Usage: .fancy Your text')
     try {
-        const _fRes = await giftedFetch(GTAPI+'/api/tools/fancy?apikey={KEY}&query='+encodeURIComponent(q))
+        const _fRes = await giftedFetch(_GTAPI+'/api/tools/fancy?apikey={KEY}&query='+encodeURIComponent(q))
         if (!_fRes?.result) return reply('❌ No results from API.')
         const _fOut = Array.isArray(_fRes.result) ? _fRes.result.join('\n') : String(_fRes.result)
         reply('✨ *Fancy Text*\n\n' + _fOut)
@@ -13885,7 +13888,7 @@ case 'meaning': {
     await X.sendMessage(m.chat, { react: { text: '📖', key: m.key } })
     if (!q) return reply('❌ Usage: .define word')
     try {
-        const _dRes = await giftedFetch(GTAPI+'/api/tools/define?apikey={KEY}&query='+encodeURIComponent(q))
+        const _dRes = await giftedFetch(_GTAPI+'/api/tools/define?apikey={KEY}&query='+encodeURIComponent(q))
         if (!_dRes?.result) return reply('❌ No definition found for *' + q + '*')
         const _dOut = typeof _dRes.result==='object' ? JSON.stringify(_dRes.result,null,2).slice(0,1500) : String(_dRes.result)
         reply('📖 *' + q.toUpperCase() + '*\n\n' + _dOut)
@@ -13901,7 +13904,7 @@ case 'mixemoji': {
     if (!q || !q.includes(' ')) return reply('❌ Usage: .emojimix 😀 😂')
     const [_e1, _e2] = q.trim().split(/\s+/)
     try {
-        const _emRes = await require('axios').get(GTAPI+'/api/tools/emojimix?apikey='+_giftedKey()+'&emoji1='+encodeURIComponent(_e1)+'&emoji2='+encodeURIComponent(_e2), { responseType: 'arraybuffer', timeout: 15000 })
+        const _emRes = await require('axios').get(_GTAPI+'/api/tools/emojimix?apikey='+_giftedKey()+'&emoji1='+encodeURIComponent(_e1)+'&emoji2='+encodeURIComponent(_e2), { responseType: 'arraybuffer', timeout: 15000 })
         await X.sendMessage(from, { image: Buffer.from(_emRes.data), caption: '🎨 *Emoji Mix* ' + _e1 + ' + ' + _e2, contextInfo: global.getCtxInfo() }, { quoted: m })
     } catch(_e) { reply('❌ Emoji mix failed: ' + _e.message) }
     break
@@ -13990,7 +13993,7 @@ case 'spoti': {
     await X.sendMessage(m.chat, { react: { text: '🎧', key: m.key } })
     if (!q) return reply('❌ Usage: .spotify <URL or song name>')
     try {
-        const _spRes = await giftedFetch(GTAPI+'/api/download/spotifydl?apikey={KEY}&url='+encodeURIComponent(q))
+        const _spRes = await giftedFetch(_GTAPI+'/api/download/spotifydl?apikey={KEY}&url='+encodeURIComponent(q))
         if (!_spRes?.result?.download_url) throw new Error(_spRes?.message || 'No download URL returned')
         const { title, download_url } = _spRes.result
         await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (title||q) + '*...' })
@@ -14008,7 +14011,7 @@ case 'ydl': {
     await X.sendMessage(m.chat, { react: { text: '📽️', key: m.key } })
     if (!q) return reply('❌ Usage: .ytv <video URL or title>')
     try {
-        const _ytvRes = await giftedFetch(GTAPI+'/api/download/youtubevideo?apikey={KEY}&url='+encodeURIComponent(q))
+        const _ytvRes = await giftedFetch(_GTAPI+'/api/download/youtubevideo?apikey={KEY}&url='+encodeURIComponent(q))
         if (!_ytvRes?.result?.download_url) throw new Error(_ytvRes?.message || 'No download URL')
         const { title, download_url, duration } = _ytvRes.result
         await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (title||q) + '* ' + (duration?'('+duration+')':'') })
@@ -14027,7 +14030,7 @@ case 'gdl': {
     if (!q) return reply('❌ Usage: .gdrive <Google Drive link>')
     if (!q.includes('drive.google.com') && !q.includes('docs.google.com')) return reply('❌ Provide a valid Google Drive link.')
     try {
-        const _gdRes = await giftedFetch(GTAPI+'/api/download/gdrive?apikey={KEY}&url='+encodeURIComponent(q))
+        const _gdRes = await giftedFetch(_GTAPI+'/api/download/gdrive?apikey={KEY}&url='+encodeURIComponent(q))
         if (!_gdRes?.result?.download_url) throw new Error(_gdRes?.message || 'No download URL')
         const { name, download_url, size, mime } = _gdRes.result
         await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (name||'file') + '* from Google Drive...' })
@@ -14046,7 +14049,7 @@ case 'mediafiredl': {
     if (!q) return reply('❌ Usage: .mediafire <Mediafire link>')
     if (!q.includes('mediafire.com')) return reply('❌ Provide a valid Mediafire link.')
     try {
-        const _mfRes = await giftedFetch(GTAPI+'/api/download/mediafiredl?apikey={KEY}&url='+encodeURIComponent(q))
+        const _mfRes = await giftedFetch(_GTAPI+'/api/download/mediafiredl?apikey={KEY}&url='+encodeURIComponent(q))
         if (!_mfRes?.result?.download_url) throw new Error(_mfRes?.message || 'No download URL')
         const { name, download_url, size, mime } = _mfRes.result
         await X.sendMessage(m.chat, { text: '⬇️ Downloading *' + (name||'file') + '* from Mediafire...' })
