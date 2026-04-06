@@ -2004,41 +2004,20 @@ X.ev.on('call', async (callData) => {
                   const _mType  = ['imageMessage','videoMessage','audioMessage','documentMessage','stickerMessage']
                                   .find(k => _msg[k])
 
-                  // ── Resolve chat name ────────────────────────────────────────────
-                  let _chatName = _chatJid
-                  try {
-                      if (_chatJid.endsWith('@g.us')) {
-                          const _meta = await X.groupMetadata(_chatJid).catch(() => null)
-                          _chatName = _meta?.subject || _chatJid.split('@')[0]
-                      } else {
-                          _chatName = 'Private Chat'
-                      }
-                  } catch {}
+                  // ── Notification (original format) ──────────────────────────────
+                  const _notif =
+                      `╔══════〔 🗑️ ANTI-DELETE 〕══════╗\n║ 🗑️ Deleted by : ${_delDisplay}\n` +
+                      (!_sameDeleter ? `║ 📤 Sender    : ${_origDisplay}\n` : ``) +
+                      `║ 🕐 Time      : ${_ts}\n` +
+                      `  *DELETED MESSAGE:*`
 
-                  // ── Notification — attachment-style format ────────────────────────
-                  const _now2      = new Date()
-                  const _timeSent  = _now2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-                  const _dateSent  = _now2.toLocaleDateString('en-GB')
-                  const _senderNum = _origSenderJid.split('@')[0].replace(/\D/g,'')
-                  const _delNum    = _deleterJid.split('@')[0].replace(/\D/g,'')
-
-                  const _header =
-`🗑️ *DELETED MESSAGE*
-━━━━━━━━━━━━━━━━━━━━━━
-💬 *Chat:* ${_chatName}
-👤 *Sent by:* @${_senderNum}
-🕐 *Time:* ${_timeSent}
-📅 *Date:* ${_dateSent}
-❌ *Deleted by:* @${_delNum}
-━━━━━━━━━━━━━━━━━━━━━━`
-
-                  const _mentions = [...new Set([_origSenderJid, _deleterJid].filter(Boolean))]
+                  const _mentions = [...new Set([_deleterJid, _origSenderJid].filter(Boolean))]
 
                   if (!_mType) {
-                      // Text-only deleted message
+                      // Text-only — send notification + message body together
                       for (const _dest of _targets) {
                           await X.sendMessage(_dest, {
-                              text: _header + (_body ? `\n\n💬 *Message:* ${_body}` : ''),
+                              text: _notif + (_body ? `\n  ${_body}` : `\n  [no content]`),
                               mentions: _mentions
                           }).catch(() => {})
                       }
@@ -2059,17 +2038,18 @@ X.ev.on('call', async (callData) => {
                       if (_cachedPath && fs.existsSync(_cachedPath)) {
                           try {
                               const _buf = fs.readFileSync(_cachedPath)
-                              const _cap = _header + (_body ? `\n\n📝 *Caption:* ${_body}` : '')
+                              // Build caption: notification header + original caption if any
+                              const _mediaCap = _notif + (_body ? `\n  ${_body}` : '')
                               const _so =
-                                  _mType === 'imageMessage'    ? { image: _buf, caption: _cap, mimetype: _mime || 'image/jpeg', mentions: _mentions } :
-                                  _mType === 'videoMessage'    ? { video: _buf, caption: _cap, mimetype: _mime || 'video/mp4', mentions: _mentions } :
+                                  _mType === 'imageMessage'    ? { image: _buf, caption: _mediaCap, mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                  _mType === 'videoMessage'    ? { video: _buf, caption: _mediaCap, mimetype: _mime || 'video/mp4', mentions: _mentions } :
                                   _mType === 'audioMessage'    ? { audio: _buf, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
-                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', caption: _header } :
+                                  _mType === 'documentMessage' ? { document: _buf, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file', caption: _notif } :
                                   _mType === 'stickerMessage'  ? { sticker: _buf } : null
                               if (_so) {
                                   for (const _dest of _targets) await X.sendMessage(_dest, _so).catch(() => {})
                                   if (_mType === 'audioMessage' || _mType === 'stickerMessage') {
-                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _header + (_mType === 'stickerMessage' ? '\n\n💬 *Message:* [Sticker]' : ''), mentions: _mentions }).catch(() => {})
+                                      for (const _dest of _targets) await X.sendMessage(_dest, { text: _notif, mentions: _mentions }).catch(() => {})
                                   }
                                   _sent = true
                               }
@@ -2092,8 +2072,8 @@ X.ev.on('call', async (callData) => {
                               if (_path2) {
                                   const _buf2 = fs.readFileSync(_path2)
                                   const _so2 =
-                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _body || '', mimetype: _mime || 'image/jpeg' } :
-                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _body || '', mimetype: _mime || 'video/mp4'  } :
+                                      _mType === 'imageMessage'    ? { image: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'image/jpeg', mentions: _mentions } :
+                                      _mType === 'videoMessage'    ? { video: _buf2, caption: _notif + (_body ? `\n  ${_body}` : ''), mimetype: _mime || 'video/mp4', mentions: _mentions } :
                                       _mType === 'audioMessage'    ? { audio: _buf2, mimetype: _mime || 'audio/ogg; codecs=opus', ptt: _isPtt } :
                                       _mType === 'documentMessage' ? { document: _buf2, mimetype: _mime || 'application/octet-stream', fileName: _mObj.fileName || 'file' } :
                                       _mType === 'stickerMessage'  ? { sticker: _buf2 } : null
