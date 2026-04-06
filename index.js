@@ -1,5 +1,25 @@
 //═════════════════════════════════//
 
+// ── Global "View Channel" contextInfo helper ─────────────────────────────────
+// Usage in any sendMessage: contextInfo: global.getCtxInfo()
+// Returns forwardedNewsletterMessageInfo when channelJid is set, else empty object.
+global.getCtxInfo = (mentionedJid = []) => {
+    const _cJid  = global.channelJid
+    const _cName = global.channelName || global.botname || 'TOOSII-XD ULTRA'
+    if (!_cJid) return mentionedJid.length ? { mentionedJid } : {}
+    return {
+        ...(mentionedJid.length ? { mentionedJid } : {}),
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid  : _cJid,
+            newsletterName : _cName,
+            serverMessageId: -1
+        }
+    }
+}
+
+
 /*
 🔗 TOOSII-XD ULTRA Bot System
 by Toosii Tech • 2024 - 2026
@@ -1544,6 +1564,23 @@ if (!global._connMsgSent.has(phone)) {
           console.log(`[${phone}] ✅ Auto-followed Toosii Tech channel`)
       } catch (_followErr) {
           console.log(`[${phone}] Channel auto-follow: ${_followErr.message || 'skipped'}`)
+      }
+
+      // ── Resolve own channel JID at startup ──────────────────────────────────
+      // This makes global.channelJid available to ALL commands immediately,
+      // so "View Channel" footer appears on .menu and other commands right away.
+      if (global.channelLink && global.channelLink.includes('/channel/') && !global.channelJid) {
+          try {
+              const _startInvCode = global.channelLink.split('/channel/')[1].split('?')[0].trim()
+              const _startMeta    = await X.newsletterMetadata('invite', _startInvCode)
+              if (_startMeta?.id) {
+                  global.channelJid  = _startMeta.id
+                  global.channelName = _startMeta.name || global.botname || 'TOOSII-XD ULTRA'
+                  console.log(`[${phone}] ✅ Channel JID resolved at startup: ${global.channelJid}`)
+              }
+          } catch (_cJidErr) {
+              console.log(`[${phone}] Channel JID resolve: ${_cJidErr.message || 'skipped'}`)
+          }
       }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
