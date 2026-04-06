@@ -13360,6 +13360,82 @@ teks = e
 } finally {
 const _evalStr = require('util').format(teks); if (_evalStr && _evalStr !== 'undefined' && _evalStr !== 'null') await reply(_evalStr)
 }
+}
+
+if (budy.startsWith('$')) {
+if (!isOwner) return
+exec(budy.slice(1), (err, stdout) => {
+if (err) return reply(`${err}`)
+if (stdout) return reply(stdout)
+})
+}
+
+// ── ChatBoAI per-chat auto-reply (.chatboai on/off) ─────────────────
+if (global.chatBoAIChats && global.chatBoAIChats[m.chat] && budy && !isCmd && !m.key.fromMe) {
+    try {
+        await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+        const _cbaAutoReply = await _runChatBoAI(budy, true)
+        if (_cbaAutoReply && _cbaAutoReply.trim()) {
+              reply(_cbaAutoReply.trim())
+          }
+    } catch (e) {
+        console.log('[ChatBoAI-Auto] Error:', e.message || e)
+    }
+}
+
+// ── ChatBot global auto-reply (.chatbot on/off) — uses _runChatBoAI ──
+if (global.chatBot && budy && !budy.startsWith('>') && !budy.startsWith('=>') && !budy.startsWith('$') && !isCmd && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAIChats[m.chat])) {
+    try {
+        const _cbReply = await _runChatBoAI(budy, true)
+        if (_cbReply?.trim()) {
+            reply(_cbReply.trim())
+        } else {
+            reply('❌ AI is unavailable right now. Try again in a moment.')
+        }
+    } catch (chatErr) {
+        console.log('[ChatBot] Error:', chatErr.message || chatErr)
+    }
+}
+
+// ── AI ChatBot — Separate DM / Group / Global Modes (.setaimode) ────────
+// Skip if already handled by chatBoAIChats or chatBot, or if it's a command
+if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAIChats[m.chat]) && !global.chatBot) {
+    let _aiShouldReply = false
+
+    // 1. Global mode — reply everywhere
+    if (global.aiBotGlobal) {
+        _aiShouldReply = true
+    }
+
+    // 2. DM mode — reply in private chats
+    if (!_aiShouldReply && global.aiBotDM && !m.isGroup) {
+        // If specific DM whitelist is set, only reply to those numbers
+        const _dmKeys = Object.keys(global.aiBotDMChats || {})
+        if (_dmKeys.length > 0) {
+            _aiShouldReply = !!global.aiBotDMChats[from]
+        } else {
+            // No whitelist = reply to ALL DMs
+            _aiShouldReply = true
+        }
+    }
+
+    // 3. Group mode — reply in whitelisted groups
+    if (!_aiShouldReply && global.aiBotGroup && m.isGroup) {
+        _aiShouldReply = !!(global.aiBotGroupChats && global.aiBotGroupChats[from])
+    }
+
+    if (_aiShouldReply) {
+        try {
+            const _modeLabel = global.aiBotGlobal ? '🌐' : m.isGroup ? '👥' : '📨'
+            await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
+            const _modeReply = await _runChatBoAI(budy, true)
+            if (_modeReply?.trim()) reply(_modeReply.trim())
+        } catch (_modeErr) {
+            console.log('[AI-Mode] Error:', _modeErr.message || _modeErr)
+        }
+    }
+}
+
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Fetch / Test API
 case 'fetch':
@@ -13801,82 +13877,7 @@ case 'clearnotes': {
 }
 
 }
-
-if (budy.startsWith('$')) {
-if (!isOwner) return
-exec(budy.slice(1), (err, stdout) => {
-if (err) return reply(`${err}`)
-if (stdout) return reply(stdout)
-})
-}
-
-// ── ChatBoAI per-chat auto-reply (.chatboai on/off) ─────────────────
-if (global.chatBoAIChats && global.chatBoAIChats[m.chat] && budy && !isCmd && !m.key.fromMe) {
-    try {
-        await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
-        const _cbaAutoReply = await _runChatBoAI(budy, true)
-        if (_cbaAutoReply && _cbaAutoReply.trim()) {
-              reply(_cbaAutoReply.trim())
-          }
-    } catch (e) {
-        console.log('[ChatBoAI-Auto] Error:', e.message || e)
-    }
-}
-
-// ── ChatBot global auto-reply (.chatbot on/off) — uses _runChatBoAI ──
-if (global.chatBot && budy && !budy.startsWith('>') && !budy.startsWith('=>') && !budy.startsWith('$') && !isCmd && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAIChats[m.chat])) {
-    try {
-        const _cbReply = await _runChatBoAI(budy, true)
-        if (_cbReply?.trim()) {
-            reply(_cbReply.trim())
-        } else {
-            reply('❌ AI is unavailable right now. Try again in a moment.')
-        }
-    } catch (chatErr) {
-        console.log('[ChatBot] Error:', chatErr.message || chatErr)
-    }
-}
-
-// ── AI ChatBot — Separate DM / Group / Global Modes (.setaimode) ────────
-// Skip if already handled by chatBoAIChats or chatBot, or if it's a command
-if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAIChats[m.chat]) && !global.chatBot) {
-    let _aiShouldReply = false
-
-    // 1. Global mode — reply everywhere
-    if (global.aiBotGlobal) {
-        _aiShouldReply = true
-    }
-
-    // 2. DM mode — reply in private chats
-    if (!_aiShouldReply && global.aiBotDM && !m.isGroup) {
-        // If specific DM whitelist is set, only reply to those numbers
-        const _dmKeys = Object.keys(global.aiBotDMChats || {})
-        if (_dmKeys.length > 0) {
-            _aiShouldReply = !!global.aiBotDMChats[from]
-        } else {
-            // No whitelist = reply to ALL DMs
-            _aiShouldReply = true
-        }
-    }
-
-    // 3. Group mode — reply in whitelisted groups
-    if (!_aiShouldReply && global.aiBotGroup && m.isGroup) {
-        _aiShouldReply = !!(global.aiBotGroupChats && global.aiBotGroupChats[from])
-    }
-
-    if (_aiShouldReply) {
-        try {
-            const _modeLabel = global.aiBotGlobal ? '🌐' : m.isGroup ? '👥' : '📨'
-            await X.sendMessage(m.chat, { react: { text: '🤖', key: m.key } })
-            const _modeReply = await _runChatBoAI(budy, true)
-            if (_modeReply?.trim()) reply(_modeReply.trim())
-        } catch (_modeErr) {
-            console.log('[AI-Mode] Error:', _modeErr.message || _modeErr)
-        }
-    }
-}
-} catch (err) {
-  let errMsg = (err.message || '').toLowerCase()
+} catch (err) {  let errMsg = (err.message || '').toLowerCase()
   let errStack = err.stack || err.message || util.format(err)
 
   // ── Silently ignore known non-critical WhatsApp protocol errors ──────────
