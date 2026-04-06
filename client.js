@@ -4734,9 +4734,25 @@ case 'announce':
 case 'sendupdate': {
     await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
     if (!isOwner) return reply(mess.OnlyOwner)
-    const _chJid  = global.channelJid
+    let _chJid   = global.channelJid
     const _chLink = global.channelLink || global.sessionUrl
-    if (!_chJid) return reply(`❌ *Channel JID not set!*\n\nAdd this to *setting.js*:\nglobal.channelJid = "120363XXXXXXXXXX@newsletter"`)
+
+    // Auto-resolve newsletter JID from invite link — no manual JID needed
+    if (!_chJid && _chLink && _chLink.includes('/channel/')) {
+        try {
+            const _invCode = _chLink.split('/channel/')[1].split('?')[0].trim()
+            const _chMeta  = await X.newsletterMetadata('invite', _invCode)
+            if (_chMeta?.id) {
+                _chJid = _chMeta.id
+                global.channelJid = _chJid   // cache so next call is instant
+                console.log('✅ Channel JID auto-resolved:', _chJid)
+            }
+        } catch (e) {
+            console.error('⚠️ Channel JID resolve failed:', e.message)
+        }
+    }
+
+    if (!_chJid) return reply(`❌ *Could not resolve Channel JID*\n\nCheck that *channelLink* in setting.js is correct:\n${_chLink || 'not set'}`)
 
     const _announcement =
 `🤖 *TOOSII-XD ULTRA — Bot Update*
@@ -4767,8 +4783,10 @@ Your bot will automatically pull the latest version from GitHub and restart with
         // Fetch channel metadata for the native "View Channel" card
         let _chThumb = null
         try {
-            const _chMeta = await X.newsletterMetadata('invite', _chJid.replace('@newsletter',''))
-                .catch(() => X.newsletterMetadata('jid', _chJid).catch(() => null))
+            const _invCode2 = _chLink?.split('/channel/')?.[1]?.split('?')[0]?.trim()
+            const _chMeta   = _invCode2
+                ? await X.newsletterMetadata('invite', _invCode2).catch(() => X.newsletterMetadata('jid', _chJid).catch(() => null))
+                : await X.newsletterMetadata('jid', _chJid).catch(() => null)
             if (_chMeta?.picture) {
                 const _thumbRes = await fetch(_chMeta.picture).catch(() => null)
                 if (_thumbRes?.ok) {
