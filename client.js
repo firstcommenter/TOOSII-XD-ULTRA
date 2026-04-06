@@ -597,8 +597,6 @@ if (!X._botSentTracked) {
     }
 }
 const from = m.key.remoteJid
-// Skip bot's own sent messages (prevents self-reply loops) but allow owner via linked device
-if (m.key.fromMe && global._botSentIds?.has(m.key.id)) return
 var body = (m.mtype === 'interactiveResponseMessage') ? JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id : (m.mtype === 'conversation') ? m.message.conversation : (m.mtype == 'imageMessage') ? m.message.imageMessage.caption : (m.mtype == 'videoMessage') ? m.message.videoMessage.caption : (m.mtype == 'extendedTextMessage') ? m.message.extendedTextMessage.text : (m.mtype == 'buttonsResponseMessage') ? m.message.buttonsResponseMessage.selectedButtonId : (m.mtype == 'listResponseMessage') ? m.message.listResponseMessage.singleSelectReply.selectedRowId : (m.mtype == 'templateButtonReplyMessage') ? m.message.templateButtonReplyMessage.selectedId : (m.mtype == 'messageContextInfo') ? (m.message.buttonsResponseMessage?.selectedButtonId || m.message.listResponseMessage?.singleSelectReply?.selectedRowId || m.text) : ""
 body = body || m.body || m.text || ""
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -616,6 +614,8 @@ const prefixRegex = /^[°zZ#$@*+,.?=''():√%!¢£¥€π¤ΠΦ_&><`™©®Δ^β
 const _bpDefined = global.botPrefix !== undefined && global.botPrefix !== null; const prefix = _bpDefined ? (global.botPrefix || '') : (prefixRegex.test(budy) ? budy.match(prefixRegex)[0] : '.');
 const isCmd = _bpDefined ? (global.botPrefix === '' ? true : budy.startsWith(global.botPrefix)) : budy.startsWith(prefix);
 const command = (isCmd ? budy.slice(prefix.length).trim().split(' ').shift().toLowerCase() : '').replace(/^[^a-z0-9]+$/, '') // ignore dot-only non-commands like '...'
+// fromMe + not a command = bot's own reply echoed back — skip to prevent loops
+if (m.key.fromMe && !isCmd) return
 const args = isCmd
   ? budy.slice(prefix.length).trim().split(/ +/).slice(1)
   : budy.trim().split(/ +/).slice(1)
