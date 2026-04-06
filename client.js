@@ -13435,7 +13435,6 @@ if (!isCmd && budy && !m.key.fromMe && !(global.chatBoAIChats && global.chatBoAI
         }
     }
 }
-}
 
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
@@ -13878,6 +13877,7 @@ case 'clearnotes': {
     break
 }
 
+}
 } catch (err) {
   let errMsg = (err.message || '').toLowerCase()
   let errStack = err.stack || err.message || util.format(err)
