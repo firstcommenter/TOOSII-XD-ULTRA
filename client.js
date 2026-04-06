@@ -13502,24 +13502,6 @@ case 'savesettings': {
     } catch(_se) { reply('❌ ' + _se.message) }
     break
 }
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Tag Everyone
-case 'everyone':
-case 'tag':
-case 'all':
-case 'mention': {
-    if (!isGroup) return reply('❌ Groups only.')
-    if (!isAdmin && !isOwner) return reply('❌ Admins only.')
-    await X.sendMessage(m.chat, { react: { text: '📢', key: m.key } })
-    try {
-        const _meta = await getGroupMetadata(X, from)
-        const _jids = _meta.participants.map(p => p.id)
-        const _mentions = _jids.map(j => '@' + j.split('@')[0]).join(' ')
-        const _msg = q ? q + '\n\n' + _mentions : _mentions
-        await X.sendMessage(from, { text: _msg, mentions: _jids, contextInfo: global.getCtxInfo(_jids) }, { quoted: m })
-    } catch(_e) { reply('❌ ' + _e.message) }
-    break
-}
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Hidden Tag
@@ -13623,19 +13605,6 @@ case 'denyall': {
     break
 }
 
-//━━━━━━━━━━━━━━━━━━━━━━━━//
-// Create New Group
-case 'newgroup':
-case 'creategc': {
-    if (!isOwner) return reply('❌ Owner only.')
-    if (!q) return reply('❌ Usage: .newgroup Group Name')
-    await X.sendMessage(m.chat, { react: { text: '🆕', key: m.key } })
-    try {
-        const _gc = await X.groupCreate(q.trim(), [m.sender])
-        reply('✅ Group *' + q.trim() + '* created!\nID: ' + (_gc.gid||_gc.id||'unknown'))
-    } catch(_e) { reply('❌ ' + _e.message) }
-    break
-}
 
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Set Group Name
@@ -13732,17 +13701,6 @@ case 'addsudo': {
     global.sudo.push(_sudoNum)
     try { require('./library/settings').saveSettings() } catch {}
     reply('✅ @' + _sudoNum + ' added as sudo (sub-owner).', null, [_sudoNum+'@s.whatsapp.net'])
-    break
-}
-case 'delsudo':
-case 'remsudo': {
-    if (!isOwner) return reply('❌ Owner only.')
-    const _delNum = (m.quoted?.sender || (q?q.replace(/[^0-9]/g,''):'')).replace('@s.whatsapp.net','')
-    if (!_delNum) return reply('❌ Quote or provide a number.')
-    if (!global.sudo?.includes(_delNum)) return reply('❌ Not in sudo list.')
-    global.sudo = global.sudo.filter(n => n !== _delNum)
-    try { require('./library/settings').saveSettings() } catch {}
-    reply('✅ @' + _delNum + ' removed from sudo.', null, [_delNum+'@s.whatsapp.net'])
     break
 }
 case 'getsudo':
