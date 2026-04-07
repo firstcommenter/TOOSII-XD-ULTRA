@@ -7259,11 +7259,23 @@ case 'sudo': {
             || (m.quoted && m.quoted.sender)
             || (args[1] && args[1].replace(/\D/g,'') + '@s.whatsapp.net')
         if (!_sdTarget || _sdTarget === '@s.whatsapp.net') return reply(`╔══〔 🛡️ ADD SUDO 〕══════╗\n\n║ Usage: *${prefix}sudo add @user*\n║ Or: *${prefix}sudo add 254xxxxxxx*\n║ Or reply to a message\n╚═══════════════════════╝`)
+        // Resolve @lid to real JID (newer WhatsApp accounts)
+        if (_sdTarget.endsWith('@lid')) {
+            try { const _lidR = await X.getJidFromLid(_sdTarget); if (_lidR) _sdTarget = _lidR } catch {}
+        }
+        const _sdTargetNum = _sdTarget.split('@')[0]
+        // Block adding the bot owner
+        if (global.owner?.includes(_sdTargetNum) || global.ownerNumber === _sdTargetNum) return reply(`❌ @${_sdTargetNum} is the bot owner and already has full access.`)
+        // Verify number exists on WhatsApp
+        try {
+            const [_sdWa] = await X.onWhatsApp(_sdTargetNum)
+            if (!_sdWa || !_sdWa.exists) return reply(`❌ The number *${_sdTargetNum}* is not registered on WhatsApp.`)
+        } catch { return reply(`⚠️ Could not verify if *${_sdTargetNum}* is on WhatsApp. Please try again.`) }
         let _sdList = _sdRead()
-        if (_sdList.includes(_sdTarget)) return reply(`⚠️ @${_sdTarget.split('@')[0]} is already a sudo user.`)
+        if (_sdList.some(u => u.split('@')[0] === _sdTargetNum)) return reply(`⚠️ @${_sdTargetNum} is already a sudo user.`)
         _sdList.push(_sdTarget)
         _sdWrite(_sdList)
-        await X.sendMessage(m.chat, { text: `╔══〔 ✅ SUDO ADDED 〕════╗\n\n║ 🛡️ @${_sdTarget.split('@')[0]} is now a *sudo user*!\n║ Total: ${_sdList.length} user(s)\n║\n║ ⚠️ *To make permanent* (survives restarts):\n║ Add to *SUDO_USERS* env var:\n║ ${_sdTarget.split('@')[0]}\n╚═══════════════════════╝`, mentions: [_sdTarget] }, { quoted: m })
+        await X.sendMessage(m.chat, { text: `╔══〔 ✅ SUDO ADDED 〕════╗\n\n║ 🛡️ @${_sdTargetNum} is now a *sudo user*!\n║ Total: ${_sdList.length} user(s)\n╚═══════════════════════╝`, mentions: [_sdTarget] }, { quoted: m })
 
     // .sudo remove / .sudo del @user
     } else if (_sdAction === 'remove' || _sdAction === 'del') {
@@ -7271,12 +7283,19 @@ case 'sudo': {
             || (m.quoted && m.quoted.sender)
             || (args[1] && args[1].replace(/\D/g,'') + '@s.whatsapp.net')
         if (!_sdTarget || _sdTarget === '@s.whatsapp.net') return reply(`╔══〔 🔓 REMOVE SUDO 〕═══╗\n\n║ Usage: *${prefix}sudo remove @user*\n║ Or: *${prefix}sudo remove 254xxxxxxx*\n║ Or reply to a message\n╚═══════════════════════╝`)
+        // Resolve @lid to real JID
+        if (_sdTarget.endsWith('@lid')) {
+            try { const _lidR = await X.getJidFromLid(_sdTarget); if (_lidR) _sdTarget = _lidR } catch {}
+        }
+        const _sdTargetNum = _sdTarget.split('@')[0]
+        // Block removing the bot owner
+        if (global.owner?.includes(_sdTargetNum) || global.ownerNumber === _sdTargetNum) return reply(`❌ Cannot remove the bot owner from sudo.`)
         let _sdList = _sdRead()
-        const _sdIdx = _sdList.indexOf(_sdTarget)
-        if (_sdIdx === -1) return reply(`⚠️ @${_sdTarget.split('@')[0]} is not a sudo user.`)
+        const _sdIdx = _sdList.findIndex(u => u.split('@')[0] === _sdTargetNum)
+        if (_sdIdx === -1) return reply(`⚠️ @${_sdTargetNum} is not a sudo user.`)
         _sdList.splice(_sdIdx, 1)
         _sdWrite(_sdList)
-        await X.sendMessage(m.chat, { text: `╔══〔 🔓 SUDO REMOVED 〕══╗\n\n║ @${_sdTarget.split('@')[0]} removed from *sudo*!\n║ Total sudo users: ${_sdList.length}\n╚═══════════════════════╝`, mentions: [_sdTarget] }, { quoted: m })
+        await X.sendMessage(m.chat, { text: `╔══〔 🔓 SUDO REMOVED 〕══╗\n\n║ @${_sdTargetNum} removed from *sudo*!\n║ Total sudo users: ${_sdList.length}\n╚═══════════════════════╝`, mentions: [_sdTarget] }, { quoted: m })
 
     } else {
         reply(`╔══〔 🛡️ SUDO MANAGER 〕══╗\n\n║ ${prefix}sudo           — list all sudo users\n║ ${prefix}sudo add @user  — grant sudo access\n║ ${prefix}sudo remove @user — revoke sudo access\n╠══〔 💡 TIPS 〕═══════════╣\n║ You can @mention, reply to a\n║ message, or use the number directly.\n╚═══════════════════════╝`)
