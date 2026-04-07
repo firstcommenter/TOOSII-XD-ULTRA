@@ -363,7 +363,7 @@ const util = require('util')
       // Source 1: Keith API (apiskeith.top)
       try {
           const _knd = await _keithFetch('/football/news')
-          const _kni = _knd?.data?.items || _knd?.items
+          const _kni = _knd?.result?.data?.items || _knd?.data?.items || _knd?.items
           if (Array.isArray(_kni) && _kni.length) return _kni.map(x => ({ title: x.title||'', summary: x.summary||'' }))
       } catch {}
       // Source 2: GiftedTech
@@ -13203,44 +13203,42 @@ case 'urban': {
 case 'gnews':
 case 'news': {
   await X.sendMessage(m.chat, { react: { text: '📰', key: m.key } })
-  let topic = text || 'Kenya'
   try {
-    await reply('📰 _Fetching news..._')
-    let r = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(topic)}&lang=en&max=5&apikey=free`, { signal: AbortSignal.timeout(15000) })
-    let d = await r.json()
-    // Fallback: use BBC RSS via rss2json
-    if (!d.articles || !d.articles.length) {
-      let r2 = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Fworld%2Fafricarsshttps://newsrss.bbc.co.uk/rss/newsonline_world_edition/africa/rss.xml`, { signal: AbortSignal.timeout(15000) })
-      let d2 = await r2.json()
-      if (d2.items && d2.items.length) {
-        let items = d2.items.slice(0, 5)
-        let body = `╔══〔 📰 LATEST NEWS 〕════╗\n`
-        items.forEach((item, i) => {
-          body += `║ *${i+1}. ${(item.title||'').slice(0,80)}*\n║    🔗 ${item.link || ''}\n`
-        })
-        body += `╚═══════════════════════╝`
-        return reply(body)
+    await reply('📰 _Fetching latest BBC news..._')
+    // Primary: Keith BBC news
+    const _nbd = await _keithFetch('/news/bbc')
+    const _nbs = _nbd?.result?.topStories || []
+    if (_nbs.length) {
+      // Send image of first story if available
+      const _nbFirst = _nbs[0]
+      if (_nbFirst.imageUrl && !_nbFirst.imageUrl.includes('grey-placeholder')) {
+        try { await X.sendMessage(m.chat, { image: { url: _nbFirst.imageUrl }, caption: `🔴 *${_nbFirst.isLive ? 'LIVE: ' : ''}${_nbFirst.title}*` }, { quoted: m }) } catch {}
       }
-    }
-    if (!d.articles || !d.articles.length) {
-      // Last fallback: use Google news RSS
-      let r3 = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fnews.google.com%2Frss%2Fsearch%3Fq%3D${encodeURIComponent(topic)}`, { signal: AbortSignal.timeout(15000) })
-      let d3 = await r3.json()
-      if (!d3.items || !d3.items.length) return reply(`❌ No news found for: *${topic}*`)
-      let body = `╔══〔 📰 NEWS: ${topic.toUpperCase()} 〕══╗\n`
-      d3.items.slice(0,5).forEach((item,i) => {
-        body += `║ *${i+1}. ${(item.title||'').slice(0,80)}*\n║    🔗 ${item.link||''}\n`
-      })
-      body += `╚═══════════════════════╝`
+      let body = `╔══〔 📰 BBC WORLD NEWS 〕══╗\n`
+      for (let a of _nbs.slice(0, 8)) {
+        const _nbTime = a.metadata?.time ? ` · ${a.metadata.time}` : ''
+        const _nbCat  = a.metadata?.category ? ` [${a.metadata.category}]` : ''
+        const _nbLive = a.isLive ? '🔴 LIVE — ' : ''
+        body += `\n${_nbLive}*${(a.title||'').slice(0,90)}*${_nbCat}\n`
+        if (a.description) body += `   _${a.description.slice(0,100)}_\n`
+        if (_nbTime) body += `   🕐${_nbTime}\n`
+        if (a.url) body += `   🔗 ${a.url}\n`
+      }
+      body += `\n╚═══════════════════════╝`
       return reply(body)
     }
-    let body = `╔══〔 📰 NEWS: ${topic.toUpperCase()} 〕══╗\n`
-    d.articles.slice(0,5).forEach((a,i) => {
-      body += `║ *${i+1}. ${(a.title||'').slice(0,80)}*\n║    🔗 ${a.url||''}\n`
+    // Fallback: Google News RSS via rss2json
+    const _nq = text?.trim() || 'Kenya'
+    const _nr = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://news.google.com/rss/search?q=' + _nq + '&hl=en')}`, { signal: AbortSignal.timeout(15000) })
+    const _nd = await _nr.json()
+    if (!_nd.items?.length) return reply('❌ No news found right now. Try again later.')
+    let body = `╔══〔 📰 NEWS: ${_nq.toUpperCase()} 〕══╗\n`
+    _nd.items.slice(0, 6).forEach((item, i) => {
+      body += `\n*${i+1}. ${(item.title||'').replace(/ - .+$/, '').slice(0,85)}*\n   🔗 ${item.link||''}\n`
     })
-    body += `╚═══════════════════════╝`
+    body += `\n╚═══════════════════════╝`
     reply(body)
-  } catch (e) { reply('❌ News fetch failed: ' + e.message) }
+  } catch (e) { reply('❌ News fetch failed. Try again later.') }
 } break
 
 
@@ -13402,12 +13400,16 @@ case 'news': {
       try {
           await reply('💻 _Fetching tech news..._')
           const _tnd = await _keithFetch('/news/tech')
-          const _tna = _tnd?.articles || _tnd?.items || (Array.isArray(_tnd) ? _tnd : [])
+          const _tna = _tnd?.result?.featuredArticles || _tnd?.result?.articles || _tnd?.articles || _tnd?.items || (Array.isArray(_tnd?.result) ? _tnd.result : [])
           if (!_tna.length) throw new Error('No data')
           let msg = `╔══〔 💻 TECH NEWS 〕══╗\n`
           for (let a of _tna.slice(0, 8)) {
-              msg += `\n🔷 *${a.title || a.name}*\n`
-              if (a.description || a.summary) msg += `   ${(a.description || a.summary || '').slice(0, 100)}...\n`
+              const _tnTitle = a.title || a.name || ''
+              const _tnDesc = (a.description || a.summary || '').trim()
+              const _tnLink = a.link || a.url || ''
+              msg += `\n🔷 *${_tnTitle}*\n`
+              if (_tnDesc) msg += `   _${_tnDesc.slice(0, 110)}_\n`
+              if (_tnLink) msg += `   🔗 ${_tnLink}\n`
           }
           msg += `\n╚═══════════════════════╝`
           await reply(msg)
@@ -13418,14 +13420,35 @@ case 'news': {
   case 'kenyannews': {
       await X.sendMessage(m.chat, { react: { text: '🇰🇪', key: m.key } })
       try {
+          if (text?.trim()) {
+              // Search mode: .kenyans [query]
+              await reply(`🔍 _Searching Kenyans.co.ke for "${text.trim()}"..._`)
+              const _ksd = await _keithFetch(`/news/kenyans/search?q=${encodeURIComponent(text.trim())}`)
+              const _ksr = _ksd?.result?.results || []
+              if (!_ksr.length) return reply(`❌ No results found for: *${text.trim()}*`)
+              let msg = `╔══〔 🔍 KENYANS SEARCH 〕══╗\n║ Query: *${text.trim()}*\n║ Found: ${_ksd?.result?.totalResults || _ksr.length} results\n`
+              for (let a of _ksr.slice(0, 6)) {
+                  msg += `\n📰 *${a.title}*\n`
+                  if (a.date) msg += `   📅 ${new Date(a.date).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}\n`
+                  if (a.excerpt) msg += `   _${a.excerpt.replace(/…/g,'').trim().slice(0, 100)}_\n`
+                  if (a.url) msg += `   🔗 ${a.url}\n`
+              }
+              msg += `\n╚═══════════════════════╝`
+              return reply(msg)
+          }
+          // Default: latest news
           await reply('🇰🇪 _Fetching Kenyans.co.ke news..._')
           const _knd = await _keithFetch('/news/kenyans')
-          const _kna = Array.isArray(_knd) ? _knd : (_knd?.articles || [])
+          const _kna = Array.isArray(_knd?.result) ? _knd.result : (_knd?.result?.articles || _knd?.articles || [])
           if (!_kna.length) throw new Error('No data')
-          let msg = `╔══〔 🇰🇪 KENYA NEWS 〕══╗\n`
+          let msg = `╔══〔 🇰🇪 KENYANS NEWS 〕══╗\n`
           for (let a of _kna.slice(0, 8)) {
-              msg += `\n📰 *${a.title}*\n`
-              if (a.url) msg += `   🔗 ${a.url.slice(0, 60)}\n`
+              const _kCat = a.category ? `[${a.category}] ` : ''
+              const _kTitle = (a.title || '').replace(/^(Breaking News|News Just In|Latest News)/i, '').trim()
+              msg += `\n${_kCat ? `🔴 *${_kCat}*` : `📰`} *${_kTitle}*\n`
+              if (a.teaser) msg += `   _${a.teaser.slice(0, 100)}_\n`
+              if (a.date) msg += `   📅 ${a.date}\n`
+              if (a.url) msg += `   🔗 ${a.url}\n`
           }
           msg += `\n╚═══════════════════════╝`
           await reply(msg)
@@ -13433,7 +13456,56 @@ case 'news': {
   } break
 
 
-  
+
+case 'bbcnews':
+case 'bbc': {
+    await X.sendMessage(m.chat, { react: { text: '🌍', key: m.key } })
+    try {
+        await reply('🌍 _Fetching BBC World News..._')
+        const _bbd = await _keithFetch('/news/bbc')
+        const _bbs = _bbd?.result?.topStories || []
+        if (!_bbs.length) throw new Error('No data')
+        // Send thumbnail of first story with real image
+        const _bbImg = _bbs.find(a => a.imageUrl && !a.imageUrl.includes('grey-placeholder'))
+        if (_bbImg) {
+            try { await X.sendMessage(m.chat, { image: { url: _bbImg.imageUrl }, caption: `🔴 *${_bbImg.isLive ? 'LIVE: ' : ''}${_bbImg.title}*\n${_bbImg.description ? '_' + _bbImg.description + '_' : ''}` }, { quoted: m }) } catch {}
+        }
+        let msg = `╔══〔 🌍 BBC WORLD NEWS 〕══╗\n`
+        for (let a of _bbs.slice(0, 8)) {
+            const _bbCat = a.metadata?.category ? ` · ${a.metadata.category}` : ''
+            const _bbTime = a.metadata?.time ? ` · ${a.metadata.time}` : ''
+            const _bbLive = a.isLive ? '🔴 *LIVE* — ' : '📰 '
+            msg += `\n${_bbLive}*${(a.title||'').slice(0,90)}*${_bbCat}\n`
+            if (a.description) msg += `   _${a.description.slice(0,110)}_\n`
+            if (_bbTime) msg += `   🕐${_bbTime}\n`
+            if (a.url) msg += `   🔗 ${a.url}\n`
+        }
+        msg += `\n╚═══════════════════════╝`
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch BBC news. Try again later.') }
+} break
+
+case 'kbcnews':
+case 'kbc': {
+    await X.sendMessage(m.chat, { react: { text: '📺', key: m.key } })
+    try {
+        await reply('📺 _Fetching KBC Channel 1 news..._')
+        const _kbd = await _keithFetch('/news/kbc')
+        const _kbr = _kbd?.result || {}
+        const _kbItems = _kbr.breakingNews || _kbr.topStories || _kbr.latestNews || []
+        if (!_kbItems.length) throw new Error('No data')
+        let msg = `╔══〔 📺 KBC CHANNEL 1 NEWS 〕══╗\n║ 🌐 ${_kbr.baseUrl || 'kbctv.co.ke'}\n`
+        for (let a of _kbItems.slice(0, 8)) {
+            const _kbTitle = (a.title || a.text || '').trim()
+            if (!_kbTitle) continue
+            msg += `\n📌 *${_kbTitle.slice(0, 90)}*\n`
+            if (a.url && a.url !== _kbr.baseUrl) msg += `   🔗 ${a.url}\n`
+        }
+        msg += `\n╚═══════════════════════╝`
+        await reply(msg)
+    } catch(e) { reply('❌ Could not fetch KBC news. Try again later.') }
+} break
+
 case 'manga': {
   await X.sendMessage(m.chat, { react: { text: '📕', key: m.key } })
   if (!text) return reply(`╔══〔 📕 MANGA SEARCH 〕═══╗\n║ *Usage:* ${prefix}manga [title]\n║ Example: ${prefix}manga one piece\n╚═══════════════════════╝`)
