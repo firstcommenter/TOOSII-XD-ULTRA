@@ -9553,21 +9553,40 @@ try {
         return Buffer.from(await _r.arrayBuffer())
     }
 
-    // ── Method 1: GiftedTech removebgv2 (returns JSON with result URL) ──
+    // ── Helper: upload buffer to catbox, get public URL ─────────────
+    const _uploadCatbox = async (buf) => {
+        const _tmpP = require("path").join(__dirname, "tmp", `rbg_${Date.now()}.jpg`)
+        require('fs').writeFileSync(_tmpP, buf)
+        const url = await CatBox(_tmpP)
+        try { require('fs').unlinkSync(_tmpP) } catch {}
+        return url
+    }
+
+    // ── Method 1: Keith API removebg ─────────────────────────────────
     if (!_result) {
         try {
-            const _tmpG = require("path").join(__dirname, "tmp", `rbg_${Date.now()}.jpg`)
-            require('fs').writeFileSync(_tmpG, _rBuf)
-            const _catUrl = await CatBox(_tmpG)
-            try { require('fs').unlinkSync(_tmpG) } catch {}
+            const _kCatUrl = await _uploadCatbox(_rBuf)
+            if (_kCatUrl) {
+                const _kRbRes = await fetch(`https://apiskeith.top/ai/removebg?url=${encodeURIComponent(_kCatUrl)}`, { signal: AbortSignal.timeout(30000) })
+                const _kRbJson = await _kRbRes.json()
+                const _kRbUrl = _kRbJson?.result
+                if (_kRbUrl && typeof _kRbUrl === 'string' && _kRbUrl.startsWith('http')) {
+                    _result = await _dlImg(_kRbUrl)
+                }
+            }
+        } catch {}
+    }
+
+    // ── Method 2: GiftedTech removebgv2 (returns JSON with result URL) ──
+    if (!_result) {
+        try {
+            const _catUrl = await _uploadCatbox(_rBuf)
             if (_catUrl) {
                 const _gtRes = await fetch(`${_GTAPI}/api/tools/removebgv2?apikey=${_giftedKey()}&url=${encodeURIComponent(_catUrl)}`, { signal: AbortSignal.timeout(45000) })
                 const _ctype = _gtRes.headers.get('content-type') || ''
                 if (_ctype.includes('image')) {
-                    // Direct image response
                     _result = Buffer.from(await _gtRes.arrayBuffer())
                 } else {
-                    // JSON response — extract result URL and download it
                     const _gtJson = await _gtRes.json()
                     const _imgUrl = _gtJson?.result?.image_url || _gtJson?.result?.url || _gtJson?.result
                     if (_imgUrl && typeof _imgUrl === 'string' && _imgUrl.startsWith('http')) {
@@ -9578,7 +9597,7 @@ try {
         } catch {}
     }
 
-    // ── Method 2: Python rembg (local AI, no API limits) ─────────────
+    // ── Method 3: Python rembg (local AI, no API limits) ─────────────
     if (!_result) {
         try {
             const _os = require('os'), _path = require('path'), _cp = require('child_process')
@@ -9666,7 +9685,21 @@ case 'upscale': {
         if (!_hdBuf || _hdBuf.length < 100) throw new Error('Failed to download image')
         let _hdOutUrl = null
         let _hdOutBuf = null
-        // Source 1: waifu2x free API (no key required)
+        // Source 1: Keith API HD enhancer
+        try {
+            const _hdTmpP = require("path").join(__dirname, "tmp", `hd_${Date.now()}.jpg`)
+            require('fs').writeFileSync(_hdTmpP, _hdBuf)
+            const _hdCatUrl = await CatBox(_hdTmpP)
+            try { require('fs').unlinkSync(_hdTmpP) } catch {}
+            if (_hdCatUrl) {
+                const _hdKRes = await fetch(`https://apiskeith.top/ai/hd?url=${encodeURIComponent(_hdCatUrl)}`, { signal: AbortSignal.timeout(30000) })
+                const _hdKJson = await _hdKRes.json()
+                const _hdKUrl = Array.isArray(_hdKJson?.result) ? _hdKJson.result[0] : _hdKJson?.result
+                if (_hdKUrl && typeof _hdKUrl === 'string' && _hdKUrl.startsWith('http')) _hdOutUrl = _hdKUrl
+            }
+        } catch {}
+        // Source 2: waifu2x free API (no key required)
+        if (!_hdOutUrl) {
         try {
             const _fd = require('form-data')
             const _form = new _fd()
@@ -9677,7 +9710,8 @@ case 'upscale': {
             })
             if (_w?.output_url) _hdOutUrl = _w.output_url
         } catch {}
-        // Source 2: Jimp 2× upscale (always works — no API needed)
+        }
+        // Source 3: Jimp 2× upscale (always works — no API needed)
         if (!_hdOutUrl) {
             try {
                 const Jimp = require('jimp')
@@ -9701,23 +9735,25 @@ case 'imageedit':
 case 'imgfilter': {
     await X.sendMessage(m.chat, { react: { text: '🎨', key: m.key } })
     const _ieMsg = m.quoted || m
-    const _ieMime = _ieMsg?.message?.imageMessage?.mimetype || ''
-    if (!_ieMime.startsWith('image/')) return reply('❌ *Reply to an image* then use .imageedit [effect]\n\n*Effects:* grayscale | sepia | blur | sharpen | flip | rotate | vintage | bright | dark | cartoon')
-    const _ieEffect = (q?.trim() || text?.trim() || 'enhance').toLowerCase()
+    const _ieMime = _ieMsg?.message?.imageMessage?.mimetype || _ieMsg?.mimetype || ''
+    if (!_ieMime.startsWith('image/')) return reply(`❌ *Reply to an image* then use *${prefix}imageedit [prompt]*\n\n_Example:_ ${prefix}imageedit make it cartoon`)
+    const _iePrompt = (q?.trim() || text?.trim() || 'enhance')
     try {
-        await reply(`🎨 _Applying ${_ieEffect} effect..._`)
-        const _ieBuf = await X.downloadMediaMessage(_ieMsg)
-        const _ieB64 = _ieBuf.toString('base64')
-        const _ieRes = await fetch('https://apiskeith.top/images/edit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: _ieB64, effect: _ieEffect }),
-            signal: AbortSignal.timeout(40000)
-        })
-        const _ieData = await _ieRes.json()
-        const _ieUrl = _ieData?.result?.url || _ieData?.url || _ieData?.imageUrl
-        if (!_ieUrl) throw new Error('No edited image returned')
-        await safeSendMedia(m.chat, { image: { url: _ieUrl }, caption: `🎨 *Effect:* ${_ieEffect}` }, {}, { quoted: m })
+        await reply(`🎨 _Editing image: "${_iePrompt}"..._`)
+        const _ieBuf = await (m.quoted ? m.quoted.download() : X.downloadMediaMessage(_ieMsg))
+        // Upload to catbox for a public URL
+        const _ieTmpP = require("path").join(__dirname, "tmp", `ie_${Date.now()}.jpg`)
+        require('fs').writeFileSync(_ieTmpP, _ieBuf)
+        const _ieCatUrl = await CatBox(_ieTmpP)
+        try { require('fs').unlinkSync(_ieTmpP) } catch {}
+        if (!_ieCatUrl) throw new Error('Image upload failed')
+        // Keith imageedit — GET endpoint, returns raw image bytes
+        const _ieRes = await fetch(`https://apiskeith.top/ai/imageedit?q=${encodeURIComponent(_iePrompt)}&url=${encodeURIComponent(_ieCatUrl)}`, { signal: AbortSignal.timeout(45000) })
+        const _ieCtype = _ieRes.headers.get('content-type') || ''
+        if (!_ieRes.ok) throw new Error(`API error ${_ieRes.status}`)
+        const _ieFinalBuf = Buffer.from(await _ieRes.arrayBuffer())
+        if (_ieFinalBuf.length < 1000) throw new Error('Empty response from image editor')
+        await X.sendMessage(m.chat, { image: _ieFinalBuf, caption: `🎨 *Prompt:* ${_iePrompt}` }, { quoted: m })
     } catch(e) { reply(`❌ Image edit failed: ${e.message}`) }
 } break
 
@@ -13290,24 +13326,45 @@ case 'wallpaper': {
   if (!text) return reply(`╔══〔 🖼️ WALLPAPER 〕══════╗\n║ *Usage:* ${prefix}wallpaper [keyword]\n║ Example: ${prefix}wallpaper galaxy\n╚═══════════════════════╝`)
   try {
     await reply('🖼️ _Finding wallpaper..._')
-    // Try Unsplash random
-    let r = await fetch(`https://source.unsplash.com/1920x1080/?${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000), redirect: 'follow' })
-    if (r.ok) {
-      let buf = Buffer.from(await r.arrayBuffer())
-      if (buf.length > 5000) {
-        return await X.sendMessage(m.chat, {
-          image: buf,
-          caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Source: Unsplash\n╚═══════════════════════╝`
-        }, { quoted: m })
+    let _wpSent = false
+    // Source 1: Keith wallpaper (topic-aware results)
+    try {
+      const _wpRes = await fetch(`https://apiskeith.top/download/wallpaper?text=${encodeURIComponent(text)}&page=1`, { signal: AbortSignal.timeout(20000) })
+      const _wpJson = await _wpRes.json()
+      const _wpList = _wpJson?.result
+      if (Array.isArray(_wpList) && _wpList.length > 0) {
+        const _wpPick = _wpList[Math.floor(Math.random() * _wpList.length)]
+        const _wpImgs = _wpPick?.image
+        if (Array.isArray(_wpImgs) && _wpImgs.length > 0) {
+          const _wpImgUrl = _wpImgs[0]
+          const _wpBuf = await fetch(_wpImgUrl, { signal: AbortSignal.timeout(20000) }).then(async r => r.ok ? Buffer.from(await r.arrayBuffer()) : null).catch(() => null)
+          if (_wpBuf && _wpBuf.length > 5000) {
+            await X.sendMessage(m.chat, { image: _wpBuf, caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Source: Keith Wallpapers\n╚═══════════════════════╝` }, { quoted: m })
+            _wpSent = true
+          } else if (_wpImgUrl) {
+            await X.sendMessage(m.chat, { image: { url: _wpImgUrl }, caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Source: Keith Wallpapers\n╚═══════════════════════╝` }, { quoted: m })
+            _wpSent = true
+          }
+        }
       }
-    }
-    // Fallback: Picsum random
+    } catch {}
+    if (_wpSent) break
+    // Source 2: Unsplash
+    try {
+      let r = await fetch(`https://source.unsplash.com/1920x1080/?${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000), redirect: 'follow' })
+      if (r.ok) {
+        let buf = Buffer.from(await r.arrayBuffer())
+        if (buf.length > 5000) {
+          await X.sendMessage(m.chat, { image: buf, caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Source: Unsplash\n╚═══════════════════════╝` }, { quoted: m })
+          _wpSent = true
+        }
+      }
+    } catch {}
+    if (_wpSent) break
+    // Source 3: Picsum random
     let r2 = await fetch(`https://picsum.photos/1920/1080`, { signal: AbortSignal.timeout(20000), redirect: 'follow' })
     let buf2 = Buffer.from(await r2.arrayBuffer())
-    await X.sendMessage(m.chat, {
-      image: buf2,
-      caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Random HD wallpaper\n╚═══════════════════════╝`
-    }, { quoted: m })
+    await X.sendMessage(m.chat, { image: buf2, caption: `╔══〔 🖼️ WALLPAPER 〕══════╗\n║ 🔍 *Query:* ${text}\n║ 📸 Random HD wallpaper\n╚═══════════════════════╝` }, { quoted: m })
   } catch (e) { reply('❌ Wallpaper fetch failed: ' + e.message) }
 } break
 
