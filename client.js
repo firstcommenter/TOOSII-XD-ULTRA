@@ -1121,34 +1121,29 @@ if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromM
         if (_asmTriggered && !isOwner && !isSudo && !isAdmins) {
             const _asmAction = (global.antiStatusMentionGroups[from].action || 'warn').toLowerCase()
             const _asmSenderNum = sender.split('@')[0]
-            if (!global.statusMentionWarns) global.statusMentionWarns = {}
-            const _asmWarnKey = `${from}:${sender}`
+            // Always silently delete the status mention notification
             try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
             if (_asmAction === 'kick') {
+                // Kick: remove user, send one message
                 try {
                     await X.groupParticipantsUpdate(from, [sender], 'remove')
                     await X.sendMessage(from, { text: `🚫 *Anti Status Mention:* @${_asmSenderNum} was removed for tagging this group in their status.`, mentions: [sender] })
-                } catch {
-                    await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status! (Bot needs admin to kick)`, mentions: [sender] })
-                }
+                } catch { /* silent if kick fails */ }
             } else if (_asmAction === 'warn') {
+                // Warn: track silently, auto-kick at 3 with no announcement
+                if (!global.statusMentionWarns) global.statusMentionWarns = {}
+                const _asmWarnKey = `${from}:${sender}`
                 global.statusMentionWarns[_asmWarnKey] = (global.statusMentionWarns[_asmWarnKey] || 0) + 1
                 const _wCount = global.statusMentionWarns[_asmWarnKey]
-                const _maxW = 3
-                if (_wCount >= _maxW) {
+                console.log(`[ASM] warn ${_wCount}/3 for ${_asmSenderNum} in ${from}`)
+                if (_wCount >= 3) {
                     try {
                         await X.groupParticipantsUpdate(from, [sender], 'remove')
                         global.statusMentionWarns[_asmWarnKey] = 0
-                        await X.sendMessage(from, { text: `🚫 *Anti Status Mention:* @${_asmSenderNum} removed after ${_maxW} warnings for repeatedly tagging this group in status.`, mentions: [sender] })
-                    } catch {
-                        await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, final warning! Do not tag this group in your status.`, mentions: [sender] })
-                    }
-                } else {
-                    await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status. Warning ${_wCount}/${_maxW}.`, mentions: [sender] })
+                    } catch { /* silent */ }
                 }
-            } else {
-                await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status.`, mentions: [sender] })
             }
+            // delete mode: already deleted above, nothing else sent
         }
     } catch (_asmNErr) { console.log('[ASM-notif]', _asmNErr.message || _asmNErr) }
 }
