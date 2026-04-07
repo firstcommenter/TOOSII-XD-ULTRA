@@ -12424,6 +12424,7 @@ case 'antilinkgc': {
     if (!['on','off'].includes(_alcArg)) return reply(`╔══〔 🔗 ANTI GC LINK 〕══╗\n\n║ Usage: *${prefix}antilinkgc on/off*\n╚═══════════════════════╝`)
     if (!global.antilinkGcGroups) global.antilinkGcGroups = {}
     global.antilinkGcGroups[m.chat] = _alcArg === 'on'
+    try { require('./library/settings').saveSettings() } catch {}
     reply(`╔══〔 🔗  ANTI GC LINK 〕══╗\n\n║ ${_alcArg === 'on' ? '✅ *ENABLED* — group links will be removed.' : '❌ *DISABLED* — group links are allowed.'}\n╚═══════════════════════╝`)
 } break
 
