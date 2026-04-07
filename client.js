@@ -956,10 +956,13 @@ if (m.isGroup && !isAdmins && !isOwner) {
         await X.sendMessage(from, { text: `@${sender.split('@')[0]} group links are not allowed here!`, mentions: [sender] })
         return
     }
-    if (global.antiLink && m.isGroup && budy && isBotAdmins) {
-        const _alIsLink = /https?:\/\/[^\s]+/i.test(budy) ||
-            /(?:^|\s)www\.[a-z0-9-]+\.[a-z]{2,}[^\s]*/i.test(budy) ||
-            /(?:^|\s)(?:chat\.whatsapp\.com|wa\.me|t\.me|youtu\.be|bit\.ly|tinyurl\.com|goo\.gl)\/[^\s]*/i.test(budy)
+    if (global.antiLink && m.isGroup) {
+        const _alText = budy || m.body || m.text || m.message?.extendedTextMessage?.text || m.message?.conversation || ''
+        const _alIsLink = _alText && (
+            /https?:\/\/[^\s]+/i.test(_alText) ||
+            /(?:^|\s)www\.[a-z0-9-]+\.[a-z]{2,}[^\s]*/i.test(_alText) ||
+            /(?:^|\s)(?:chat\.whatsapp\.com|wa\.me|t\.me|youtu\.be|bit\.ly|tinyurl\.com|goo\.gl)\/[^\s]*/i.test(_alText)
+        )
         if (_alIsLink) {
             const _alAction = (global.antiLinkAction || 'delete').toLowerCase()
             const _alSenderNum = sender.split('@')[0]
