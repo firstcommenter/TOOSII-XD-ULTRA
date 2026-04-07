@@ -1019,6 +1019,33 @@ if (global.antiLink && m.isGroup && !m.key.fromMe) {
     }
 }
 
+// ── Anti Group Mention enforcement ───────────────────────────────────────
+// Fires when someone uses @everyone / mass-mentions the group (groupMentions API or large mentionedJid).
+if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe) {
+    const _agmGroupMentions = m.message?.extendedTextMessage?.contextInfo?.groupMentions || []
+    const _agmHasGroupTag   = _agmGroupMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])
+    // Also catch mass-tagging (≥ half the group or ≥ 10 mentions)
+    const _agmMassTag = (m.mentionedJid || []).length >= Math.max(10, Math.floor((participants.length || 0) / 2))
+    if (_agmHasGroupTag || _agmMassTag) {
+        if (!isOwner && !isSudo && !isAdmins) {
+            const _agmAction = (global.antiGroupMentionGroups[from].action || 'delete').toLowerCase()
+            const _agmSenderNum = sender.split('@')[0]
+            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
+            if (_agmAction === 'kick') {
+                try {
+                    await X.groupParticipantsUpdate(from, [sender], 'remove')
+                    await X.sendMessage(from, { text: `🚫 *Anti Group Mention:* @${_agmSenderNum} was removed for tagging the entire group.`, mentions: [sender] })
+                } catch {
+                    await X.sendMessage(from, { text: `⚠️ *Anti Group Mention:* Mass tag deleted from @${_agmSenderNum}. Could not kick (need admin rights).`, mentions: [sender] })
+                }
+            } else {
+                await X.sendMessage(from, { text: `⚠️ *Anti Group Mention:* @${_agmSenderNum}, tagging the entire group is not allowed here!`, mentions: [sender] })
+            }
+            return
+        }
+    }
+}
+
 // ── Anti Status Mention enforcement ──────────────────────────────────────
 // Fires when someone posts a WhatsApp status that tags/mentions a group.
 // Applies warn (3-strike kick) / delete-notify / instant kick in that group.
@@ -4351,6 +4378,46 @@ break
 
 
 
+
+case 'antigroupmention':
+case 'agm': {
+    await X.sendMessage(m.chat, { react: { text: '👥', key: m.key } })
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    if (!global.antiGroupMentionGroups) global.antiGroupMentionGroups = {}
+    const _agmCfg = global.antiGroupMentionGroups[m.chat] || { enabled: false, action: 'delete' }
+    const _agmArg = (args[0] || '').toLowerCase()
+
+    const _agmStatus = () => {
+        const _s    = _agmCfg.enabled ? '✅ ON' : '❌ OFF'
+        const _a    = (_agmCfg.action || 'delete').toUpperCase()
+        const _aIcon = _a === 'KICK' ? '🚫' : '🗑️'
+        return `╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ 📊 *Status* : ${_s}\n║ ${_aIcon} *Action* : ${_a}\n║ 📍 *Scope* : This group only\n\n║ *Commands:*\n║ ${prefix}agm on\n║ ${prefix}agm off\n║ ${prefix}agm delete — delete the message\n║ ${prefix}agm kick   — delete + kick sender\n\n║ _Triggers when someone uses @everyone_\n║ _or mass-tags the group members._\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`
+    }
+
+    if (!_agmArg) {
+        reply(_agmStatus())
+    } else if (_agmArg === 'on' || _agmArg === 'enable') {
+        global.antiGroupMentionGroups[m.chat] = { enabled: true, action: _agmCfg.action || 'delete' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ ✅ *Enabled for this group*\n║ Action: *${(_agmCfg.action || 'delete').toUpperCase()}*\n\n║ _Anyone who mass-tags or uses @everyone_\n║ _will have their message deleted${(_agmCfg.action||'delete')==='kick'?' and be kicked':''}._\n╚═══════════════════════╝`)
+    } else if (_agmArg === 'off' || _agmArg === 'disable') {
+        global.antiGroupMentionGroups[m.chat] = { enabled: false, action: _agmCfg.action || 'delete' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ ❌ *Disabled for this group*\n╚═══════════════════════╝`)
+    } else if (_agmArg === 'delete' || _agmArg === 'del') {
+        global.antiGroupMentionGroups[m.chat] = { enabled: true, action: 'delete' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ 🗑️ *DELETE MODE — Enabled*\n║ Mass-tags will be silently deleted.\n╚═══════════════════════╝`)
+    } else if (_agmArg === 'kick' || _agmArg === 'remove') {
+        global.antiGroupMentionGroups[m.chat] = { enabled: true, action: 'kick' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ 🚫 *KICK MODE — Enabled*\n║ Mass-taggers will be removed from the group.\n╚═══════════════════════╝`)
+    } else {
+        reply(`❌ Unknown option. Use: *on, off, delete, kick*`)
+    }
+}
+break
 
 case 'antilink':
 case 'setantilink': {
