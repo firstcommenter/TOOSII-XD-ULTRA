@@ -3556,14 +3556,15 @@ let likeState = (global.autoLikeStatus && global.autoLikeEmoji) ? `✅ ON (${glo
 let replyState = global.autoReplyStatus ? `✅ ON ("${global.autoReplyStatusMsg}")` : '❌ OFF'
 let fwdState = global.statusToGroup ? '✅ ON' : '❌ OFF'
 let fwdGroup = global.statusToGroup ? global.statusToGroup : 'Not set'
-let asmState = global.antiStatusMention ? `✅ ON (${(global.antiStatusMentionAction||'warn').toUpperCase()})` : '❌ OFF'
+const _asmCount = Object.values(global.antiStatusMentionGroups || {}).filter(v => v?.enabled).length
+const _asmSummary = _asmCount > 0 ? `✅ ON (${_asmCount} group${_asmCount>1?'s':''})` : '❌ OFF'
 reply(`╔══〔 📊 STATUS TOOLS CONFIG 〕══╗
 
 ║ 👀 *Auto View* : ${viewState}
 ║ ❤️  *Auto Like* : ${likeState}
 ║ 💬 *Auto Reply* : ${replyState}
 ║ 📤 *Forward* : ${fwdState}
-║ 🛡️  *Anti-Mention* : ${asmState}
+║ 🛡️  *Anti-Mention* : ${_asmSummary}
 
 
   🛠️  *Commands*
@@ -3571,7 +3572,7 @@ reply(`╔══〔 📊 STATUS TOOLS CONFIG 〕══╗
 ║ ${prefix}autolikestatus [emoji/off]
 ║ ${prefix}autoreplystatus [msg/off]
 ║ ${prefix}togroupstatus on/off
-║ ${prefix}antistatusmention [on/warn/kick/delete/off]
+║ ${prefix}asm [on/warn/kick/delete/off] ← in group
 ╚═══════════════════════╝`)
 }
 break
@@ -4228,26 +4229,42 @@ break
 case 'antistatusmention':
 case 'asm': {
     await X.sendMessage(m.chat, { react: { text: '🛡️', key: m.key } })
-    if (!isOwner && !isSudo) return reply(`❌ Only the bot owner can use this command.`)
+    if (!m.isGroup) return reply(mess.OnlyGrup)
+    if (!isAdmins && !isOwner) return reply(mess.admin)
+    if (!global.antiStatusMentionGroups) global.antiStatusMentionGroups = {}
+    const _asmCfg = global.antiStatusMentionGroups[m.chat] || { enabled: false, action: 'warn' }
     const _asmArg = (args[0] || '').toLowerCase()
-    if (!_asmArg || !['on','off','warn','kick','delete','del'].includes(_asmArg)) {
-        let _cur = global.antiStatusMention
-            ? `✅ ON (${(global.antiStatusMentionAction||'warn').toUpperCase()})`
-            : '❌ OFF'
-        return reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ Status: ${_cur}\n║\n║ Protects your groups from members\n║ who tag them in WhatsApp statuses.\n║\n  🛠️  Usage\n║ ${prefix}antistatusmention on\n║ ${prefix}antistatusmention off\n║ ${prefix}antistatusmention warn  ← 3 warns then kick\n║ ${prefix}antistatusmention kick  ← instant remove\n║ ${prefix}antistatusmention delete ← auto-delete msgs\n╚═══════════════════════╝`)
+    const _asmStatus = () => {
+        const _s    = _asmCfg.enabled ? '✅ ON' : '❌ OFF'
+        const _a    = (_asmCfg.action || 'warn').toUpperCase()
+        const _aIcon = _a === 'KICK' ? '🚫' : _a === 'DELETE' ? '🗑️' : '⚠️'
+        return `╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ 📊 *Status* : ${_s}\n║ ${_aIcon} *Action* : ${_a}\n║ 📍 *Scope* : This group only\n\n║ *Commands:*\n║ ${prefix}asm on\n║ ${prefix}asm off\n║ ${prefix}asm warn   ← 3 warns then kick\n║ ${prefix}asm kick   ← instant remove\n║ ${prefix}asm delete ← auto-delete msgs\n\n║ _Triggers when a group member tags this_\n║ _group in their WhatsApp status post._\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`
     }
-    if (_asmArg === 'off') {
-        global.antiStatusMention = false
-        global.antiStatusMentionAction = 'warn'
-        saveSettings()
-        return reply(`🛡️ *Anti Status Mention* disabled.`)
+    if (!_asmArg) {
+        reply(_asmStatus())
+    } else if (_asmArg === 'on' || _asmArg === 'enable') {
+        global.antiStatusMentionGroups[m.chat] = { enabled: true, action: _asmCfg.action || 'warn' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ ✅ *Enabled for this group*\n║ Action: *${(_asmCfg.action||'warn').toUpperCase()}*\n\n║ _Members who tag this group in status_\n║ _will be ${(_asmCfg.action||'warn')==='kick'?'removed instantly':(_asmCfg.action||'warn')==='delete'?'put on auto-delete':'warned (3× then kicked)'}._\n╚═══════════════════════╝`)
+    } else if (_asmArg === 'off' || _asmArg === 'disable') {
+        global.antiStatusMentionGroups[m.chat] = { enabled: false, action: _asmCfg.action || 'warn' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ ❌ *Disabled for this group*\n╚═══════════════════════╝`)
+    } else if (_asmArg === 'warn') {
+        global.antiStatusMentionGroups[m.chat] = { enabled: true, action: 'warn' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ ⚠️ *WARN MODE — Enabled*\n║ Members get 3 warnings then are kicked.\n╚═══════════════════════╝`)
+    } else if (_asmArg === 'kick' || _asmArg === 'remove') {
+        global.antiStatusMentionGroups[m.chat] = { enabled: true, action: 'kick' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ 🚫 *KICK MODE — Enabled*\n║ Members are removed instantly on first offense.\n╚═══════════════════════╝`)
+    } else if (_asmArg === 'delete' || _asmArg === 'del') {
+        global.antiStatusMentionGroups[m.chat] = { enabled: true, action: 'delete' }
+        try { require('./library/settings').saveSettings() } catch {}
+        reply(`╔══〔 🛡️ ANTI STATUS MENTION 〕══╗\n\n║ 🗑️ *DELETE MODE — Enabled*\n║ Members' messages will be auto-deleted.\n╚═══════════════════════╝`)
+    } else {
+        reply(`❌ Unknown option. Use: *on, off, warn, kick, delete*`)
     }
-    global.antiStatusMention = true
-    global.antiStatusMentionAction = (_asmArg === 'del' || _asmArg === 'delete') ? 'delete'
-        : _asmArg === 'kick' ? 'kick'
-        : 'warn'
-    saveSettings()
-    reply(`✅ *Anti Status Mention* enabled.\n⚡ Action: *${global.antiStatusMentionAction.toUpperCase()}*\n\nAnyone who tags your group in their status will be ${global.antiStatusMentionAction === 'kick' ? 'removed instantly' : global.antiStatusMentionAction === 'delete' ? 'put on auto-delete list' : 'warned (3 warns → kick)'}.`)
 }
 break
 
