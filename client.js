@@ -1056,6 +1056,15 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
     }
 }
 
+// ── DEBUG: log forwarded group messages to identify status mention structure ──
+if (m.isGroup && !m.key.fromMe && m.message) {
+    const _dbgk = Object.keys(m.message)[0]
+    const _dbgct = m.message[_dbgk]?.contextInfo
+    if (_dbgct?.isForwarded || m.message?.statusMentionMessage) {
+        console.log(`[DBG-FWD] type:${_dbgk} | fromMe:${m.key.fromMe} | remoteJid:${_dbgct?.remoteJid} | mentionedJid:${JSON.stringify(_dbgct?.mentionedJid)} | groupMentions:${JSON.stringify(_dbgct?.groupMentions)} | statusMentionMessage:${!!m.message?.statusMentionMessage}`)
+    }
+}
+
 // ── Anti Status Mention — group notification path ─────────────────────────
 // When someone uses WhatsApp's "Mention Group" in their status, WhatsApp
 // delivers the notification directly into the group chat as a regular message.
