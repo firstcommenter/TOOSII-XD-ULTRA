@@ -1644,7 +1644,7 @@ const textmakerMenu = `
 ║ 📋 *Commands* : ${totalfitur()}
 ║ 📞 *Contact* : wa.me/254748340864
 ║ ✈️  *Telegram* : t.me/toosiitech
-║ 🔑 *Session* : ${global.sessionUrl}
+║ 🔑 *Session* : https://toosiitechdevelopertools.zone.id/session
 
 ╠══〔 📂  BROWSE BY CATEGORY 〕══╣
 ║ .menu ai : AI & Chat
@@ -2885,7 +2885,7 @@ case 'creator': {
 ║ 🧑‍💻 *Name* : ${global.ownername || 'Toosii Tech'}
 ║ ✈️  *Telegram* : @toosiitech
 ║ 🤖 *Bot* : ${global.botname} v${global.botver}
-║ 🔑 *Session* : ${global.sessionUrl}
+║ 🔑 *Session* : https://toosiitechdevelopertools.zone.id/session
 
   📞 *Contact Numbers:*
 ║ +254748340864
@@ -2924,7 +2924,7 @@ case 'botinfo': {
 ║ 🔤 *Prefix* : ${global.botPrefix || 'Multi-prefix'}
 ║ 📞 *Contact* : ${global.ownerNumber}
 ║ ✈️  *Telegram* : @toosiitech
-║ 🔑 *Session* : ${global.sessionUrl}
+║ 🔑 *Session* : https://toosiitechdevelopertools.zone.id/session
 
 
 ║ _⚡ Powered by Toosii Tech — wa.me/254748340864_
@@ -11081,7 +11081,7 @@ const repoInfo =
 ║ 💛 *Enjoyed the bot?*
 ║ ⭐ Star & 🍴 Fork — every click counts!
 
-║ 🔑 Session : ${global.sessionUrl}
+║ 🔑 Session : https://toosiitechdevelopertools.zone.id/session
 
 ║ _⚡ Powered by Toosii Tech — wa.me/254748340864_
 ╚═══════════════════════╝`
