@@ -956,6 +956,11 @@ if (m.isGroup && !isAdmins && !isOwner) {
         await X.sendMessage(from, { text: `@${sender.split('@')[0]} group links are not allowed here!`, mentions: [sender] })
         return
     }
+    if (global.antiLink && m.isGroup && budy && /https?:\/\/[^\s]+|www\.[^\s]+/i.test(budy) && isBotAdmins && !isAdmins && !isOwner) {
+        await X.sendMessage(m.chat, { delete: m.key })
+        await X.sendMessage(from, { text: `@${sender.split('@')[0]} links are not allowed in this group!`, mentions: [sender] })
+        return
+    }
     if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
         const _isViewOnce    = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
         const _isFwdStatus   = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
