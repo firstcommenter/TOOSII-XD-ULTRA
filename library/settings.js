@@ -8,7 +8,8 @@ const SAVEABLE = [
     'antiword','antispam','warn','warnlimit','alive','aliveMsg','aliveMoment',
     'packname','authorname','watermark','botPrefix','statusMentionWarns','statusMentionDeleteList',
     'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode','antilinkGcGroups',
-    'antiLinkAction','antiLinkWarnLimit','antiLinkWarns'
+    'antiLinkAction','antiLinkWarnLimit','antiLinkWarns',
+    'antiStatusMentionGroups'
 ]
 const loadSettings = () => {
     try {
