@@ -1056,32 +1056,53 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
     }
 }
 
-// ── DEBUG: log forwarded group messages to identify status mention structure ──
-if (m.isGroup && !m.key.fromMe && m.message) {
-    const _dbgk = Object.keys(m.message)[0]
-    const _dbgct = m.message[_dbgk]?.contextInfo
-    if (_dbgct?.isForwarded || m.message?.statusMentionMessage) {
-        console.log(`[DBG-FWD] type:${_dbgk} | fromMe:${m.key.fromMe} | remoteJid:${_dbgct?.remoteJid} | mentionedJid:${JSON.stringify(_dbgct?.mentionedJid)} | groupMentions:${JSON.stringify(_dbgct?.groupMentions)} | statusMentionMessage:${!!m.message?.statusMentionMessage}`)
-    }
-}
-
 // ── Anti Status Mention — group notification path ─────────────────────────
-// When someone uses WhatsApp's "Mention Group" in their status, WhatsApp
-// delivers the notification directly into the group chat as a regular message.
-// This path catches it regardless of whether they saved the bot's number.
+// Catches WhatsApp's "Mention Group in Status" feature delivered into the group.
+// Uses groupStatusMentionMessage (primary), groupMentionedMessage, statusMentionMessage,
+// contextInfo.groupMentions/mentionedJid, and forwarded-from-status as fallbacks.
 if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe) {
     try {
-        // Check ALL message types for groupMentions pointing at this group
-        const _asmNotifMentions = _extractGroupMentions(m.message)
-        const _asmNotifHasTag   = _asmNotifMentions.some(gm =>
-            gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0]
-        )
-        // Also catch statusMentionMessage type
-        const _asmIsStatusMention = !!m.message?.statusMentionMessage
-        // Also catch: status forwarded into group (photo/video/text from status@broadcast
-        // that mentions this group via mentionedJid or groupMentions in contextInfo)
-        let _asmFwdStatus = false
-        if (m.message) {
+        let _asmTriggered = false
+
+        // 1. Primary: groupStatusMentionMessage (WhatsApp's dedicated proto type)
+        const _gsmMsg = m.message?.groupStatusMentionMessage
+        if (_gsmMsg) {
+            const _gsmGroupId = _gsmMsg?.groupJid || _gsmMsg?.message?.groupJid
+            if (!_gsmGroupId || _gsmGroupId === from || _gsmGroupId.split('@')[0] === from.split('@')[0]) {
+                _asmTriggered = true
+                console.log(`[ASM] groupStatusMentionMessage from ${sender} in ${from}`)
+            }
+        }
+
+        // 2. groupMentionedMessage type
+        if (!_asmTriggered && m.message?.groupMentionedMessage) {
+            const _gmmJid = m.message.groupMentionedMessage?.groupJid || m.message.groupMentionedMessage?.jid
+            if (!_gmmJid || _gmmJid === from || _gmmJid.split('@')[0] === from.split('@')[0]) {
+                _asmTriggered = true
+                console.log(`[ASM] groupMentionedMessage from ${sender} in ${from}`)
+            }
+        }
+
+        // 3. statusMentionMessage type
+        if (!_asmTriggered && m.message?.statusMentionMessage) {
+            const _smmJid = m.message.statusMentionMessage?.groupJid
+            if (!_smmJid || _smmJid === from || _smmJid.split('@')[0] === from.split('@')[0]) {
+                _asmTriggered = true
+                console.log(`[ASM] statusMentionMessage from ${sender} in ${from}`)
+            }
+        }
+
+        // 4. contextInfo.groupMentions across ALL message types
+        if (!_asmTriggered) {
+            const _asmCtxMentions = _extractGroupMentions(m.message)
+            if (_asmCtxMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])) {
+                _asmTriggered = true
+                console.log(`[ASM] contextInfo.groupMentions from ${sender} in ${from}`)
+            }
+        }
+
+        // 5. Forwarded-from-status with group in mentionedJid or groupMentions
+        if (!_asmTriggered && m.message) {
             for (const _fk of Object.keys(m.message)) {
                 const _fct = m.message[_fk]?.contextInfo
                 if (_fct?.isForwarded && _fct?.remoteJid === 'status@broadcast') {
@@ -1089,14 +1110,14 @@ if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromM
                     const _fGrpMentions = _fct?.groupMentions || []
                     if (_fMentioned.some(j => j === from || j.split('@')[0] === from.split('@')[0]) ||
                         _fGrpMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])) {
-                        _asmFwdStatus = true
+                        _asmTriggered = true
+                        console.log(`[ASM] fwd-from-status from ${sender} in ${from}`)
                     }
                     break
                 }
             }
         }
-        const _asmTriggered = _asmNotifHasTag || _asmIsStatusMention || _asmFwdStatus
-        if (_asmTriggered) console.log(`[ASM] triggered for ${sender} in ${from} | hasTag:${_asmNotifHasTag} statusMsg:${_asmIsStatusMention} fwdStatus:${_asmFwdStatus}`)
+
         if (_asmTriggered && !isOwner && !isSudo && !isAdmins) {
             const _asmAction = (global.antiStatusMentionGroups[from].action || 'warn').toLowerCase()
             const _asmSenderNum = sender.split('@')[0]
