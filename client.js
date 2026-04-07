@@ -2303,17 +2303,34 @@ break
           `╚═══════════════════════╝`
       )
       try {
-          const _fxParts = _fxInput.trim().split(/\s+/)
+          // Normalize common informal currency names/codes to ISO 4217
+          const _fxAlias = { KSH:'KES', TSH:'TZS', SHS:'KES', KSHS:'KES', TSHS:'TZS', NAIRA:'NGN', CEDIS:'GHS', CEDI:'GHS', RAND:'ZAR', POUNDS:'GBP', POUND:'GBP', EURO:'EUR', EUROS:'EUR', DOLLAR:'USD', DOLLARS:'USD', FRANC:'XOF', BIRR:'ETB', SHILLING:'KES', SHILLINGS:'KES' }
+          const _fxNorm = c => { const u = c?.toUpperCase?.()?.replace?.(/[^A-Z]/g,''); return _fxAlias[u] || u || '' }
+          // Strip connector words (to/into/→/=) so "100ksh to tsh" → "100ksh tsh"
+          const _fxClean = _fxInput.replace(/\bTO\b|\bINTO\b|→|=>/g, ' ').trim()
+          const _fxParts = _fxClean.split(/\s+/).filter(Boolean)
           let _fxAmt = 1, _fxFrom = 'USD', _fxTo
           if (_fxParts.length === 1) {
-              _fxTo = _fxParts[0]
+              // ".forex KES" or ".forex 100KES"
+              const _n = parseFloat(_fxParts[0])
+              const _c = _fxNorm(_fxParts[0].replace(/[\d.,]/g, ''))
+              if (!isNaN(_n) && _c) { _fxAmt = _n; _fxTo = _c }
+              else { _fxTo = _fxNorm(_fxParts[0]) }
           } else if (_fxParts.length === 2) {
-              if (!isNaN(_fxParts[0])) { _fxAmt = parseFloat(_fxParts[0]); _fxTo = _fxParts[1] }
-              else { _fxFrom = _fxParts[0]; _fxTo = _fxParts[1] }
+              // "100KSH TSH" or "100 KSH" or "USD KES"
+              const _n0 = parseFloat(_fxParts[0])
+              const _c0 = _fxNorm(_fxParts[0].replace(/[\d.,]/g, ''))
+              const _c1 = _fxNorm(_fxParts[1])
+              if (!isNaN(_n0) && _c0) { _fxAmt = _n0; _fxFrom = _c0; _fxTo = _c1 }      // "100KSH TSH"
+              else if (!isNaN(_n0))   { _fxAmt = _n0; _fxTo = _c1 }                      // "100 KES"
+              else                     { _fxFrom = _fxNorm(_fxParts[0]); _fxTo = _c1 }   // "USD KES"
           } else {
-              _fxAmt = parseFloat(_fxParts[0]) || 1
-              _fxFrom = _fxParts[1]
-              _fxTo = _fxParts[2]
+              // "100 KSH TSH" — 3+ parts
+              const _n0 = parseFloat(_fxParts[0])
+              const _c0 = _fxNorm(_fxParts[0].replace(/[\d.,]/g, ''))
+              if (!isNaN(_n0) && _c0) { _fxAmt = _n0; _fxFrom = _c0; _fxTo = _fxNorm(_fxParts[1]) }    // "100KSH TSH"
+              else if (!isNaN(_n0))   { _fxAmt = _n0; _fxFrom = _fxNorm(_fxParts[1]); _fxTo = _fxNorm(_fxParts[2]) } // "100 KSH TSH"
+              else { _fxFrom = _fxNorm(_fxParts[0]); _fxTo = _fxNorm(_fxParts[1]) }
           }
           if (!_fxTo) return reply('❌ Please specify a target currency. Example: `.forex KES`')
           await reply(`💱 _Converting ${_fxAmt} ${_fxFrom} → ${_fxTo}..._`)
