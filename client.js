@@ -8767,130 +8767,115 @@ case 'series': {
     await X.sendMessage(m.chat, { react: { text: '🎬', key: m.key } })
     if (!text) return reply(
         `╔══〔 🎬 MOVIE / SERIES 〕══╗\n\n` +
-        `  Search any movie or TV series and get info + stream links.\n\n` +
+        `  Search any movie or TV series and get\n  info + trailer.\n\n` +
         `║ *${prefix}movie* Inception\n` +
         `║ *${prefix}movie* Breaking Bad\n` +
-        `║ *${prefix}movie* Avengers 2019\n` +
-        `║ *${prefix}stream* [id] [movie|tv] — get episodes/streams directly\n╚═══════════════════════╝`
+        `║ *${prefix}movie* Avengers 2019\n╚═══════════════════════╝`
     )
     try {
         await reply(`🎬 _Searching for_ *${text}*_..._`)
 
-        const _TMDB = '8265bd1679663a7ea12ac168da84d2e8'
-        const _BASE = 'https://api.themoviedb.org/3'
-        const _IMG  = 'https://image.tmdb.org/t/p/w500'
-        const _XCASPER = 'https://movieapi.xcasper.space'
-        const _na   = (v) => (v !== null && v !== undefined && v !== '') ? v : '—'
-        const _q    = text.trim()
-        const _ym   = _q.match(/(19|20)\d{2}/)
-        const _year = _ym ? _ym[0] : ''
-        const _titl = _q.replace(_year, '').trim()
+        const _TMDB  = '8265bd1679663a7ea12ac168da84d2e8'
+        const _BASE  = 'https://api.themoviedb.org/3'
+        const _IMG   = 'https://image.tmdb.org/t/p/w500'
+        const _KEITH = 'https://apiskeith.top'
+        const _na    = (v) => (v !== null && v !== undefined && v !== '') ? v : '—'
+        const _q     = text.trim()
+        const _ym    = _q.match(/(19|20)\d{2}/)
+        const _year  = _ym ? _ym[0] : ''
+        const _titl  = _q.replace(_year, '').trim()
 
-        // Search movies + TV + xcasper showbox in parallel
-        const [_mRes, _tRes, _xmRes, _xtvRes] = await Promise.allSettled([
+        // Step 1: TMDB search (movie + tv) + Keith moviebox search — all in parallel
+        const [_mRes, _tRes, _kRes] = await Promise.allSettled([
             fetch(`${_BASE}/search/movie?api_key=${_TMDB}&query=${encodeURIComponent(_titl)}${_year ? `&year=${_year}` : ''}`).then(r => r.json()),
             fetch(`${_BASE}/search/tv?api_key=${_TMDB}&query=${encodeURIComponent(_titl)}${_year ? `&first_air_date_year=${_year}` : ''}`).then(r => r.json()),
-            fetch(`${_XCASPER}/api/showbox/search?keyword=${encodeURIComponent(_q)}&type=movie`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()),
-            fetch(`${_XCASPER}/api/showbox/search?keyword=${encodeURIComponent(_q)}&type=tv`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()),
+            fetch(`${_KEITH}/moviebox/search?q=${encodeURIComponent(_q)}`, { signal: AbortSignal.timeout(12000) }).then(r => r.json())
         ])
 
         const _tmdbAll = [
-            ...((_mRes.value?.results || _mRes.status==='fulfilled' ? _mRes.value?.results||[] : [])).map(x => ({ ...x, _mt: 'movie' })),
-            ...((_tRes.value?.results || _tRes.status==='fulfilled' ? _tRes.value?.results||[] : [])).map(x => ({ ...x, _mt: 'tv'    }))
+            ...(_mRes.status === 'fulfilled' ? (_mRes.value?.results || []).map(x => ({ ...x, _mt: 'movie' })) : []),
+            ...(_tRes.status === 'fulfilled' ? (_tRes.value?.results || []).map(x => ({ ...x, _mt: 'tv'    })) : [])
         ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
 
-        // Best xcasper match (movie preferred, then tv)
-        const _xcMovies = _xmRes.status==='fulfilled' && _xmRes.value?.success ? (_xmRes.value.data||[]) : []
-        const _xcTV     = _xtvRes.status==='fulfilled' && _xtvRes.value?.success ? (_xtvRes.value.data||[]) : []
-        const _xcPick   = _xcMovies[0] || _xcTV[0] || null
-        const _xcIsTV   = !_xcMovies[0] && !!_xcTV[0]
+        // Best Keith moviebox match (title fuzzy match first, else first result)
+        const _kResults = (_kRes.status === 'fulfilled' && _kRes.value?.status) ? (_kRes.value.result?.results || []) : []
+        const _kPick = _kResults.find(r => r.title?.toLowerCase().includes(_titl.toLowerCase())) || _kResults[0] || null
 
-        if (!_tmdbAll.length && !_xcPick) return reply(
+        if (!_tmdbAll.length && !_kPick) return reply(
             `╔══〔 🎬 MOVIE SEARCH 〕══╗\n\n` +
             `  ❌ *Not found:* _${text}_\n\n` +
             `  _Try a different spelling or add the year._\n` +
             `  _Example:_ *${prefix}movie Inception 2010*\n╚═══════════════════════╝`
         )
 
-        // Get TMDB details + xcasper stream data in parallel
-        const _pick = _tmdbAll[0]
-        const _mt   = _pick?._mt || (_xcIsTV ? 'tv' : 'movie')
-        const _isTV = _mt === 'tv'
+        // Step 2: TMDB details + Keith trailer — in parallel
+        const _pick  = _tmdbAll[0]
+        const _mt    = _pick?._mt || 'movie'
+        const _isTV  = _mt === 'tv'
 
-        const [_dRes, _streamRes] = await Promise.allSettled([
+        const [_dRes, _trRes] = await Promise.allSettled([
             _pick ? fetch(`${_BASE}/${_mt}/${_pick.id}?api_key=${_TMDB}&append_to_response=credits`).then(r => r.json()) : Promise.resolve(null),
-            _xcPick ? fetch(`${_XCASPER}/api/showbox/${_xcIsTV ? 'tv' : 'movie'}?id=${_xcPick.id}${_xcIsTV ? '&season=1&episode=1' : ''}`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()) : Promise.resolve(null)
+            _kPick?.url ? fetch(`${_KEITH}/movie/trailer?q=${encodeURIComponent(_kPick.url)}`, { signal: AbortSignal.timeout(15000) }).then(r => r.json()) : Promise.resolve(null)
         ])
-        const _d = _dRes.status === 'fulfilled' ? _dRes.value : null
-        const _sd = _streamRes.status === 'fulfilled' ? _streamRes.value : null
+        const _d   = _dRes.status  === 'fulfilled' ? _dRes.value  : null
+        const _tr  = _trRes.status === 'fulfilled' ? _trRes.value : null
+        const _trd = _tr?.status ? _tr.result : null
 
+        // Build metadata
         const _icon   = _isTV ? '📺' : '🎬'
         const _tStr   = _isTV ? 'TV SERIES' : 'MOVIE'
-        const _title2 = _na(_d?.title || _d?.name || _xcPick?.title || _pick?.title || _pick?.name)
-        const _yr2    = (_d?.release_date || _d?.first_air_date || '').slice(0, 4) || (_xcPick?.year ? String(_xcPick.year) : '')
-        const _genres = (_d?.genres || []).map(g => g.name).join(', ') || (_xcPick?.cats || '—')
+        const _title2 = _na(_d?.title || _d?.name || _trd?.title || _kPick?.title || _pick?.title || _pick?.name)
+        const _yr2    = (_d?.release_date || _d?.first_air_date || '').slice(0, 4)
+        const _genres = (_d?.genres || []).map(g => g.name).join(', ') || '—'
         const _rt     = _isTV
             ? (_d?.episode_run_time?.[0] ? `${_d.episode_run_time[0]} min/ep` : '—')
-            : (_d?.runtime ? `${_d.runtime} min` : (_sd?.data?.runtime ? `${_sd.data.runtime} min` : '—'))
+            : (_d?.runtime ? `${_d.runtime} min` : '—')
         const _lang   = _na((_d?.original_language || '').toUpperCase())
-        const _score  = _d?.vote_average
-            ? `${_d.vote_average.toFixed(1)}/10 ⭐`
-            : (_sd?.data?.imdb_rating ? `${_sd.data.imdb_rating}/10 ⭐ (IMDb)` : '—')
-        const _plot   = _na(_d?.overview || _sd?.data?.description)
-        const _poster = _d?.poster_path ? `${_IMG}${_d.poster_path}` : (_xcPick?.poster_org || _xcPick?.poster_min || null)
+        const _score  = _d?.vote_average ? `${_d.vote_average.toFixed(1)}/10 ⭐` : '—'
+        // Keith rating is doubled e.g. "8.88.8" — take first half
+        const _kRaw   = _kPick?.rating || ''
+        const _kRating = _kRaw.length >= 2 ? _kRaw.slice(0, _kRaw.length / 2) : _kRaw
+        const _plot   = _na(_d?.overview || _trd?.description)
+        const _poster = _d?.poster_path ? `${_IMG}${_d.poster_path}` : (_trd?.thumbnail || null)
         const _dir    = !_isTV
-            ? (_d?.credits?.crew?.find(c => c.job === 'Director')?.name || _sd?.data?.director || '—')
+            ? (_d?.credits?.crew?.find(c => c.job === 'Director')?.name || '—')
             : (_d?.created_by?.map(c => c.name).join(', ') || '—')
-        const _cast   = (_d?.credits?.cast || []).slice(0, 5).map(c => c.name).join(', ') || (_sd?.data?.actors?.split(',').slice(0,4).join(',').trim() || '—')
-        const _imdbId = _d?.imdb_id || _sd?.data?.imdb_id || ''
+        const _cast   = (_d?.credits?.cast || []).slice(0, 5).map(c => c.name).join(', ') || '—'
+        const _imdbId = _d?.imdb_id || ''
+        const _trailerMp4 = _trd?.trailerUrl || null
 
-        // ── Stream links from xcasper ──
-        const _files = _sd?.data?.file || []
-        const _freeFiles = _files.filter(f => !f.vip_only && f.path && f.path.startsWith('http'))
-        const _vipFiles  = _files.filter(f =>  f.vip_only && f.path && f.path.startsWith('http'))
-        const _allPlayable = [..._freeFiles, ..._vipFiles]
-
-        let _cap  = `╔══〔 ${icon} ${tStr} INFO 〕══╗\n\n`
+        let _cap  = `╔══〔 ${_icon} ${_tStr} INFO 〕══╗\n\n`
             _cap += `  *${_title2}*  _(${_yr2 || '?'})_\n\n`
             _cap += `║ 🎭 *Genre* : ${_genres}\n`
             _cap += `║ ⏱️  *Runtime* : ${_rt}\n`
             _cap += `║ 🌍 *Language* : ${_lang}\n`
-            _cap += `║ ⭐ *Rating* : ${_score}\n`
+        if (_score !== '—') _cap += `║ ⭐ *TMDB Rating* : ${_score}\n`
+        if (_kRating && _kRating !== '0') _cap += `║ ⭐ *MovieBox Rating* : ${_kRating}\n`
         if (_isTV && _d) {
             _cap += `║ 📺 *Seasons* : ${_na(_d.number_of_seasons)} seasons · ${_na(_d.number_of_episodes)} episodes\n`
         }
-            _cap += `║ 🎬 *${_isTV ? 'Creator ' : 'Director'}* : ${_dir}\n`
+            _cap += `║ 🎬 *${_isTV ? 'Creator' : 'Director'}* : ${_dir}\n`
             _cap += `║ 🎭 *Cast* : ${_cast}\n`
-            _cap += `\n║ *📝 Plot:*\n║ _${_plot.slice(0, 300)}${_plot.length > 300 ? '…' : ''}_\n`
+            _cap += `\n║ 📝 *Plot:*\n║ _${_plot.slice(0, 350)}${_plot.length > 350 ? '…' : ''}_\n`
         if (_imdbId) _cap += `\n║ 🔗 https://www.imdb.com/title/${_imdbId}\n`
+        if (_kPick?.url) _cap += `║ 📺 ${_kPick.url}\n`
+        if (_trailerMp4) _cap += `\n╠══〔 🎞️ TRAILER BELOW 〕══╣\n`
+        _cap += `╚═══════════════════════╝`
 
-        // Stream section
-        if (_allPlayable.length) {
-            _cap += `\n╠══〔 📥 STREAM / DOWNLOAD LINKS 〕══╣\n`
-            if (_isTV) _cap += `  _Season 1, Ep 1 — use ${prefix}stream for other episodes_\n`
-            for (const _f of _allPlayable.slice(0, 5)) {
-                _cap += `\n🎞️ *${_f.quality || '?'}* ${_f.format ? `(${_f.format.toUpperCase()})` : ''} — ${_f.size || '?'}\n`
-                _cap += `${_f.path}\n`
-            }
-            if (_allPlayable.length > 5) _cap += `\n_...and ${_allPlayable.length - 5} more quality options_\n`
-            _cap += `\n_Open links in VLC / MX Player / browser to watch_`
-        } else if (_xcPick) {
-            // Has xcasper data but no free stream links (VIP only or not yet available)
-            _cap += `\n╠═════〔 📡 STREAM 〕═════╣\n`
-            _cap += `_Streams for this title require VIP access on ShowBox._\n`
-            if (_isTV) {
-                _cap += `\nUse *${prefix}stream ${_xcPick.id} tv [season] [ep]* to check specific episodes`
-            } else {
-                _cap += `\nUse *${prefix}stream ${_xcPick.id} movie* to check availability`
-            }
-        } else {
-            _cap += `\n_No direct stream found. Try searching on:_\n🔗 https://showbox.media\n🔗 https://fmovies.ps`
-        }
-
+        // Send poster with info card
         if (_poster) {
             await X.sendMessage(m.chat, { image: { url: _poster }, caption: _cap }, { quoted: m })
         } else {
-            reply(_cap)
+            await reply(_cap)
+        }
+
+        // Send trailer video if available
+        if (_trailerMp4) {
+            await X.sendMessage(m.chat, {
+                video: { url: _trailerMp4 },
+                caption: `🎬 *${_title2}* — Official Trailer`,
+                mimetype: 'video/mp4'
+            }, { quoted: m })
         }
 
     } catch(e) {
