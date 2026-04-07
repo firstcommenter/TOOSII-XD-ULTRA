@@ -1022,11 +1022,14 @@ if (m.isGroup && !isAdmins && !isOwner) {
 // Applies warn (3-strike kick) / delete-notify / instant kick in that group.
 if (from === 'status@broadcast' && global.antiStatusMentionGroups && Object.values(global.antiStatusMentionGroups).some(g => g?.enabled) && !m.key.fromMe) {
     try {
-        const _asmSender  = sender  // JID of the person who posted the status
+        // For status messages, m.key.participant or m.participant holds the actual poster's JID
+        const _asmSender = m.participant || m.key?.participant || (sender !== 'status@broadcast' ? sender : null)
+        if (!_asmSender || _asmSender === 'status@broadcast') throw new Error('unknown status sender')
         // Collect group JIDs mentioned directly in the status
         const _mentionedGroups = (m.mentionedJid || []).filter(j => j.endsWith('@g.us'))
         // Also detect WhatsApp group invite links in the status text
-        const _hasGroupLink = /chat\.whatsapp\.com\/[A-Za-z0-9]{10,}/.test(budy)
+        const _asmText = budy || m.body || m.text || m.message?.extendedTextMessage?.text || m.message?.imageMessage?.caption || m.message?.videoMessage?.caption || ''
+        const _hasGroupLink = /chat\.whatsapp\.com\/[A-Za-z0-9]{10,}/.test(_asmText)
 
         if (_mentionedGroups.length || _hasGroupLink) {
             let _targetGroups = [..._mentionedGroups]
@@ -1053,20 +1056,23 @@ if (from === 'status@broadcast' && global.antiStatusMentionGroups && Object.valu
                     const _gMeta    = await X.groupMetadata(_gId).catch(() => null)
                     if (!_gMeta) continue
                     const _gParts   = _gMeta.participants || []
-                    // Bot must be admin in the group to act
+                    // Check if bot is admin (needed for kick; warn/delete still work without it)
                     const _botAdmin = _gParts.some(p => isParticipantBot(p) && (p.admin === 'admin' || p.admin === 'superadmin'))
-                    if (!_botAdmin) continue
-                    // Sender must be a member of this group
+                    // Sender must be a member of this group (check by number, not full JID)
                     const _sNum     = _asmSender.split('@')[0].split(':')[0]
                     const _inGroup  = _gParts.some(p => (p.id || '').split('@')[0].split(':')[0] === _sNum)
                     if (!_inGroup) continue
 
                     if (_asmAction === 'kick') {
+                        if (!_botAdmin) {
+                            await X.sendMessage(_gId, { text: `⚠️ @${_sNum} tagged this group in their status, but I need admin rights to kick them.`, mentions: [_asmSender] })
+                        } else {
                         await X.groupParticipantsUpdate(_gId, [_asmSender], 'remove')
                         await X.sendMessage(_gId, {
                             text: `🚫 @${_sNum} was removed for tagging this group in their WhatsApp status.`,
                             mentions: [_asmSender]
                         })
+                        }
                     } else if (_asmAction === 'delete') {
                         // Can't delete a status post, so notify in group and DM the sender
                         await X.sendMessage(_gId, {
@@ -1089,14 +1095,21 @@ if (from === 'status@broadcast' && global.antiStatusMentionGroups && Object.valu
                         require('fs').writeFileSync(_warnPath, JSON.stringify(_warnDb, null, 2))
                         const _cnt = _uWarns.length
                         if (_cnt >= 3) {
-                            await X.groupParticipantsUpdate(_gId, [_asmSender], 'remove')
-                            _gWarns[_asmSender] = []
-                            _warnDb[_gId] = _gWarns
-                            require('fs').writeFileSync(_warnPath, JSON.stringify(_warnDb, null, 2))
-                            await X.sendMessage(_gId, {
-                                text: `🚨 @${_sNum} reached 3/3 warnings for tagging this group in their status and was removed.`,
-                                mentions: [_asmSender]
-                            })
+                            if (_botAdmin) {
+                                await X.groupParticipantsUpdate(_gId, [_asmSender], 'remove')
+                                _gWarns[_asmSender] = []
+                                _warnDb[_gId] = _gWarns
+                                require('fs').writeFileSync(_warnPath, JSON.stringify(_warnDb, null, 2))
+                                await X.sendMessage(_gId, {
+                                    text: `🚨 @${_sNum} reached 3/3 warnings for tagging this group in their status and was removed.`,
+                                    mentions: [_asmSender]
+                                })
+                            } else {
+                                await X.sendMessage(_gId, {
+                                    text: `🚨 @${_sNum} reached 3/3 warnings for tagging this group in their status. Give me admin to kick them.`,
+                                    mentions: [_asmSender]
+                                })
+                            }
                         } else {
                             await X.sendMessage(_gId, {
                                 text: `⚠️ Warning ${_cnt}/3 — @${_sNum}: Do not tag this group in your WhatsApp status.\n_${3 - _cnt} more warning(s) before removal._`,
@@ -4309,19 +4322,24 @@ case 'antismention': {
         reply(_asmStatus())
     } else if (asmArg === 'on' || asmArg === 'enable') {
         _save(true, _asmCfg.action || 'warn')
+        try { require('./library/settings').saveSettings() } catch {}
         const _a = (_asmCfg.action || 'warn').toUpperCase()
         reply(`╔══〔 🛡️  ANTI STATUS MENTION 〕══╗\n\n║ ✅ *Enabled for this group*\n║ Action: *${_a}*\n\n║ _Anyone who tags this group in their status\n║ will be ${_a === 'WARN' ? 'warned (3x = kick)' : _a === 'KICK' ? 'instantly kicked' : 'notified and warned'}._\n╚═══════════════════════╝`)
     } else if (asmArg === 'off' || asmArg === 'disable') {
         _save(false, _asmCfg.action || 'warn')
+        try { require('./library/settings').saveSettings() } catch {}
         reply(`╔══〔 🛡️  ANTI STATUS MENTION 〕══╗\n\n║ ❌ *Disabled for this group*\n║ Group tagging in statuses no longer actioned.\n╚═══════════════════════╝`)
     } else if (asmArg === 'warn') {
         _save(true, 'warn')
+        try { require('./library/settings').saveSettings() } catch {}
         reply(`╔══〔 🛡️  ANTI STATUS MENTION 〕══╗\n\n║ ⚠️ *WARN MODE — Enabled*\n║ 📍 This group only\n║ 3 warnings : automatic kick\n\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`)
     } else if (asmArg === 'delete' || asmArg === 'del') {
         _save(true, 'delete')
+        try { require('./library/settings').saveSettings() } catch {}
         reply(`╔══〔 🛡️  ANTI STATUS MENTION 〕══╗\n\n║ 🗑️ *DELETE MODE — Enabled*\n║ 📍 This group only\n║ Group notified + sender DM'd\n\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`)
     } else if (asmArg === 'kick' || asmArg === 'remove') {
         _save(true, 'kick')
+        try { require('./library/settings').saveSettings() } catch {}
         reply(`╔══〔 🛡️  ANTI STATUS MENTION 〕══╗\n\n║ 🚫 *KICK MODE — Enabled*\n║ 📍 This group only\n║ Instant removal from group\n\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`)
     } else {
         reply(`❌ Unknown option. Use: *on, off, warn, delete, kick*`)
