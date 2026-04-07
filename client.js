@@ -14,6 +14,30 @@ by Toosii Tech • 2024 - 2026
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Module
 require("./setting")
+
+// ── Channel React persistent settings ────────────────────────────────────────
+;(() => {
+    const _crFs = require('fs'), _crPath = require('path').join(__dirname, 'database', 'channelreact.json')
+    const _crSave = () => {
+        try {
+            require('fs').mkdirSync(require('path').join(__dirname, 'database'), { recursive: true })
+            _crFs.writeFileSync(_crPath, JSON.stringify({
+                on: global.autoChannelReact || false,
+                jid: global.autoChannelReactJid || '',
+                emojis: global.autoChannelReactEmojis || [],
+                count: global.autoChannelReactCount || 0
+            }, null, 2))
+        } catch {}
+    }
+    try {
+        const _crData = JSON.parse(_crFs.readFileSync(_crPath, 'utf-8'))
+        if (_crData.on)     global.autoChannelReact       = _crData.on
+        if (_crData.jid)    global.autoChannelReactJid    = _crData.jid
+        if (_crData.emojis && _crData.emojis.length) global.autoChannelReactEmojis = _crData.emojis
+        if (_crData.count)  global.autoChannelReactCount  = _crData.count
+    } catch {}
+    global._saveCrSettings = _crSave
+})()
 const {
     downloadContentFromMessage,
     proto,
@@ -6913,23 +6937,26 @@ case 'autoreactchannel': {
     const _craEmojis = (global.autoChannelReactEmojis || ['❤️','🔥','👍','😍','🎉','💯','🙌','⚡','🫶','😎']).join(' ')
     const _craCnt = global.autoChannelReactCount || (global.autoChannelReactEmojis || ['x']).length
     if (!_cra) return reply(`╔══〔 📡 CHANNEL REACT 〕══╗\n║\n║ 📊 *Status* : ${global.autoChannelReact ? '✅ ON' : '❌ OFF'}${_craJid}\n║ 🔢 *Count* : ${_craCnt} reactions/post\n║ 🎭 *Emojis* : ${_craEmojis}\n║\n║ *Usage*\n║ .channelreact on\n║ .channelreact off\n║ .channelreact count 30\n║ .channelreact jid [newsletter-jid]\n║ .channelreact emojis ❤️ 🔥 👍 🎉\n║ .channeljid [channel-link]\n╚══════════════════════╝`);
-    if (_cra === 'on') { global.autoChannelReact = true; reply('╔══〔 📡 CHANNEL REACT 〕══╗\n\n║ Status: ✅ ON\n║ Bot will auto-react to\n║ every channel post with\n║ multiple emojis 🔥\n║\n║ Use .channelreact jid to\n║ target a specific channel.\n╚══════════════════════╝') }
-    else if (_cra === 'off') { global.autoChannelReact = false; reply('╔══〔 📡 CHANNEL REACT 〕══╗\n\n║ Status: ❌ OFF\n║ Channel auto-react disabled.\n╚══════════════════════╝') }
+    if (_cra === 'on') { global.autoChannelReact = true; global._saveCrSettings(); reply('╔══〔 📡 CHANNEL REACT 〕══╗\n\n║ Status: ✅ ON\n║ Bot will auto-react to\n║ every channel post with\n║ multiple emojis 🔥\n║\n║ Use .channelreact jid to\n║ target a specific channel.\n╚══════════════════════╝') }
+    else if (_cra === 'off') { global.autoChannelReact = false; global._saveCrSettings(); reply('╔══〔 📡 CHANNEL REACT 〕══╗\n\n║ Status: ❌ OFF\n║ Channel auto-react disabled.\n╚══════════════════════╝') }
     else if (_cra === 'jid') {
         if (!args[1]) return reply('❌ Provide the newsletter JID\nExample: .channelreact jid 120363xxxxxxxx@newsletter')
         global.autoChannelReactJid = args[1].trim()
+        global._saveCrSettings()
         reply(`✅ *Channel JID set*\n📌 ${global.autoChannelReactJid}\n\nBot will only auto-react to posts from this channel.`)
     } else if (_cra === 'emojis') {
         const _newEmojis = args.slice(1)
         if (!_newEmojis.length) return reply('❌ Provide emojis\nExample: .channelreact emojis ❤️ 🔥 👍 🎉 💯')
         global.autoChannelReactEmojis = _newEmojis
+        global._saveCrSettings()
         reply(`✅ *React emojis updated*\n🎭 ${_newEmojis.join(' ')}\n\n${_newEmojis.length} emojis will be sent per channel post.`)
     } else if (_cra === 'count') {
         const _newCnt = parseInt(args[1])
         if (isNaN(_newCnt) || _newCnt < 1 || _newCnt > 200) return reply('❌ Count must be a number between 1 and 200\nExample: .channelreact count 30')
         global.autoChannelReactCount = _newCnt
+        global._saveCrSettings()
         reply(`✅ *React count set*\n🔢 ${_newCnt} reactions will be sent per channel post.`)
-    } else { global.autoChannelReact = true; reply(`✅ *Channel React ON*\n🎭 Emojis: ${_craEmojis}`) }
+    } else { global.autoChannelReact = true; global._saveCrSettings(); reply(`✅ *Channel React ON*\n🎭 Emojis: ${_craEmojis}`) }
 } break
 case 'channeljid':
 case 'getchanneljid': {
@@ -6943,6 +6970,7 @@ case 'getchanneljid': {
         const _cjMeta = await X.newsletterMetadata('invite', _cjCode)
         const _cjJid = _cjMeta.id
         global.autoChannelReactJid = _cjJid
+        global._saveCrSettings()
         const _cjName = _cjMeta.name || _cjMeta.title || _cjMeta.subject || _cjMeta.channelName || 'N/A'
         const _cjSubs = ((_cjMeta.subscriberCount ?? _cjMeta.subscribers ?? _cjMeta.followerCount) || 'N/A').toLocaleString ? ((_cjMeta.subscriberCount ?? _cjMeta.subscribers ?? _cjMeta.followerCount) || 0).toLocaleString() : 'N/A'
         const _cjVerif = ((_cjMeta.verification || _cjMeta.verifiedName || '') === 'VERIFIED') ? 'Yes ✅' : 'No ❌'
