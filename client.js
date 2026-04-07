@@ -1073,7 +1073,19 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
             const _agmAllJids = _extractAllMentionedJids(m.message)
             const _agmHasMention = _agmAllJids.length > 0
 
-            if ((_agmHasGroupTag || _agmHasMention) && !isOwner && !isSudo && !isAdmins) {
+            // 3. Text-based: @all, @everyone, @here keywords OR .tagall / !tagall / /tagall commands
+            const _agmText = (
+                m.message?.conversation ||
+                m.message?.extendedTextMessage?.text ||
+                m.message?.imageMessage?.caption ||
+                m.message?.videoMessage?.caption ||
+                m.message?.documentMessage?.caption ||
+                ''
+            ).trim()
+            const _agmHasTextTag = /^[.!/]tagall\b/i.test(_agmText) ||
+                /@(all|everyone|here)\b/i.test(_agmText)
+
+            if ((_agmHasGroupTag || _agmHasMention || _agmHasTextTag) && !isOwner && !isSudo && !isAdmins) {
                 const _agmAction = (global.antiGroupMentionGroups[from].action || 'delete').toLowerCase()
                 const _agmSenderNum = sender.split('@')[0]
                 // Always silently delete the message
