@@ -10328,6 +10328,44 @@ case 'motivation': {
     }
 } break
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🌿  INSPIROBOT MEDITATION FLOW (Keith API)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'inspirobot':
+case 'meditate':
+case 'innerpeace':
+case 'mindful': {
+  await X.sendMessage(m.chat, { react: { text: '🌿', key: m.key } })
+  try {
+    await reply('🌿 _Generating your mindfulness flow..._')
+    const _ibRes = await fetch('https://apiskeith.top/quote/audio', { signal: AbortSignal.timeout(20000) })
+    const _ibJson = await _ibRes.json()
+    if (!_ibJson.status) throw new Error('Service unavailable')
+    const _ibData = _ibJson.result
+    // Extract all quote texts from the flow
+    const _ibQuotes = (_ibData.data || []).filter(d => d.type === 'quote' && d.text).map(d => d.text)
+    const _ibMp3   = _ibData.mp3 || null
+    if (!_ibQuotes.length) throw new Error('No quotes returned')
+    // Build the message
+    let _ibMsg = `╔══〔 🌿 MEDITATION FLOW 〕══╗\n\n`
+    _ibQuotes.forEach((q, i) => {
+      _ibMsg += `❝ ${q} ❞\n\n`
+    })
+    _ibMsg += `╚═══════════════════════╝\n_🧘 Take a deep breath and let it go..._`
+    await reply(_ibMsg)
+    // Send the background meditation audio
+    if (_ibMp3) {
+      await X.sendMessage(m.chat, {
+        audio: { url: _ibMp3 },
+        mimetype: 'audio/mpeg',
+        fileName: 'meditation_flow.mp3'
+      }, { quoted: m })
+    }
+  } catch(e) {
+    reply(`❌ Meditation flow failed: ${e.message}`)
+  }
+} break
+
 case 'fact':
 case 'randomfact': {
     await X.sendMessage(m.chat, { react: { text: '🧠', key: m.key } })
