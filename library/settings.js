@@ -10,7 +10,7 @@ const SAVEABLE = [
     'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode','antilinkGcGroups',
     'antiLinkAction','antiLinkWarnLimit','antiLinkWarns',
     'antiGroupMentionGroups',
-    'antiStatusMention','antiStatusMentionAction','antiAutoReplyStatus'
+    'antiStatusMentionGroups'
 ]
 const loadSettings = () => {
     try {
