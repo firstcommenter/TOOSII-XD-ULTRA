@@ -2138,19 +2138,30 @@ break
       if (!_tksu) return reply(`╌══〔 🎵 TIKTOK STALK 〕══╌\n║ *Usage:* ${prefix}tiktokstalk [@username]\n║ Example: ${prefix}tiktokstalk @charlidamelio\n╚═══════════════════════╝`)
       try {
           await reply(`🔍 _Stalking TikTok: ${_tksu}..._`)
-          const _tkd = await _keithFetch(`/stalker/tiktok?user=${encodeURIComponent(_tksu.replace('@',''))}`)
-          const _tkp = _tkd?.profile || _tkd?.result?.profile || _tkd
+          const _tkd = await _keithFetch(`/stalker/tiktok?q=${encodeURIComponent(_tksu.replace('@',''))}`)
+          const _tkp = _tkd?.result?.profile || _tkd?.profile
+          const _tks = _tkd?.result?.stats   || _tkd?.stats || {}
           if (!_tkp?.username) throw new Error('User not found')
-          let msg = `╌══〔 🎵 TIKTOK PROFILE 〕═╌\n`
-          msg += `\n👤 *@${_tkp.username}* (_${_tkp.nickname || ''}_ )\n`
-          if (_tkp.bio) msg += `\n💬 *Bio:* ${_tkp.bio}\n`
-          if (_tkp.followers !== undefined) msg += `\n👥 *Followers:* ${_tkp.followers?.toLocaleString() || _tkp.followers}\n`
-          if (_tkp.following !== undefined) msg += `💞 *Following:* ${_tkp.following?.toLocaleString() || _tkp.following}\n`
-          if (_tkp.likes !== undefined) msg += `❤️ *Total Likes:* ${_tkp.likes?.toLocaleString() || _tkp.likes}\n`
-          if (_tkp.videos !== undefined) msg += `🎬 *Videos:* ${_tkp.videos}\n`
-          if (_tkp.verified) msg += `✅ *Verified Account*\n`
-          msg += `\n╚═══════════════════════╝`
-          await reply(msg)
+          const _tkAvatar = _tkp.avatars?.large || _tkp.avatars?.medium
+          const _fmtNum = n => (typeof n === 'number' && n >= 0) ? n.toLocaleString() : 'N/A'
+          let caption = `╌══〔 🎵 TIKTOK PROFILE 〕═╌\n`
+          caption += `\n👤 *@${_tkp.username}*`
+          if (_tkp.nickname) caption += ` _(${_tkp.nickname})_`
+          caption += `\n`
+          if (_tkp.bio) caption += `\n💬 *Bio:* ${_tkp.bio}\n`
+          caption += `\n👥 *Followers:* ${_fmtNum(_tks.followers)}`
+          caption += `\n💞 *Following:* ${_fmtNum(_tks.following)}`
+          caption += `\n❤️ *Total Likes:* ${_fmtNum(_tks.likes)}`
+          caption += `\n🎬 *Videos:* ${_tks.videos ?? 'N/A'}`
+          caption += `\n👫 *Friends:* ${_fmtNum(_tks.friends)}`
+          if (_tkp.verified) caption += `\n✅ *Verified Account*`
+          if (_tkp.private) caption += `\n🔒 *Private Account*`
+          if (_tkp.createdAt) caption += `\n📅 *Joined:* ${new Date(_tkp.createdAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}`
+          caption += `\n\n╚═══════════════════════╝`
+          if (_tkAvatar) {
+              try { await X.sendMessage(m.chat, { image: { url: _tkAvatar }, caption }, { quoted: m }); break } catch {}
+          }
+          await reply(caption)
       } catch(e) { reply(`❌ Could not stalk TikTok user *${_tksu}*. Make sure the username is correct.`) }
   } break
 
@@ -2161,20 +2172,33 @@ break
       if (!_igsu) return reply(`╌══〔 📷 INSTAGRAM STALK 〕╌\n║ *Usage:* ${prefix}igstalk [@username]\n║ Example: ${prefix}igstalk @cristiano\n╚═══════════════════════╝`)
       try {
           await reply(`🔍 _Stalking Instagram: ${_igsu}..._`)
-          const _igd = await _keithFetch(`/stalker/ig?user=${encodeURIComponent(_igsu.replace('@',''))}`)
-          const _igp = _igd?.profile || _igd?.result?.profile || _igd
+          const _igd = await _keithFetch(`/stalker/ig?q=${encodeURIComponent(_igsu.replace('@',''))}`)
+          const _igp  = _igd?.result?.profile || _igd?.profile
+          const _igs  = _igd?.result?.stats   || _igd?.stats  || {}
+          const _igst = _igd?.result?.status  || _igd?.status || {}
           if (!_igp?.username) throw new Error('Not found')
-          let msg = `╌══〔 📷 INSTAGRAM PROFILE 〕╌\n`
-          msg += `\n👤 *@${_igp.username}* (_${_igp.fullName || _igp.name || ''}_ )\n`
-          if (_igp.bio) msg += `\n💬 *Bio:* ${_igp.bio}\n`
-          if (_igp.followers !== undefined) msg += `\n👥 *Followers:* ${_igp.followers?.toLocaleString() || _igp.followers}\n`
-          if (_igp.following !== undefined) msg += `💞 *Following:* ${_igp.following?.toLocaleString() || _igp.following}\n`
-          if (_igp.posts !== undefined) msg += `🖼️ *Posts:* ${_igp.posts}\n`
-          if (_igp.isPrivate) msg += `🔒 *Private Account*\n`
-          if (_igp.isVerified) msg += `✅ *Verified Account*\n`
-          msg += `\n╚═══════════════════════╝`
-          await reply(msg)
-      } catch(e) { reply(`❌ Could not fetch Instagram profile *${_igsu}*.`) }
+          const _igAvatar = _igp.avatars?.hd || _igp.avatars?.standard
+          const _fmtNum = n => (typeof n === 'number') ? n.toLocaleString() : 'N/A'
+          let caption = `╌══〔 📷 INSTAGRAM PROFILE 〕╌\n`
+          caption += `\n👤 *${_igp.username}*`
+          if (_igp.fullName) caption += ` _(${_igp.fullName})_`
+          caption += `\n`
+          if (_igp.biography) caption += `\n💬 *Bio:* ${_igp.biography}\n`
+          if (_igp.category) caption += `🏷️ *Category:* ${_igp.category}\n`
+          caption += `\n👥 *Followers:* ${_fmtNum(_igs.followers)}`
+          caption += `\n💞 *Following:* ${_fmtNum(_igs.following)}`
+          caption += `\n🖼️ *Posts:* ${_igs.mediaCount ?? 'N/A'}`
+          if (_igs.engagementRate) caption += `\n📊 *Engagement:* ${_igs.engagementRate}`
+          if (_igst.isVerified) caption += `\n✅ *Verified Account*`
+          if (_igst.isPrivate) caption += `\n🔒 *Private Account*`
+          if (_igst.isBusiness) caption += `\n🏢 *Business Account*`
+          if (_igp.externalUrl) caption += `\n🔗 ${_igp.externalUrl}`
+          caption += `\n\n╚═══════════════════════╝`
+          if (_igAvatar) {
+              try { await X.sendMessage(m.chat, { image: { url: _igAvatar }, caption }, { quoted: m }); break } catch {}
+          }
+          await reply(caption)
+      } catch(e) { reply(`❌ Could not fetch Instagram profile *${_igsu}*. Check the username and try again.`) }
   } break
 
   case 'twitterstalk':
@@ -2252,41 +2276,62 @@ break
           await reply(`📦 _Looking up npm: ${_npq}..._`)
           const _npd = await _keithFetch(`/stalker/npm?q=${encodeURIComponent(_npq)}`)
           const _npr = _npd?.result || _npd
-          if (!_npr?.name) throw new Error('Not found')
-          let msg = `╌══〔 📦 NPM: ${_npr.name} 〕══╌\n`
-          if (_npr.description) msg += `\n📝 *Description:* ${_npr.description}\n`
-          if (_npr.version) msg += `📌 *Latest Version:* ${_npr.version}\n`
-          if (_npr.author) msg += `✍️ *Author:* ${typeof _npr.author === 'object' ? _npr.author.name : _npr.author}\n`
-          if (_npr.license) msg += `📄 *License:* ${_npr.license}\n`
-          if (_npr.weeklyDownloads) msg += `📥 *Weekly Downloads:* ${_npr.weeklyDownloads?.toLocaleString()}\n`
-          if (_npr.homepage) msg += `🔗 *Homepage:* ${_npr.homepage}\n`
-          msg += `\n📦 npm install ${_npr.name}\n`
+          const _npm = _npr?.metadata || _npr
+          const _npv = _npr?.versions || {}
+          const _npDeps = _npr?.dependencies || {}
+          if (!_npm?.name) throw new Error('Not found')
+          let msg = `╌══〔 📦 NPM: ${_npm.name} 〕══╌\n`
+          if (_npm.description) msg += `\n📝 *Description:* ${_npm.description}\n`
+          if (_npm.license) msg += `📄 *License:* ${_npm.license}\n`
+          if (_npv.latest) msg += `\n📌 *Latest Version:* v${_npv.latest}\n`
+          if (_npv.latestPublishTime) msg += `📅 *Last Published:* ${new Date(_npv.latestPublishTime).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}\n`
+          if (_npv.count) msg += `🗂️ *Total Versions:* ${_npv.count}\n`
+          if (_npv.first) msg += `🕰️ *First Version:* v${_npv.first}\n`
+          if (_npv.initialPublishTime) msg += `📅 *First Published:* ${new Date(_npv.initialPublishTime).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}\n`
+          if (_npr?.maintainers?.length) msg += `\n✍️ *Maintainers:* ${_npr.maintainers.slice(0, 3).join(', ')}\n`
+          if (_npDeps?.latestCount) msg += `📦 *Dependencies:* ${_npDeps.latestCount}\n`
+          if (_npm.keywords?.length) msg += `🏷️ *Keywords:* ${_npm.keywords.slice(0, 6).join(', ')}\n`
+          if (_npr?.repository) msg += `\n🔗 *Repo:* ${_npr.repository}\n`
+          msg += `\n\`\`\`npm install ${_npm.name}\`\`\``
           msg += `\n╚═══════════════════════╝`
           await reply(msg)
       } catch(e) { reply(`❌ Package *${_npq}* not found on npm.`) }
   } break
 
   case 'pinterestsearch':
+  case 'pinstalk':
   case 'pinterest': {
       await X.sendMessage(m.chat, { react: { text: '📌', key: m.key } })
       const _piq = q?.trim() || text?.trim()
-      if (!_piq) return reply(`╌══〔 📌 PINTEREST 〕══════╌\n║ *Usage:* ${prefix}pinterest [search]\n║ Example: ${prefix}pinterest cute cats\n╚═══════════════════════╝`)
+      if (!_piq) return reply(`╌══〔 📌 PINTEREST STALK 〕╌\n║ *Usage:* ${prefix}pinterest [username]\n║ Example: ${prefix}pinterest nasa\n╚═══════════════════════╝`)
       try {
-          await reply(`📌 _Searching Pinterest for: ${_piq}..._`)
-          const _pid = await _keithFetch(`/stalker/pinterest?q=${encodeURIComponent(_piq)}`)
-          const _pir = Array.isArray(_pid) ? _pid : (_pid?.result || _pid?.pins || [])
-          if (!_pir.length) { reply(`❌ No Pinterest results for *${_piq}*`); break }
-          const _pickpin = _pir[Math.floor(Math.random() * Math.min(_pir.length, 5))]
-          const _pinUrl = _pickpin.url || _pickpin.image || _pickpin.imageUrl
-          if (_pinUrl) {
-              await safeSendMedia(m.chat, { image: { url: _pinUrl }, caption: `📌 *Pinterest: ${_piq}*\n\n🔎 ${_pir.length} results found` }, {}, { quoted: m })
-          } else {
-              let msg = `╌══〔 📌 PINTEREST: ${_piq} 〕╌\n`
-              for (let p of _pir.slice(0, 5)) { msg += `\n📌 *${p.title || p.board || ''}* \n   🔗 ${p.link || p.url || ''}\n` }
-              msg += `\n╚═══════════════════════╝`
-              await reply(msg)
+          await reply(`📌 _Looking up Pinterest: ${_piq}..._`)
+          const _pid = await _keithFetch(`/stalker/pinterest?q=${encodeURIComponent(_piq.replace('@',''))}`)
+          const _piu = _pid?.result?.data || _pid?.data
+          if (!_piu?.username) throw new Error('Not found')
+          const _piAvatar = _piu.image?.original || _piu.image?.large || _piu.image?.medium
+          const _fmtNum = n => (typeof n === 'number') ? n.toLocaleString() : 'N/A'
+          const _piStats = _piu.stats || {}
+          let caption = `╌══〔 📌 PINTEREST PROFILE 〕╌\n`
+          caption += `\n👤 *@${_piu.username}*`
+          if (_piu.full_name) caption += ` _(${_piu.full_name})_`
+          caption += `\n`
+          if (_piu.bio) caption += `\n💬 *Bio:* ${_piu.bio}\n`
+          caption += `\n📌 *Pins:* ${_fmtNum(_piStats.pins)}`
+          caption += `\n📋 *Boards:* ${_fmtNum(_piStats.boards)}`
+          caption += `\n👥 *Followers:* ${_fmtNum(_piStats.followers)}`
+          caption += `\n💞 *Following:* ${_fmtNum(_piStats.following)}`
+          if (_piu.is_verified?.verified) caption += `\n✅ *Verified Account*`
+          if (_piu.website) caption += `\n🔗 ${_piu.website}`
+          if (_piu.location) caption += `\n📍 ${_piu.location}`
+          if (_piu.created_at) caption += `\n📅 *Joined:* ${_piu.created_at}`
+          if (_piu.profile_url) caption += `\n\n🌐 ${_piu.profile_url}`
+          caption += `\n\n╚═══════════════════════╝`
+          if (_piAvatar) {
+              try { await X.sendMessage(m.chat, { image: { url: _piAvatar }, caption }, { quoted: m }); break } catch {}
           }
-      } catch(e) { reply('❌ Pinterest search failed. Try again later.') }
+          await reply(caption)
+      } catch(e) { reply(`❌ Pinterest user *${_piq}* not found. Try again.`) }
   } break
 
 
