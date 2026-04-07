@@ -2250,21 +2250,36 @@ break
       if (!_ciq) return reply(`╌══〔 🌍 COUNTRY INFO 〕══╌\n║ *Usage:* ${prefix}country [name]\n║ Example: ${prefix}country Kenya\n╚═══════════════════════╝`)
       try {
           await reply(`🌍 _Looking up: ${_ciq}..._`)
-          const _cid = await _keithFetch(`/stalker/country?region=${encodeURIComponent(_ciq)}`)
-          const _cir = _cid?.result || (Array.isArray(_cid) ? _cid[0] : _cid)
-          if (!_cir?.name) throw new Error('Not found')
-          let msg = `╌══〔 🌍 ${(_cir.name?.common || _cir.name || _ciq).toUpperCase()} 〕╌\n`
-          const _cin = _cir.name?.common || _cir.name; if (_cin) msg += `\n🏳️ *Name:* ${_cin}\n`
-          if (_cir.capital) msg += `🏢 *Capital:* ${Array.isArray(_cir.capital) ? _cir.capital[0] : _cir.capital}\n`
-          if (_cir.population) msg += `👥 *Population:* ${_cir.population?.toLocaleString()}\n`
-          if (_cir.region) msg += `🗺️ *Region:* ${_cir.region}\n`
-          if (_cir.subregion) msg += `🏷️ *Subregion:* ${_cir.subregion}\n`
-          if (_cir.languages) msg += `🗣️ *Languages:* ${Object.values(_cir.languages).slice(0,3).join(', ')}\n`
-          if (_cir.currencies) msg += `💰 *Currency:* ${Object.values(_cir.currencies).map(c => `${c.name} (${c.symbol || '?'})`).join(', ')}\n`
-          if (_cir.flag || _cir.emoji) msg += `\n${_cir.flag || _cir.emoji}\n`
-          msg += `\n╚═══════════════════════╝`
-          await reply(msg)
-      } catch(e) { reply(`❌ Country *${_ciq}* not found. Try the full name.`) }
+          const _cid = await _keithFetch(`/stalker/country?q=${encodeURIComponent(_ciq)}`)
+          const _cib = _cid?.basicInfo
+          const _cig = _cid?.geography
+          const _cic = _cid?.culture
+          const _civ = _cid?.government
+          if (!_cib?.name) throw new Error('Not found')
+          const _ciContinent = _cig?.continent?.emoji ? `${_cig.continent.emoji} ${_cig.continent.name}` : ''
+          const _ciNeighbors = (_cig?.neighbors || []).map(n => n.name).join(', ')
+          const _ciLangs = (_cic?.languages?.native || []).map(l => l.charAt(0).toUpperCase() + l.slice(1)).join(', ')
+          let caption = `╌══〔 🌍 ${_cib.name.toUpperCase()} 〕╌\n`
+          caption += `\n🏳️ *Country:* ${_cib.name}`
+          if (_cib.capital) caption += `\n🏢 *Capital:* ${_cib.capital}`
+          if (_ciContinent) caption += `\n🗺️ *Continent:* ${_ciContinent}`
+          if (_civ?.currency) caption += `\n💰 *Currency:* ${_civ.currency}`
+          if (_ciLangs) caption += `\n🗣️ *Languages:* ${_ciLangs}`
+          if (_civ?.constitutionalForm) caption += `\n🏛️ *Government:* ${_cib.name.charAt(0).toUpperCase() + _civ.constitutionalForm.slice(1)}`
+          if (_cig?.area?.sqKm) caption += `\n📐 *Area:* ${_cig.area.sqKm.toLocaleString()} km²`
+          if (_cib.phoneCode) caption += `\n📞 *Phone Code:* ${_cib.phoneCode}`
+          if (_cib.internetTLD) caption += `\n🌐 *TLD:* ${_cib.internetTLD}`
+          if (_cig?.landlocked !== undefined) caption += `\n⛵ *Landlocked:* ${_cig.landlocked ? 'Yes' : 'No'}`
+          if (_cic?.famousFor) caption += `\n⭐ *Famous For:* ${_cic.famousFor}`
+          if (_cic?.drivingSide) caption += `\n🚗 *Drives on:* ${_cic.drivingSide} side`
+          if (_ciNeighbors) caption += `\n🤝 *Neighbors:* ${_ciNeighbors}`
+          if (_cib.googleMaps) caption += `\n📍 ${_cib.googleMaps}`
+          caption += `\n\n╚═══════════════════════╝`
+          if (_cib.flag) {
+              try { await X.sendMessage(m.chat, { image: { url: _cib.flag }, caption }, { quoted: m }); break } catch {}
+          }
+          await reply(caption)
+      } catch(e) { reply(`❌ Country *${_ciq}* not found. Try the full country name.`) }
   } break
 
   case 'npminfo':
