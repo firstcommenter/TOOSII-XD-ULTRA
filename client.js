@@ -956,24 +956,35 @@ if (m.isGroup && !isAdmins && !isOwner) {
         await X.sendMessage(from, { text: `@${sender.split('@')[0]} group links are not allowed here!`, mentions: [sender] })
         return
     }
-    if (global.antiLink && m.isGroup) {
-        const _alText = budy || m.body || m.text || m.message?.extendedTextMessage?.text || m.message?.conversation || ''
-        const _alIsLink = _alText && (
-            /https?:\/\/[^\s]+/i.test(_alText) ||
-            /(?:^|\s)www\.[a-z0-9-]+\.[a-z]{2,}[^\s]*/i.test(_alText) ||
-            /(?:^|\s)(?:chat\.whatsapp\.com|wa\.me|t\.me|youtu\.be|bit\.ly|tinyurl\.com|goo\.gl)\/[^\s]*/i.test(_alText)
-        )
-        if (_alIsLink) {
-            const _alAction = (global.antiLinkAction || 'delete').toLowerCase()
-            const _alSenderNum = sender.split('@')[0]
-            if (isOwner || isSudo) {
-                await X.sendMessage(from, { text: `⚠️ *Anti-Link Active!*\nAction: *${_alAction}*\n\nLink detected from @${_alSenderNum}, but they are a *sudo/owner* and cannot be actioned.`, mentions: [sender] })
-                return
-            }
-            if (isAdmins) {
-                await X.sendMessage(from, { text: `⚠️ *Anti-Link Active!*\nAction: *${_alAction}*\n\nLink detected from @${_alSenderNum}, but they are a *group admin* and cannot be actioned.`, mentions: [sender] })
-                return
-            }
+    if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
+        const _isViewOnce    = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
+        const _isFwdStatus   = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
+        const _isGroupStatus = m.mtype === 'groupStatusMessageV2' || !!m.message?.groupStatusMessageV2
+        if (_isViewOnce || _isFwdStatus || _isGroupStatus) {
+            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
+            return
+        }
+    }
+}
+
+// ── Anti-Link enforcement ─────────────────────────────────────────────────
+// Lives OUTSIDE the !isAdmins/!isOwner block so it catches all senders.
+// Admin/owner exemptions are handled internally.
+if (global.antiLink && m.isGroup && !m.key.fromMe) {
+    const _alText = budy || m.body || m.text || m.message?.extendedTextMessage?.text || m.message?.conversation || ''
+    const _alIsLink = _alText && (
+        /https?:\/\/[^\s]+/i.test(_alText) ||
+        /(?:^|\s)www\.[a-z0-9-]+\.[a-z]{2,}[^\s]*/i.test(_alText) ||
+        /(?:^|\s)(?:chat\.whatsapp\.com|wa\.me|t\.me|youtu\.be|bit\.ly|tinyurl\.com|goo\.gl)\/[^\s]*/i.test(_alText)
+    )
+    if (_alIsLink) {
+        const _alAction = (global.antiLinkAction || 'delete').toLowerCase()
+        const _alSenderNum = sender.split('@')[0]
+        if (isOwner || isSudo) {
+            // owner/sudo: notify only, no enforcement
+        } else if (isAdmins) {
+            // group admin: notify only, no enforcement
+        } else {
             try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
             if (_alAction === 'kick') {
                 try {
@@ -1003,15 +1014,6 @@ if (m.isGroup && !isAdmins && !isOwner) {
             } else {
                 await X.sendMessage(from, { text: `⚠️ *Anti-Link:* Links are not allowed here @${_alSenderNum}!`, mentions: [sender] })
             }
-            return
-        }
-    }
-    if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
-        const _isViewOnce    = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
-        const _isFwdStatus   = m.message?.extendedTextMessage?.contextInfo?.isForwarded && m.message?.extendedTextMessage?.contextInfo?.remoteJid === 'status@broadcast'
-        const _isGroupStatus = m.mtype === 'groupStatusMessageV2' || !!m.message?.groupStatusMessageV2
-        if (_isViewOnce || _isFwdStatus || _isGroupStatus) {
-            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
             return
         }
     }
