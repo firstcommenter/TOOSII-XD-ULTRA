@@ -1423,7 +1423,7 @@ const isDeployedNumber = m.key.fromMe || senderClean === botClean
 
 if (isCmd && X.public === false && !isDeployedNumber && !isSudo && !isOwner) {
       console.log('[PrivateGate] BLOCKED', senderClean, '| isSudo:', isSudo, '| isOwner:', isOwner, '| sudoList:', _sudoMerged)
-    return reply('🔒 *Bot is in Private Mode.*\n_Only the owner and sudo users can use commands._\n\n📢 *Join Channel:*\nhttps://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03')
+    return X.sendMessage(m.chat, { text: '🔒 *Bot is in Private Mode.*\n_Only the owner and sudo users can use commands._\n\n📢 *Follow our channel to stay updated!*', contextInfo: global.getCtxInfo() }, { quoted: m })
 }
 if (isCmd && (global.BOT_MODE === 'silent') && !isDeployedNumber && !isSudo && !isOwner) {
     return reply('🔇 *Bot is in Silent Mode.*\n_Only the owner and sudo users can use commands._')
