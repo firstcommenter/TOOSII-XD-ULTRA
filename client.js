@@ -13587,7 +13587,12 @@ case 'wyr': {
       if (typeof _wyrkd === 'string') _wyrTxt = _wyrkd
       else if (_wyrkd?.result) _wyrTxt = typeof _wyrkd.result === 'string' ? _wyrkd.result : _wyrkd.result?.question
       if (_wyrTxt && _wyrTxt.includes(' or ')) {
-          const [optA, optB] = _wyrTxt.split(' or ').map(s => s.trim())
+          // Strip leading "Would you rather [have] " prefix if present
+          const _wyrClean = _wyrTxt.replace(/^would you rather\s*/i, '').trim()
+          // Split on first " or " and join remainder back for optB
+          const _wyrParts = _wyrClean.split(/ or /i)
+          const optA = _wyrParts[0].trim().replace(/\?$/, '')
+          const optB = _wyrParts.slice(1).join(' or ').trim().replace(/\?$/, '')
           await reply(`╌══〔 🤔 WOULD YOU RATHER 〕═╌\n║ 🅰️ *Option A:*\n║    ${optA}\n║\n║ 🅱️ *Option B:*\n║    ${optB}\n║\n║ 💬 Reply A or B!\n╚═══════════════════════╝`)
       } else {
           // Local fallback
