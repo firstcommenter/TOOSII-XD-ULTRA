@@ -10083,7 +10083,7 @@ reply(`╔══〔 🔥 DARE CHALLENGE 〕══╗\n║ 🎯 ${_dareQ}\n╚═
           const _nhd = await _keithFetch('/fun/never-have-i-ever')
           const _nhtxt = typeof _nhd === 'string' ? _nhd : (_nhd?.result || _nhd?.statement)
           if (!_nhtxt) throw new Error('No statement')
-          await reply(`╌══〔 🙅 NEVER HAVE I EVER 〕═╌\n\n✋ _Raise your hand if you have..._\n\n💬 *Never have I ever ${_nhtxt}*\n\n🤫 _Who has done this? React below!_\n╚═══════════════════════╝`)
+          await reply(`╌══〔 🙅 NEVER HAVE I EVER 〕═╌\n\n✋ _Raise your hand if you have..._\n\n💬 *${_nhtxt}*\n\n🤫 _Who has done this? React below!_\n╚═══════════════════════╝`)
       } catch(e) { reply('❌ Could not get a NHIE statement. Try again!') }
   } break
 
