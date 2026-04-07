@@ -363,7 +363,7 @@ const util = require('util')
       // Source 1: Keith API (apiskeith.top)
       try {
           const _knd = await _keithFetch('/football/news')
-          const _kni = _knd?.result?.data?.items || _knd?.data?.items || _knd?.items
+          const _kni = _knd?.data?.items || _knd?.items
           if (Array.isArray(_kni) && _kni.length) return _kni.map(x => ({ title: x.title||'', summary: x.summary||'' }))
       } catch {}
       // Source 2: GiftedTech
@@ -13252,7 +13252,7 @@ case 'news': {
     await reply('📰 _Fetching latest BBC news..._')
     // Primary: Keith BBC news
     const _nbd = await _keithFetch('/news/bbc')
-    const _nbs = _nbd?.result?.topStories || []
+    const _nbs = _nbd?.topStories || []
     if (_nbs.length) {
       // Send image of first story if available
       const _nbFirst = _nbs[0]
@@ -13445,7 +13445,7 @@ case 'news': {
       try {
           await reply('💻 _Fetching tech news..._')
           const _tnd = await _keithFetch('/news/tech')
-          const _tna = _tnd?.result?.featuredArticles || _tnd?.result?.articles || _tnd?.articles || _tnd?.items || (Array.isArray(_tnd?.result) ? _tnd.result : [])
+          const _tna = _tnd?.featuredArticles || _tnd?.articles || _tnd?.items || (Array.isArray(_tnd) ? _tnd : [])
           if (!_tna.length) throw new Error('No data')
           let msg = `╔══〔 💻 TECH NEWS 〕══╗\n`
           for (let a of _tna.slice(0, 8)) {
@@ -13469,9 +13469,9 @@ case 'news': {
               // Search mode: .kenyans [query]
               await reply(`🔍 _Searching Kenyans.co.ke for "${text.trim()}"..._`)
               const _ksd = await _keithFetch(`/news/kenyans/search?q=${encodeURIComponent(text.trim())}`)
-              const _ksr = _ksd?.result?.results || []
+              const _ksr = _ksd?.results || []
               if (!_ksr.length) return reply(`❌ No results found for: *${text.trim()}*`)
-              let msg = `╔══〔 🔍 KENYANS SEARCH 〕══╗\n║ Query: *${text.trim()}*\n║ Found: ${_ksd?.result?.totalResults || _ksr.length} results\n`
+              let msg = `╔══〔 🔍 KENYANS SEARCH 〕══╗\n║ Query: *${text.trim()}*\n║ Found: ${_ksd?.totalResults || _ksr.length} results\n`
               for (let a of _ksr.slice(0, 6)) {
                   msg += `\n📰 *${a.title}*\n`
                   if (a.date) msg += `   📅 ${new Date(a.date).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' })}\n`
@@ -13484,7 +13484,7 @@ case 'news': {
           // Default: latest news
           await reply('🇰🇪 _Fetching Kenyans.co.ke news..._')
           const _knd = await _keithFetch('/news/kenyans')
-          const _kna = Array.isArray(_knd?.result) ? _knd.result : (_knd?.result?.articles || _knd?.articles || [])
+          const _kna = Array.isArray(_knd) ? _knd : (_knd?.articles || [])
           if (!_kna.length) throw new Error('No data')
           let msg = `╔══〔 🇰🇪 KENYANS NEWS 〕══╗\n`
           for (let a of _kna.slice(0, 8)) {
@@ -13508,7 +13508,7 @@ case 'bbc': {
     try {
         await reply('🌍 _Fetching BBC World News..._')
         const _bbd = await _keithFetch('/news/bbc')
-        const _bbs = _bbd?.result?.topStories || []
+        const _bbs = _bbd?.topStories || []
         if (!_bbs.length) throw new Error('No data')
         // Send thumbnail of first story with real image
         const _bbImg = _bbs.find(a => a.imageUrl && !a.imageUrl.includes('grey-placeholder'))
@@ -13536,7 +13536,7 @@ case 'kbc': {
     try {
         await reply('📺 _Fetching KBC Channel 1 news..._')
         const _kbd = await _keithFetch('/news/kbc')
-        const _kbr = _kbd?.result || {}
+        const _kbr = _kbd || {}
         const _kbItems = _kbr.breakingNews || _kbr.topStories || _kbr.latestNews || []
         if (!_kbItems.length) throw new Error('No data')
         let msg = `╔══〔 📺 KBC CHANNEL 1 NEWS 〕══╗\n║ 🌐 ${_kbr.baseUrl || 'kbctv.co.ke'}\n`
