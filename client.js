@@ -4142,9 +4142,11 @@ if (!arArg) {
     reply(`╔══〔 👁️ AUTO READ 〕══════╗\n║ 📊 *Status* : ${arState}\n║ Marks all messages as read automatically\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}autoread on\n║ ${prefix}autoread off\n╚═══════════════════════╝`)
 } else if (arArg === 'on' || arArg === 'enable') {
     global.autoRead = true
+    try { require('./library/settings').saveSettings() } catch {}
     reply('╔══〔 📖 AUTO READ 〕══╗\n\n║ Status: ✅ ON\n║ All messages will be marked as read.\n╚═══════════════════════╝')
 } else if (arArg === 'off' || arArg === 'disable') {
     global.autoRead = false
+    try { require('./library/settings').saveSettings() } catch {}
     reply('╔══〔 📖 AUTO READ 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
@@ -4162,9 +4164,11 @@ if (!cbArg) {
     reply(`╔══〔 🤖 CHATBOT STATUS 〕══╗\n║ 🌐 *Global ChatBot* : ${cbState}\n║ 💬 *AI Active Chats* : ${cbaChats}\n╠══〔 📋 COMMANDS 〕══════╣\n║ ${prefix}chatbot on       — global auto-reply\n║ ${prefix}chatbot off      — disable\n║ ${prefix}chatboai on      — this chat only\n║ ${prefix}chatboai off     — disable here\n║ ${prefix}chatboai [msg]   — one-shot AI reply\n╚═══════════════════════╝`)
 } else if (cbArg === 'on' || cbArg === 'enable') {
     global.chatBot = true
+    try { require('./library/settings').saveSettings() } catch {}
     reply('*🤖 ChatBot: ✅ ON*\n_Bot will now auto-reply to all messages in English using AI._\n\n_Use_ ' + prefix + 'chatbot off _to stop._')
 } else if (cbArg === 'off' || cbArg === 'disable') {
     global.chatBot = false
+    try { require('./library/settings').saveSettings() } catch {}
     reply('*🤖 ChatBot: ❌ OFF*\n_Global auto-replies disabled._')
 }
 }
@@ -4289,9 +4293,11 @@ if (!alArg) {
     reply(`╔══〔 🔗 ANTI LINK 〕══════╗\n║ 📊 *Status* : ${alState}\n║ Deletes links & warns sender\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}antilink on\n║ ${prefix}antilink off\n╚═══════════════════════╝`)
 } else if (alArg === 'on' || alArg === 'enable') {
     global.antiLink = true
+    try { require('./library/settings').saveSettings() } catch {}
     reply(`╔══〔 🔗 ANTI-LINK: ON 〕══╗\n\n║ ✅ Links will be deleted.\n║ _Bot must be admin._\n╚═══════════════════════╝`)
 } else if (alArg === 'off' || alArg === 'disable') {
     global.antiLink = false
+    try { require('./library/settings').saveSettings() } catch {}
     reply('╔══〔 🔗 ANTI-LINK 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
 }
 }
@@ -5023,9 +5029,11 @@ break
                   reply(`╔══〔 👋 WELCOME / GOODBYE 〕══╗\n\n║ 📊 *Status* : ${welState}\n║ Sends greetings when members join/leave\n\n║ ${prefix}welcome on  — Enable\n║ ${prefix}welcome off — Disable\n╚═══════════════════════╝`)
                } else if (welArg === 'on' || welArg === 'enable') {
                   global.welcome = true
+                  try { require('./library/settings').saveSettings() } catch {}
                   reply(`╔══〔 👋 WELCOME / GOODBYE 〕══╗\n\n║ ✅ *Enabled in ${groupName || 'this group'}*\n║ _Bot will greet joins & announce leaves._\n╚═══════════════════════╝`)
                } else if (welArg === 'off' || welArg === 'disable') {
                   global.welcome = false
+                  try { require('./library/settings').saveSettings() } catch {}
                   reply(`╔══〔 👋 WELCOME / GOODBYE 〕══╗\n\n║ ❌ *Disabled in ${groupName || 'this group'}*\n║ _Welcome and goodbye messages turned off._\n╚═══════════════════════╝`)
                }
             }
@@ -7626,9 +7634,11 @@ if (!isAdmins && !isOwner) return reply(mess.admin)
 let gbArg = (args[0] || '').toLowerCase()
 if (gbArg === 'on') {
     global.goodbye = true
+    try { require('./library/settings').saveSettings() } catch {}
     reply(`╔══〔 👋 GOODBYE MESSAGES 〕══╗\n\n║ ✅ *Enabled in ${groupName || 'this group'}*\n║ _Bot will farewell departing members._\n╚═══════════════════════╝`)
 } else if (gbArg === 'off') {
     global.goodbye = false
+    try { require('./library/settings').saveSettings() } catch {}
     reply(`╔══〔 👋 GOODBYE MESSAGES 〕══╗\n\n║ ❌ *Disabled in ${groupName || 'this group'}*\n║ _Goodbye messages turned off._\n╚═══════════════════════╝`)
 } else {
     let gbState = (global.goodbye ?? global.welcome) ? '✅ ON' : '❌ OFF'
@@ -10159,6 +10169,7 @@ let _chosen = (text || '').toLowerCase().trim()
 if (!_chosen) return reply(`╔════〔 🔤 SET FONT 〕════╗\n\n║ Usage: *${prefix}setfont [fontname]*\n║ Fonts: ${_validFonts.join(' · ')}\n\n║ _Auto-converts your messages until ${prefix}fontoff_\n╚═══════════════════════╝`)
 if (!_validFonts.includes(_chosen)) return reply(`❌ Unknown font: *${_chosen}*\n\nValid options:\n${_validFonts.map(f=>'• '+f).join('\n')}`)
 global.ownerFontMode = _chosen
+try { require('./library/settings').saveSettings() } catch {}
 reply(`✅ *Font mode set to: ${_chosen}*\n\n_Every message you send will now appear in ${_chosen} style._\n_Use ${prefix}fontoff to return to normal._`)
 } break
 
@@ -10167,6 +10178,7 @@ case 'resetfont': {
     await X.sendMessage(m.chat, { react: { text: '✏️', key: m.key } })
 if (!isOwner) return reply(mess.OnlyOwner)
 global.ownerFontMode = 'off'
+try { require('./library/settings').saveSettings() } catch {}
 reply(`✅ *Font mode disabled.*\n_Your messages will now send normally._`)
 } break
 
