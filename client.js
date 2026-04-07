@@ -1068,11 +1068,12 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
                 gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0]
             )
 
-            // 2. mentionedJid across ALL message types (text, image, video, doc, audio, sticker)
+            // 2. ANY mentionedJid across ALL message types (text, image, video, doc, audio, sticker)
+            // Even a single @tag triggers AGM — this is the key difference from ASM
             const _agmAllJids = _extractAllMentionedJids(m.message)
-            const _agmMassTag = _agmAllJids.length >= Math.max(5, Math.floor((participants?.length || 20) / 2))
+            const _agmHasMention = _agmAllJids.length > 0
 
-            if ((_agmHasGroupTag || _agmMassTag) && !isOwner && !isSudo && !isAdmins) {
+            if ((_agmHasGroupTag || _agmHasMention) && !isOwner && !isSudo && !isAdmins) {
                 const _agmAction = (global.antiGroupMentionGroups[from].action || 'delete').toLowerCase()
                 const _agmSenderNum = sender.split('@')[0]
                 // Always silently delete the message
@@ -1080,7 +1081,7 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
                 if (_agmAction === 'kick') {
                     try {
                         await X.groupParticipantsUpdate(from, [sender], 'remove')
-                        await X.sendMessage(from, { text: `🚫 *Anti Group Mention:* @${_agmSenderNum} was removed for mass-tagging the group.`, mentions: [sender] })
+                        await X.sendMessage(from, { text: `🚫 *Anti Group Mention:* @${_agmSenderNum} was removed for tagging members in this group.`, mentions: [sender] })
                     } catch { /* silent if no admin */ }
                 } else if (_agmAction === 'warn') {
                     if (!global._agmWarns) global._agmWarns = {}
@@ -4469,7 +4470,7 @@ case 'agm': {
         const _s    = _agmCfg.enabled ? '✅ ON' : '❌ OFF'
         const _a    = (_agmCfg.action || 'delete').toUpperCase()
         const _aIcon = _a === 'KICK' ? '🚫' : _a === 'WARN' ? '⚠️' : '🗑️'
-        return `╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ 📊 *Status* : ${_s}\n║ ${_aIcon} *Action* : ${_a}\n║ 📍 *Scope* : This group only\n\n║ *Commands:*\n║ ${prefix}agm on\n║ ${prefix}agm off\n║ ${prefix}agm delete — silent delete\n║ ${prefix}agm warn   — 3 silent strikes then kick\n║ ${prefix}agm kick   — delete + kick sender\n\n║ _Triggers on @everyone or mass-tagging._\n║ _Bot must be admin in the group._\n╚═══════════════════════╝`
+        return `╔══〔 👥 ANTI GROUP MENTION 〕══╗\n\n║ 📊 *Status* : ${_s}\n║ ${_aIcon} *Action* : ${_a}\n║ 📍 *Scope* : This group only\n\n║ *Commands:*\n║ ${prefix}agm on\n║ ${prefix}agm off\n║ ${prefix}agm delete — silent delete\n║ ${prefix}agm warn   — 3 silent strikes then kick\n║ ${prefix}agm kick   — delete + kick sender\n\n║ _Triggers when anyone @tags a member_\n║ _in any message (text, image, video…)._\n║ _Bot must be admin. Admins are exempt._\n╚═══════════════════════╝`
     }
 
     if (!_agmArg) {
