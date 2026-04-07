@@ -956,10 +956,52 @@ if (m.isGroup && !isAdmins && !isOwner) {
         await X.sendMessage(from, { text: `@${sender.split('@')[0]} group links are not allowed here!`, mentions: [sender] })
         return
     }
-    if (global.antiLink && m.isGroup && budy && /https?:\/\/[^\s]+|www\.[^\s]+/i.test(budy) && isBotAdmins && !isAdmins && !isOwner) {
-        await X.sendMessage(m.chat, { delete: m.key })
-        await X.sendMessage(from, { text: `@${sender.split('@')[0]} links are not allowed in this group!`, mentions: [sender] })
-        return
+    if (global.antiLink && m.isGroup && budy && isBotAdmins) {
+        const _alIsLink = /https?:\/\/[^\s]+/i.test(budy) ||
+            /(?:^|\s)www\.[a-z0-9-]+\.[a-z]{2,}[^\s]*/i.test(budy) ||
+            /(?:^|\s)(?:chat\.whatsapp\.com|wa\.me|t\.me|youtu\.be|bit\.ly|tinyurl\.com|goo\.gl)\/[^\s]*/i.test(budy)
+        if (_alIsLink) {
+            const _alAction = (global.antiLinkAction || 'delete').toLowerCase()
+            const _alSenderNum = sender.split('@')[0]
+            if (isOwner || isSudo) {
+                await X.sendMessage(from, { text: `⚠️ *Anti-Link Active!*\nAction: *${_alAction}*\n\nLink detected from @${_alSenderNum}, but they are a *sudo/owner* and cannot be actioned.`, mentions: [sender] })
+                return
+            }
+            if (isAdmins) {
+                await X.sendMessage(from, { text: `⚠️ *Anti-Link Active!*\nAction: *${_alAction}*\n\nLink detected from @${_alSenderNum}, but they are a *group admin* and cannot be actioned.`, mentions: [sender] })
+                return
+            }
+            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
+            if (_alAction === 'kick') {
+                try {
+                    await X.groupParticipantsUpdate(from, [sender], 'remove')
+                    await X.sendMessage(from, { text: `⚠️ *Anti-Link:* @${_alSenderNum} has been kicked for sharing a link.`, mentions: [sender] })
+                } catch {
+                    await X.sendMessage(from, { text: `⚠️ *Anti-Link:* Link deleted from @${_alSenderNum}. Could not kick (missing admin perms?).`, mentions: [sender] })
+                }
+            } else if (_alAction === 'warn') {
+                if (!global.antiLinkWarns) global.antiLinkWarns = {}
+                if (!global.antiLinkWarns[from]) global.antiLinkWarns[from] = {}
+                global.antiLinkWarns[from][sender] = (global.antiLinkWarns[from][sender] || 0) + 1
+                const _alWarnLimit = global.antiLinkWarnLimit || 3
+                const _alCurrentWarns = global.antiLinkWarns[from][sender]
+                if (_alCurrentWarns >= _alWarnLimit) {
+                    try {
+                        await X.groupParticipantsUpdate(from, [sender], 'remove')
+                        global.antiLinkWarns[from][sender] = 0
+                        try { require('./library/settings').saveSettings() } catch {}
+                        await X.sendMessage(from, { text: `🚫 *Anti-Link:* @${_alSenderNum} reached ${_alWarnLimit} warnings and has been kicked!`, mentions: [sender] })
+                    } catch {
+                        await X.sendMessage(from, { text: `⚠️ *Anti-Link:* @${_alSenderNum} has ${_alCurrentWarns}/${_alWarnLimit} warnings! Could not kick.`, mentions: [sender] })
+                    }
+                } else {
+                    await X.sendMessage(from, { text: `⚠️ *Anti-Link Warning ${_alCurrentWarns}/${_alWarnLimit}* for @${_alSenderNum}!\nLinks are not allowed. You will be kicked after ${_alWarnLimit} warnings.`, mentions: [sender] })
+                }
+            } else {
+                await X.sendMessage(from, { text: `⚠️ *Anti-Link:* Links are not allowed here @${_alSenderNum}!`, mentions: [sender] })
+            }
+            return
+        }
     }
     if (global.antiGroupStatusGroups?.[m.chat] && isBotAdmins) {
         const _isViewOnce    = m.mtype === 'viewOnceMessage' || m.mtype === 'viewOnceMessageV2' || m.mtype === 'viewOnceMessageV2Extension'
@@ -4292,18 +4334,32 @@ case 'setantilink': {
     await X.sendMessage(m.chat, { react: { text: '🔗', key: m.key } })
 if (!m.isGroup) return reply(mess.OnlyGrup)
 if (!isAdmins && !isOwner) return reply(mess.admin)
-let alArg = (args[0] || '').toLowerCase()
-if (!alArg) {
-    let alState = global.antiLink ? 'ON' : 'OFF'
-    reply(`╔══〔 🔗 ANTI LINK 〕══════╗\n║ 📊 *Status* : ${alState}\n║ Deletes links & warns sender\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}antilink on\n║ ${prefix}antilink off\n╚═══════════════════════╝`)
-} else if (alArg === 'on' || alArg === 'enable') {
+const _alArg = (args[0] || '').toLowerCase()
+const _alAction = global.antiLinkAction || 'delete'
+const _alWarnLimitDisplay = global.antiLinkWarnLimit || 3
+if (!_alArg) {
+    reply(`╔══〔 🔗 ANTI LINK 〕══════╗\n║ 📊 *Status* : ${global.antiLink ? '✅ ON' : '❌ OFF'}\n║ ⚙️  *Action* : ${_alAction}\n║ ⚠️  *Warn Limit* : ${_alWarnLimitDisplay}\n╠══〔 📋 USAGE 〕══════════╣\n║ ${prefix}antilink on\n║ ${prefix}antilink off\n║ ${prefix}antilink delete — delete only\n║ ${prefix}antilink kick  — delete + kick\n║ ${prefix}antilink warn  — warn, then kick\n║ ${prefix}antilink warnlimit 3 — set warn limit\n╚═══════════════════════╝`)
+} else if (_alArg === 'on' || _alArg === 'enable') {
     global.antiLink = true
     try { require('./library/settings').saveSettings() } catch {}
-    reply(`╔══〔 🔗 ANTI-LINK: ON 〕══╗\n\n║ ✅ Links will be deleted.\n║ _Bot must be admin._\n╚═══════════════════════╝`)
-} else if (alArg === 'off' || alArg === 'disable') {
+    reply(`╔══〔 🔗 ANTI-LINK: ON 〕══╗\n\n║ ✅ Active — action: *${_alAction}*\n║ _Bot must be admin in group._\n╚═══════════════════════╝`)
+} else if (_alArg === 'off' || _alArg === 'disable') {
     global.antiLink = false
     try { require('./library/settings').saveSettings() } catch {}
     reply('╔══〔 🔗 ANTI-LINK 〕══╗\n\n║ Status: ❌ OFF\n╚═══════════════════════╝')
+} else if (['delete','kick','warn'].includes(_alArg)) {
+    global.antiLinkAction = _alArg
+    global.antiLink = true
+    try { require('./library/settings').saveSettings() } catch {}
+    reply(`╔══〔 🔗 ANTI-LINK 〕══╗\n\n║ ✅ ON — Action: *${_alArg}*\n║ ${_alArg === 'delete' ? 'Links will be deleted silently.' : _alArg === 'kick' ? 'Senders will be kicked.' : `Senders get ${_alWarnLimitDisplay} warnings then kicked.`}\n╚═══════════════════════╝`)
+} else if (_alArg === 'warnlimit') {
+    const _alNewLimit = parseInt(args[1])
+    if (isNaN(_alNewLimit) || _alNewLimit < 1 || _alNewLimit > 20) return reply('❌ Warn limit must be a number between 1 and 20\nExample: .antilink warnlimit 3')
+    global.antiLinkWarnLimit = _alNewLimit
+    try { require('./library/settings').saveSettings() } catch {}
+    reply(`✅ *Anti-Link warn limit set to ${_alNewLimit}*\nUsers will be kicked after ${_alNewLimit} link warnings.`)
+} else {
+    reply(`❌ Unknown option: *${_alArg}*\nUse: on / off / delete / kick / warn / warnlimit`)
 }
 }
 break
