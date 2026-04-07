@@ -2,11 +2,12 @@ const fs   = require('fs')
 const path = require('path')
 const SETTINGS_FILE = path.join(__dirname, '..', 'data', 'settings.json')
 const SAVEABLE = [
-    'prefix','botname','welcome','goodbye','adminevent','antidelete','antilink',
+    'prefix','botname','welcome','goodbye','adminevent','antidelete','antiLink',
     'antitoxic','antibot','fakePresence','autoViewStatus','autoLikeStatus',
-    'autoLikeEmoji','statusToGroup','mode','autoread','chatbot','anticall',
+    'autoLikeEmoji','statusToGroup','mode','autoRead','chatBot','anticall',
     'antiword','antispam','warn','warnlimit','alive','aliveMsg','aliveMoment',
-    'packname','authorname','watermark','botPrefix','statusMentionWarns','statusMentionDeleteList','BOT_MODE','onlyGroup','botPublicMode'
+    'packname','authorname','watermark','botPrefix','statusMentionWarns','statusMentionDeleteList',
+    'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode'
 ]
 const loadSettings = () => {
     try {
