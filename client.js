@@ -1959,42 +1959,55 @@ break;
 //━━━━━━━━━━━━━━━━━━━━━━━━//
 // Download Features
 case 'mfdl':
-case 'mediafire': {
+case 'mediafire':
+case 'mfire': {
     await X.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
- if (!text) return reply(`╔══〔 📥 MEDIAFIRE 〕══════╗
-║ *Usage:* ${prefix}mediafire [link]
-║ Example: ${prefix}mediafire https://mediafire.com/...
-╚═══════════════════════╝`)
-  try {
-    const _mfHtml = await axios.get(text, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      timeout: 20000
-    })
-    const _mfPage = _mfHtml.data || ''
-    const _dlMatch = _mfPage.match(/href="(https:\/\/download\d*\.mediafire\.com\/[^"]+)"/)
-      || _mfPage.match(/"downloadUrl":"([^"]+)"/)
-      || _mfPage.match(/id="downloadButton"[^>]+href="([^"]+)"/)
-    if (!_dlMatch) return reply('❌ Could not extract download link. Please check the MediaFire URL.')
-    const _dlLink = _dlMatch[1].replace(/&amp;/g, '&')
-    const _fnMatch = _mfPage.match(/"filename"\s*:\s*"([^"]+)"/)
-      || _mfPage.match(/class="filename"[^>]*>([^<]+)</)
-      || _mfPage.match(/<title>([^<|]+)/)
-    const fileNama = (_fnMatch ? _fnMatch[1].trim() : 'mediafire_file') + ''
-    const extension = fileNama.split('.').pop().toLowerCase()
-    let mimetype = extension === 'mp4' ? 'video/mp4' : extension === 'mp3' ? 'audio/mpeg' : `application/${extension}`
-    const _res = await axios.get(_dlLink, {
-      responseType: 'arraybuffer', timeout: 60000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    })
-    await X.sendMessage(m.chat, {
-      document: Buffer.from(_res.data),
-      fileName: fileNama,
-      mimetype: mimetype
-    }, { quoted: m })
-  } catch (err) {
-    console.error('[MEDIAFIRE]', err.message)
-    reply('❌ Download failed. Make sure the MediaFire link is valid and public.')
-  }
+    if (!text) return reply(`╔══〔 📥 MEDIAFIRE 〕══════╗\n║ *Usage:* ${prefix}mediafire [link]\n║ Example: ${prefix}mediafire https://mediafire.com/...\n╚═══════════════════════╝`)
+    try {
+      let _mfDlLink = null, _mfFileName = null, _mfMime = null
+
+      // Source 1: Keith mfire API
+      try {
+        const _kMf = await fetch(`https://apiskeith.top/download/mfire?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+        const _kMfd = await _kMf.json()
+        console.log('[mfire] keith: status=', _kMfd.status)
+        if (_kMfd.status && _kMfd.result?.dl_link) {
+          _mfDlLink   = _kMfd.result.dl_link
+          _mfFileName = _kMfd.result.fileName || 'mediafire_file'
+          const _ext  = _mfFileName.split('.').pop().toLowerCase()
+          _mfMime = _ext === 'mp4' ? 'video/mp4' : _ext === 'mp3' ? 'audio/mpeg' : `application/${_ext}`
+        }
+      } catch (_kMfE) { console.log('[mfire] keith:', _kMfE.message) }
+
+      // Source 2: HTML scraping fallback
+      if (!_mfDlLink) {
+        const _mfHtml = await axios.get(text, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          timeout: 20000
+        })
+        const _mfPage = _mfHtml.data || ''
+        const _dlMatch = _mfPage.match(/href="(https:\/\/download\d*\.mediafire\.com\/[^"]+)"/)
+          || _mfPage.match(/"downloadUrl":"([^"]+)"/)
+          || _mfPage.match(/id="downloadButton"[^>]+href="([^"]+)"/)
+        if (!_dlMatch) return reply('❌ Could not extract download link. Please check the MediaFire URL.')
+        _mfDlLink = _dlMatch[1].replace(/&amp;/g, '&')
+        const _fnMatch = _mfPage.match(/"filename"\s*:\s*"([^"]+)"/)
+          || _mfPage.match(/class="filename"[^>]*>([^<]+)</)
+          || _mfPage.match(/<title>([^<|]+)/)
+        _mfFileName = (_fnMatch ? _fnMatch[1].trim() : 'mediafire_file')
+        const _ext2 = _mfFileName.split('.').pop().toLowerCase()
+        _mfMime = _ext2 === 'mp4' ? 'video/mp4' : _ext2 === 'mp3' ? 'audio/mpeg' : `application/${_ext2}`
+      }
+
+      const _mfBuf = await axios.get(_mfDlLink, {
+        responseType: 'arraybuffer', timeout: 60000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      })
+      await X.sendMessage(m.chat, { document: Buffer.from(_mfBuf.data), fileName: _mfFileName, mimetype: _mfMime }, { quoted: m })
+    } catch (err) {
+      console.error('[MEDIAFIRE]', err.message)
+      reply('❌ Download failed. Make sure the MediaFire link is valid and public.')
+    }
 }
 break
 case 'ig':
@@ -2027,6 +2040,18 @@ case 'ig':
           console.log('[ig] gifted:', _gtIgd.success)
           if (_gtIgd.success && _gtIgd.result?.download_url) _igUrl = _gtIgd.result.download_url
         } catch(_e3) { console.log('[ig] gifted:', _e3.message) }
+      }
+
+      // Source 4: Keith instadl
+      if (!_igUrl) {
+        try {
+          let _kIg = await fetch(`https://apiskeith.top/download/instadl?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+          let _kIgd = await _kIg.json()
+          console.log('[ig] keith:', _kIgd.status)
+          const _kIgUrl = _kIgd?.result
+          if (_kIgd.status && typeof _kIgUrl === 'string' && _kIgUrl.startsWith('http')) _igUrl = _kIgUrl
+          else if (_kIgd.status && Array.isArray(_kIgUrl) && _kIgUrl[0]?.url) _igUrl = _kIgUrl[0].url
+        } catch(_e4) { console.log('[ig] keith:', _e4.message) }
       }
 
       if (!_igUrl) return reply('❌ Failed to download. The link may be private or invalid. Try again.')
@@ -2081,6 +2106,19 @@ break
             _twThumb = _gtTwd.result.thumbnail || null
           }
         } catch(_e2) { console.log('[tw] gifted:', _e2.message) }
+      }
+
+      // Source 3: Keith twitter
+      if (!_twUrl) {
+        try {
+          const _kTw = await fetch(`https://apiskeith.top/download/twitter?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+          const _kTwd = await _kTw.json()
+          console.log('[tw] keith:', _kTwd.status)
+          if (_kTwd.status && _kTwd.result) {
+            _twUrl = _kTwd.result.video_hd || _kTwd.result.video_sd || null
+            _twThumb = _kTwd.result.thumb || null
+          }
+        } catch(_e3) { console.log('[tw] keith:', _e3.message) }
       }
 
       if (!_twUrl) return reply('❌ Failed to download. The link may be invalid or the tweet has no video.')
@@ -2315,6 +2353,36 @@ break
   }
   break
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎵  SOUNDCLOUD DOWNLOADER (Keith API)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+case 'soundcloud':
+case 'scloud': {
+  await X.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
+  if (!text) return reply(`╔══〔 🎵 SOUNDCLOUD DL 〕══╗\n\n║ *Usage:* ${prefix}soundcloud [link]\n║ Example: ${prefix}soundcloud https://soundcloud.com/...\n╚═══════════════════════╝`)
+  const _scUrlRegex = /soundcloud\.com\//i
+  if (!_scUrlRegex.test(text)) return reply(`╔══〔 🎵 SOUNDCLOUD DL 〕══╗\n\n║ ❌ Please provide a valid SoundCloud track link.\n╚═══════════════════════╝`)
+  try {
+    await reply('🎵 _Downloading from SoundCloud..._')
+    const _scRes = await fetch(`https://apiskeith.top/download/soundcloud?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(30000) })
+    const _scJson = await _scRes.json()
+    if (!_scJson.success && !_scJson.status) throw new Error('Track not found or unavailable')
+    const _scData = _scJson.data || _scJson.result
+    const _scAudioUrl = Array.isArray(_scData?.medias) ? _scData.medias.find(m => m.audioAvailable || m.extension === 'mp3')?.url || _scData.medias[0]?.url : null
+    if (!_scAudioUrl) throw new Error('No audio stream found')
+    const _scTitle = _scData?.title || 'SoundCloud Track'
+    const _scThumb = _scData?.thumbnail || null
+    const _scDur   = _scData?.duration || '--:--'
+    const _scCap = `╔══〔 🎵 SOUNDCLOUD 〕══════╗\n║ 🎵 *${_scTitle}*\n║ ⏱️ *Duration:* ${_scDur}\n╚═══════════════════════╝`
+    if (_scThumb) {
+      await X.sendMessage(m.chat, { image: { url: _scThumb }, caption: _scCap }, { quoted: m })
+    }
+    await X.sendMessage(m.chat, { audio: { url: _scAudioUrl }, mimetype: 'audio/mpeg', fileName: `${_scTitle}.mp3` }, { quoted: m })
+  } catch(e) {
+    reply(`❌ SoundCloud download failed: ${e.message}`)
+  }
+} break
+
   case 'tempemail':
   case 'tempmail': {
       await X.sendMessage(m.chat, { react: { text: '📧', key: m.key } })
@@ -2444,6 +2512,19 @@ try {
         }
       } catch (_e3) { console.log('[tt] tikwm:', _e3.message) }
     }
+    // Fallback 3: Keith tiktokdl3
+    if (!_ttFallback) {
+      try {
+        let _kTt = await fetch(`https://apiskeith.top/download/tiktokdl3?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(25000) })
+        let _kTtd = await _kTt.json()
+        console.log('[tt] keith:', _kTtd.status)
+        const _kTtUrl = _kTtd?.result
+        if (_kTtd.status && typeof _kTtUrl === 'string' && _kTtUrl.startsWith('http')) {
+          await safeSendMedia(m.chat, { video: { url: _kTtUrl }, mimetype: 'video/mp4', caption: '🎵 *TikTok Download*' }, {}, { quoted: m })
+          _ttFallback = true
+        }
+      } catch (_e4) { console.log('[tt] keith:', _e4.message) }
+    }
     if (!_ttFallback) reply('❌ TikTok download failed. Please make sure the link is valid and public.')
 }
 }
@@ -2511,6 +2592,19 @@ if (!text) return reply(`╔══〔 📘 FACEBOOK DL 〕════╗\n\n║
               _fbDuration = _gtd.result.duration || null
             }
           } catch (_e3) { console.log('[fb] giftedtech:', _e3.message) }
+        }
+
+        // Source 4: Keith fbdown
+        if (!_fbUrl) {
+          try {
+            let _kFb = await fetch(`https://apiskeith.top/download/fbdown?url=${encodeURIComponent(text)}`, { signal: AbortSignal.timeout(20000) })
+            let _kFbd = await _kFb.json()
+            console.log('[fb] keith:', _kFbd.status)
+            if (_kFbd.status && _kFbd.result) {
+              _fbUrl   = _kFbd.result.media?.hd || _kFbd.result.media?.sd || null
+              _fbTitle = _kFbd.result.title || null
+            }
+          } catch (_e4) { console.log('[fb] keith:', _e4.message) }
         }
 
         if (_fbUrl) {
