@@ -1019,10 +1019,20 @@ if (global.antiLink && m.isGroup && !m.key.fromMe) {
     }
 }
 
+// ── Helper: extract groupMentions from ANY message type ──────────────────
+const _extractGroupMentions = (msg) => {
+    if (!msg) return []
+    for (const _mk of Object.keys(msg)) {
+        const _mc = msg[_mk]
+        if (_mc?.contextInfo?.groupMentions?.length) return _mc.contextInfo.groupMentions
+    }
+    return []
+}
+
 // ── Anti Group Mention enforcement ───────────────────────────────────────
 // Fires when someone uses @everyone / mass-mentions the group (groupMentions API or large mentionedJid).
 if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe) {
-    const _agmGroupMentions = m.message?.extendedTextMessage?.contextInfo?.groupMentions || []
+    const _agmGroupMentions = _extractGroupMentions(m.message)
     const _agmHasGroupTag   = _agmGroupMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])
     // Also catch mass-tagging (≥ half the group or ≥ 10 mentions)
     const _agmMassTag = (m.mentionedJid || []).length >= Math.max(10, Math.floor((participants.length || 0) / 2))
@@ -1044,6 +1054,54 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
             return
         }
     }
+}
+
+// ── Anti Status Mention — group notification path ─────────────────────────
+// When someone uses WhatsApp's "Mention Group" in their status, WhatsApp
+// delivers the notification directly into the group chat as a regular message.
+// This path catches it regardless of whether they saved the bot's number.
+if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe) {
+    try {
+        // Check ALL message types for groupMentions pointing at this group
+        const _asmNotifMentions = _extractGroupMentions(m.message)
+        const _asmNotifHasTag   = _asmNotifMentions.some(gm =>
+            gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0]
+        )
+        // Also catch if the message itself is a statusMentionMessage type
+        const _asmIsStatusMention = !!m.message?.statusMentionMessage
+        if ((_asmNotifHasTag || _asmIsStatusMention) && !isOwner && !isSudo && !isAdmins) {
+            const _asmAction = (global.antiStatusMentionGroups[from].action || 'warn').toLowerCase()
+            const _asmSenderNum = sender.split('@')[0]
+            if (!global.statusMentionWarns) global.statusMentionWarns = {}
+            const _asmWarnKey = `${from}:${sender}`
+            try { await X.sendMessage(m.chat, { delete: m.key }) } catch {}
+            if (_asmAction === 'kick') {
+                try {
+                    await X.groupParticipantsUpdate(from, [sender], 'remove')
+                    await X.sendMessage(from, { text: `🚫 *Anti Status Mention:* @${_asmSenderNum} was removed for tagging this group in their status.`, mentions: [sender] })
+                } catch {
+                    await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status! (Bot needs admin to kick)`, mentions: [sender] })
+                }
+            } else if (_asmAction === 'warn') {
+                global.statusMentionWarns[_asmWarnKey] = (global.statusMentionWarns[_asmWarnKey] || 0) + 1
+                const _wCount = global.statusMentionWarns[_asmWarnKey]
+                const _maxW = 3
+                if (_wCount >= _maxW) {
+                    try {
+                        await X.groupParticipantsUpdate(from, [sender], 'remove')
+                        global.statusMentionWarns[_asmWarnKey] = 0
+                        await X.sendMessage(from, { text: `🚫 *Anti Status Mention:* @${_asmSenderNum} removed after ${_maxW} warnings for repeatedly tagging this group in status.`, mentions: [sender] })
+                    } catch {
+                        await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, final warning! Do not tag this group in your status.`, mentions: [sender] })
+                    }
+                } else {
+                    await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status. Warning ${_wCount}/${_maxW}.`, mentions: [sender] })
+                }
+            } else {
+                await X.sendMessage(from, { text: `⚠️ *Anti Status Mention:* @${_asmSenderNum}, don't tag this group in your status.`, mentions: [sender] })
+            }
+        }
+    } catch (_asmNErr) { console.log('[ASM-notif]', _asmNErr.message || _asmNErr) }
 }
 
 
