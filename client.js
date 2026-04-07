@@ -2282,6 +2282,65 @@ break
       } catch(e) { reply(`❌ Country *${_ciq}* not found. Try the full country name.`) }
   } break
 
+  case 'forex':
+  case 'exchange':
+  case 'convert':
+  case 'rate': {
+      await X.sendMessage(m.chat, { react: { text: '💱', key: m.key } })
+      // Usage: .forex [amount] [FROM] [TO]  |  .forex [FROM] [TO]  |  .forex [TO]
+      const _fxInput = (q?.trim() || text?.trim() || '').toUpperCase()
+      if (!_fxInput) return reply(
+          `╌══〔 💱 FOREX CONVERTER 〕══╌\n` +
+          `║ *Usage:*\n` +
+          `║   ${prefix}forex [to]          → 1 USD to currency\n` +
+          `║   ${prefix}forex [from] [to]   → 1 unit conversion\n` +
+          `║   ${prefix}forex [amt] [from] [to]\n` +
+          `║\n` +
+          `║ *Examples:*\n` +
+          `║   ${prefix}forex KES\n` +
+          `║   ${prefix}forex USD KES\n` +
+          `║   ${prefix}forex 500 KES USD\n` +
+          `╚═══════════════════════╝`
+      )
+      try {
+          const _fxParts = _fxInput.trim().split(/\s+/)
+          let _fxAmt = 1, _fxFrom = 'USD', _fxTo
+          if (_fxParts.length === 1) {
+              _fxTo = _fxParts[0]
+          } else if (_fxParts.length === 2) {
+              if (!isNaN(_fxParts[0])) { _fxAmt = parseFloat(_fxParts[0]); _fxTo = _fxParts[1] }
+              else { _fxFrom = _fxParts[0]; _fxTo = _fxParts[1] }
+          } else {
+              _fxAmt = parseFloat(_fxParts[0]) || 1
+              _fxFrom = _fxParts[1]
+              _fxTo = _fxParts[2]
+          }
+          if (!_fxTo) return reply('❌ Please specify a target currency. Example: `.forex KES`')
+          await reply(`💱 _Converting ${_fxAmt} ${_fxFrom} → ${_fxTo}..._`)
+          // Fetch both rates (USD→FROM and USD→TO)
+          let _fxRateFrom = 1, _fxRateTo = 1
+          if (_fxFrom !== 'USD') {
+              const _fxD = await _keithFetch(`/finance/exchange?q=${_fxFrom}`)
+              if (!_fxD?.rate) return reply(`❌ Unknown currency: *${_fxFrom}*`)
+              _fxRateFrom = _fxD.rate
+          }
+          if (_fxTo !== 'USD') {
+              const _fxD2 = await _keithFetch(`/finance/exchange?q=${_fxTo}`)
+              if (!_fxD2?.rate) return reply(`❌ Unknown currency: *${_fxTo}*`)
+              _fxRateTo = _fxD2.rate
+          }
+          const _fxResult = (_fxAmt * _fxRateTo) / _fxRateFrom
+          const _fxRate = _fxRateTo / _fxRateFrom
+          let msg = `╌══〔 💱 FOREX CONVERTER 〕══╌\n`
+          msg += `\n💵 *${_fxAmt.toLocaleString()} ${_fxFrom}*\n`
+          msg += `   = *${_fxResult.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${_fxTo}*\n`
+          msg += `\n📊 *Rate:* 1 ${_fxFrom} = ${_fxRate.toFixed(4)} ${_fxTo}\n`
+          msg += `🏦 *Base:* USD (via exchange rates)\n`
+          msg += `\n╚═══════════════════════╝`
+          await reply(msg)
+      } catch(e) { reply('❌ Currency conversion failed. Check the currency codes and try again.') }
+  } break
+
   case 'npminfo':
   case 'npm': {
       await X.sendMessage(m.chat, { react: { text: '📦', key: m.key } })
