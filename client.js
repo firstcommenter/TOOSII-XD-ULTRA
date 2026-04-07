@@ -7802,7 +7802,7 @@ case 'pair': {
           `║\n` +
           `║  Click the link below to get your pairing code:\n` +
           `║\n` +
-          `║  🌐 ${global.sessionUrl || 'https://toosiitechdevelopertools.zone.id/session'}\n` +
+          `║  🌐 https://toosiitechdevelopertools.zone.id/session\n` +
           `║\n` +
           `║  📱 Enter your WhatsApp number\n` +
           `║  📋 Copy the code shown\n` +
