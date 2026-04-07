@@ -1613,7 +1613,7 @@ if (!global._connMsgSent.has(phone)) {
       }
     const connectedJid = X.user.id.replace(/:.*@/, '@')
     try {
-        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n║ 📢 Channel  : ${global.channelLink || 'https://whatsapp.com/channel/0029VbCGMJeEquiVSIthcK03'}\n║ 👉 Join & follow to stay updated!\n╚${"═".repeat(40)}╝`})
+        await X.sendMessage(connectedJid, {text: `╔══════〔 ⚡ TOOSII-XD ULTRA 〕══════╗\n║ 👤 User     : ${connUser}\n║ 🟢 Status   : Active & Online\n║ 🤖 Bot      : ${global.botname || 'TOOSII-XD ULTRA'}\n║ 📋 Commands : .menu\n╚${"═".repeat(40)}╝`, contextInfo: global.getCtxInfo()})
     } catch (e) {}
 }
 console.log(`[BOT_CONNECTED:${connUser}]`)
