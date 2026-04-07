@@ -1058,62 +1058,102 @@ if (global.antiGroupMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe
 
 // ── Anti Status Mention — group notification path ─────────────────────────
 // Catches WhatsApp's "Mention Group in Status" feature delivered into the group.
-// Uses groupStatusMentionMessage (primary), groupMentionedMessage, statusMentionMessage,
-// contextInfo.groupMentions/mentionedJid, and forwarded-from-status as fallbacks.
+// Deduplication by message ID prevents double-processing under mass-mention load.
 if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromMe) {
     try {
+        // 0. Dedup: same message ID never processed twice (handles mass mention bursts)
+        if (!global._asmSeen) global._asmSeen = new Map()
+        const _asmMsgId = m.key?.id
+        let _asmAlreadySeen = false
+        if (_asmMsgId) {
+            if (global._asmSeen.has(_asmMsgId)) {
+                _asmAlreadySeen = true
+            } else {
+                global._asmSeen.set(_asmMsgId, Date.now())
+                if (global._asmSeen.size > 500) {
+                    const _asmCutoff = Date.now() - 60000
+                    for (const [_k, _t] of global._asmSeen) if (_t < _asmCutoff) global._asmSeen.delete(_k)
+                }
+            }
+        }
+
         let _asmTriggered = false
+        const _asmFromNum = from.split('@')[0]
 
-        // 1. Primary: groupStatusMentionMessage (WhatsApp's dedicated proto type)
-        const _gsmMsg = m.message?.groupStatusMentionMessage
-        if (_gsmMsg) {
-            const _gsmGroupId = _gsmMsg?.groupJid || _gsmMsg?.message?.groupJid
-            if (!_gsmGroupId || _gsmGroupId === from || _gsmGroupId.split('@')[0] === from.split('@')[0]) {
-                _asmTriggered = true
-                console.log(`[ASM] groupStatusMentionMessage from ${sender} in ${from}`)
+        if (!_asmAlreadySeen && m.message) {
+            // Helper: does a JID string match the current group?
+            const _asmJidMatch = j => j && (j === from || j.split('@')[0] === _asmFromNum)
+
+            // 1. Primary: groupStatusMentionMessage
+            const _gsmMsg = m.message.groupStatusMentionMessage
+            if (_gsmMsg) {
+                const _gsmGroupId = _gsmMsg?.groupJid || _gsmMsg?.message?.groupJid
+                if (!_gsmGroupId || _asmJidMatch(_gsmGroupId)) {
+                    _asmTriggered = true
+                    console.log(`[ASM] groupStatusMentionMessage from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                }
             }
-        }
 
-        // 2. groupMentionedMessage type
-        if (!_asmTriggered && m.message?.groupMentionedMessage) {
-            const _gmmJid = m.message.groupMentionedMessage?.groupJid || m.message.groupMentionedMessage?.jid
-            if (!_gmmJid || _gmmJid === from || _gmmJid.split('@')[0] === from.split('@')[0]) {
-                _asmTriggered = true
-                console.log(`[ASM] groupMentionedMessage from ${sender} in ${from}`)
+            // 2. groupMentionedMessage
+            if (!_asmTriggered && m.message.groupMentionedMessage) {
+                const _gmmJid = m.message.groupMentionedMessage?.groupJid || m.message.groupMentionedMessage?.jid
+                if (!_gmmJid || _asmJidMatch(_gmmJid)) {
+                    _asmTriggered = true
+                    console.log(`[ASM] groupMentionedMessage from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                }
             }
-        }
 
-        // 3. statusMentionMessage type
-        if (!_asmTriggered && m.message?.statusMentionMessage) {
-            const _smmJid = m.message.statusMentionMessage?.groupJid
-            if (!_smmJid || _smmJid === from || _smmJid.split('@')[0] === from.split('@')[0]) {
-                _asmTriggered = true
-                console.log(`[ASM] statusMentionMessage from ${sender} in ${from}`)
+            // 3. statusMentionMessage
+            if (!_asmTriggered && m.message.statusMentionMessage) {
+                const _smmJid = m.message.statusMentionMessage?.groupJid
+                if (!_smmJid || _asmJidMatch(_smmJid)) {
+                    _asmTriggered = true
+                    console.log(`[ASM] statusMentionMessage from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                }
             }
-        }
 
-        // 4. contextInfo.groupMentions across ALL message types
-        if (!_asmTriggered) {
-            const _asmCtxMentions = _extractGroupMentions(m.message)
-            if (_asmCtxMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])) {
-                _asmTriggered = true
-                console.log(`[ASM] contextInfo.groupMentions from ${sender} in ${from}`)
+            // 4. contextInfo.groupMentions / mentionedJid across ALL message types
+            if (!_asmTriggered) {
+                const _asmCtxMentions = _extractGroupMentions(m.message)
+                if (_asmCtxMentions.some(gm => _asmJidMatch(gm.groupJid))) {
+                    _asmTriggered = true
+                    console.log(`[ASM] contextInfo.groupMentions from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                }
             }
-        }
 
-        // 5. Forwarded-from-status with group in mentionedJid or groupMentions
-        if (!_asmTriggered && m.message) {
-            for (const _fk of Object.keys(m.message)) {
-                const _fct = m.message[_fk]?.contextInfo
-                if (_fct?.isForwarded && _fct?.remoteJid === 'status@broadcast') {
-                    const _fMentioned = _fct?.mentionedJid || []
-                    const _fGrpMentions = _fct?.groupMentions || []
-                    if (_fMentioned.some(j => j === from || j.split('@')[0] === from.split('@')[0]) ||
-                        _fGrpMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])) {
-                        _asmTriggered = true
-                        console.log(`[ASM] fwd-from-status from ${sender} in ${from}`)
+            // 5. Any key forwarded from status@broadcast mentioning this group
+            if (!_asmTriggered) {
+                for (const _fk of Object.keys(m.message)) {
+                    const _fct = m.message[_fk]?.contextInfo
+                    if (!_fct) continue
+                    if (_fct.isForwarded && _fct.remoteJid === 'status@broadcast') {
+                        const _fMentioned = _fct.mentionedJid || []
+                        const _fGrpMentions = _fct.groupMentions || []
+                        if (_fMentioned.some(_asmJidMatch) ||
+                            _fGrpMentions.some(gm => _asmJidMatch(gm.groupJid))) {
+                            _asmTriggered = true
+                            console.log(`[ASM] fwd-from-status key:${_fk} from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                            break
+                        }
                     }
-                    break
+                }
+            }
+
+            // 6. Catch-all: any unknown key whose name contains status/mention/group
+            //    scanned for a groupJid/jid field pointing at this group
+            if (!_asmTriggered) {
+                const _asmCatchKeys = Object.keys(m.message).filter(k =>
+                    /status|mention|group/i.test(k) && k !== 'messageContextInfo' && k !== 'senderKeyDistributionMessage'
+                )
+                for (const _ck of _asmCatchKeys) {
+                    const _cv = m.message[_ck]
+                    if (!_cv || typeof _cv !== 'object') continue
+                    const _cjid = _cv.groupJid || _cv.jid || _cv.remoteJid
+                    if (_cjid && _asmJidMatch(_cjid)) {
+                        _asmTriggered = true
+                        console.log(`[ASM] catch-all key:${_ck} from ${sender.split('@')[0]} in ${_asmFromNum}`)
+                        break
+                    }
                 }
             }
         }
