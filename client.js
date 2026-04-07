@@ -1067,9 +1067,28 @@ if (global.antiStatusMentionGroups?.[from]?.enabled && m.isGroup && !m.key.fromM
         const _asmNotifHasTag   = _asmNotifMentions.some(gm =>
             gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0]
         )
-        // Also catch if the message itself is a statusMentionMessage type
+        // Also catch statusMentionMessage type
         const _asmIsStatusMention = !!m.message?.statusMentionMessage
-        if ((_asmNotifHasTag || _asmIsStatusMention) && !isOwner && !isSudo && !isAdmins) {
+        // Also catch: status forwarded into group (photo/video/text from status@broadcast
+        // that mentions this group via mentionedJid or groupMentions in contextInfo)
+        let _asmFwdStatus = false
+        if (m.message) {
+            for (const _fk of Object.keys(m.message)) {
+                const _fct = m.message[_fk]?.contextInfo
+                if (_fct?.isForwarded && _fct?.remoteJid === 'status@broadcast') {
+                    const _fMentioned = _fct?.mentionedJid || []
+                    const _fGrpMentions = _fct?.groupMentions || []
+                    if (_fMentioned.some(j => j === from || j.split('@')[0] === from.split('@')[0]) ||
+                        _fGrpMentions.some(gm => gm.groupJid === from || gm.groupJid?.split('@')[0] === from.split('@')[0])) {
+                        _asmFwdStatus = true
+                    }
+                    break
+                }
+            }
+        }
+        const _asmTriggered = _asmNotifHasTag || _asmIsStatusMention || _asmFwdStatus
+        if (_asmTriggered) console.log(`[ASM] triggered for ${sender} in ${from} | hasTag:${_asmNotifHasTag} statusMsg:${_asmIsStatusMention} fwdStatus:${_asmFwdStatus}`)
+        if (_asmTriggered && !isOwner && !isSudo && !isAdmins) {
             const _asmAction = (global.antiStatusMentionGroups[from].action || 'warn').toLowerCase()
             const _asmSenderNum = sender.split('@')[0]
             if (!global.statusMentionWarns) global.statusMentionWarns = {}
