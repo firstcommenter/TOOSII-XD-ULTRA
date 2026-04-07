@@ -9,7 +9,6 @@ const SAVEABLE = [
     'packname','authorname','watermark','botPrefix','statusMentionWarns','statusMentionDeleteList',
     'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode','antilinkGcGroups',
     'antiLinkAction','antiLinkWarnLimit','antiLinkWarns',
-    'antiStatusMentionGroups',
     'antiGroupMentionGroups'
 ]
 const loadSettings = () => {
