@@ -7,7 +7,7 @@ const SAVEABLE = [
     'autoLikeEmoji','statusToGroup','mode','autoRead','chatBot','anticall',
     'antiword','antispam','warn','warnlimit','alive','aliveMsg','aliveMoment',
     'packname','authorname','watermark','botPrefix','statusMentionWarns','statusMentionDeleteList',
-    'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode'
+    'BOT_MODE','onlyGroup','botPublicMode','ownerFontMode','antilinkGcGroups'
 ]
 const loadSettings = () => {
     try {
